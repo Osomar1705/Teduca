@@ -1,0 +1,62 @@
+[project]
+name = "teduca-backend"
+version = "0.1.0"
+description = "TEDUCA - Backend EdTech escalable (FastAPI + Clean Architecture)"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.118.0",
+    "uvicorn[standard]>=0.37.0",
+    "sqlalchemy>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    "python-jose[cryptography]>=3.3.0",
+    "argon2-cffi>=23.1.0",
+    "redis>=5.2.0",
+    "python-multipart>=0.0.20",
+    "slowapi>=0.1.9",
+    "email-validator>=2.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.25.0",
+    "httpx>=0.28.0",
+    "ruff>=0.9.0",
+    "aiosqlite>=0.20.0",
+    "fakeredis>=2.37.0",
+]
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/teduca"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "tests"]
+extend-exclude = ["migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "C4", "SIM", "ASYNC"]
+ignore = [
+    "B008",  # FastAPI usa Depends() en defaults
+    "N818",  # AppException es la base de dominio; sin sufijo Error a propósito
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["teduca"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests", "src"]
+pythonpath = ["src"]
