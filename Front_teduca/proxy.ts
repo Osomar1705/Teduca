@@ -13,7 +13,7 @@ const protectedPaths = [
   '/settings',
 ]
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Check if route is protected
