@@ -24,8 +24,16 @@ register_gamification_handlers()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Siembra idempotente de roles, logros y recompensas al arrancar.
-    async with AsyncSessionLocal() as session:
-        await seed(session)
+    # En serverless el lifespan puede no ejecutarse; por eso el seed también
+    # se puede correr manualmente (python -m teduca.core.seed) y aquí no debe
+    # tumbar el arranque si algo falla.
+    try:
+        async with AsyncSessionLocal() as session:
+            await seed(session)
+    except Exception as exc:  # noqa: BLE001
+        import logging
+
+        logging.getLogger("teduca").warning("Seed en arranque omitido: %s", exc)
     yield
     await close_redis()
 

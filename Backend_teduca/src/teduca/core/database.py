@@ -13,15 +13,44 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+from sqlalchemy.pool import NullPool
+
 from teduca.core.config import settings
 
-engine = create_async_engine(
-    settings.database_url,
-    echo=settings.debug and not settings.is_production,
-    pool_pre_ping=True,
-    pool_size=20,
-    max_overflow=10,
-)
+
+def _build_engine():
+    """Crea el engine adaptándose al entorno.
+
+    En serverless (Vercel) cada invocación es un proceso efímero detrás de un
+    pooler (pgBouncer de Neon/Supabase): usamos NullPool, desactivamos la caché
+    de prepared statements (incompatible con pgBouncer en modo transacción) y
+    forzamos SSL cuando el host no es local.
+    """
+    url = settings.database_url
+    is_local = "localhost" in url or "127.0.0.1" in url or "@postgres" in url
+
+    if settings.is_production or not is_local:
+        connect_args: dict = {"statement_cache_size": 0}
+        if not is_local:
+            connect_args["ssl"] = True
+        return create_async_engine(
+            url,
+            echo=False,
+            poolclass=NullPool,
+            connect_args=connect_args,
+        )
+
+    # Desarrollo local (Docker): pool normal.
+    return create_async_engine(
+        url,
+        echo=settings.debug and not settings.is_production,
+        pool_pre_ping=True,
+        pool_size=20,
+        max_overflow=10,
+    )
+
+
+engine = _build_engine()
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

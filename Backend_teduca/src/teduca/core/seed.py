@@ -43,3 +43,18 @@ async def seed(session: AsyncSession) -> None:
             session.add(Reward(code=code, name=name, description=desc, cost_points=cost))
 
     await session.commit()
+
+
+async def _main() -> None:
+    """Permite sembrar la BD manualmente: `python -m teduca.core.seed`."""
+    from teduca.core.database import AsyncSessionLocal
+
+    async with AsyncSessionLocal() as session:
+        await seed(session)
+    print("Seed completado.")
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(_main())
