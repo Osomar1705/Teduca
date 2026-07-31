@@ -5,10 +5,12 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
+import { APP_ROUTES } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
+import { Logo } from '@/components/common/Logo'
 
 export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const router = useRouter()
@@ -33,101 +35,114 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
     setLoading(false)
 
     if (error) {
-      setError(error.message ?? 'Something went wrong')
+      setError(error.message ?? 'Ocurrió un error. Intentá de nuevo.')
       return
     }
 
-    router.push('/')
+    router.push(APP_ROUTES.DASHBOARD)
     router.refresh()
   }
 
   return (
-    <main className="min-h-svh bg-background flex items-center justify-center px-4">
-      <Card className="w-full max-w-sm p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {isSignUp ? 'Create an account' : 'Welcome back'}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {isSignUp
-              ? 'Sign up to get started'
-              : 'Sign in to your account to continue'}
-          </p>
-        </div>
+    <Card className="w-full p-6 shadow-lg sm:p-8">
+      <div className="mb-6 flex flex-col items-center text-center">
+        <Logo className="mb-5 h-11 w-auto" />
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          {isSignUp ? 'Creá tu cuenta' : 'Bienvenido de nuevo'}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {isSignUp
+            ? 'Registrate para empezar a aprender'
+            : 'Iniciá sesión para continuar'}
+        </p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {isSignUp && (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                autoComplete="name"
-              />
-            </div>
-          )}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {isSignUp && (
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="name">Nombre</Label>
             <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
-              autoComplete="email"
+              minLength={2}
+              autoComplete="name"
+              placeholder="Tu nombre"
             />
           </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-              </button>
-            </div>
+        )}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            placeholder="tu@email.com"
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="password">Contraseña</Label>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={isSignUp ? 8 : undefined}
+              autoComplete={isSignUp ? 'new-password' : 'current-password'}
+              className="pr-10"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
           </div>
-
-          {error && (
-            <p className="text-sm text-destructive" role="alert">
-              {error}
+          {isSignUp && (
+            <p className="text-xs text-muted-foreground">
+              Mínimo 8 caracteres, con mayúsculas, minúsculas y números.
             </p>
           )}
+        </div>
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading
-              ? 'Please wait...'
-              : isSignUp
-                ? 'Create account'
-                : 'Sign in'}
-          </Button>
-        </form>
+        {error && (
+          <p className="text-sm text-destructive" role="alert">
+            {error}
+          </p>
+        )}
 
-        <p className="text-sm text-muted-foreground text-center mt-6">
-          {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-          <Link
-            href={isSignUp ? '/sign-in' : '/sign-up'}
-            className="text-foreground font-medium underline-offset-4 hover:underline"
-          >
-            {isSignUp ? 'Sign in' : 'Sign up'}
-          </Link>
-        </p>
-      </Card>
-    </main>
+        <Button
+          type="submit"
+          variant="brand"
+          disabled={loading}
+          className="mt-1 w-full"
+        >
+          {loading
+            ? 'Procesando...'
+            : isSignUp
+              ? 'Crear cuenta'
+              : 'Iniciar sesión'}
+        </Button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        {isSignUp ? '¿Ya tenés cuenta? ' : '¿No tenés cuenta? '}
+        <Link
+          href={isSignUp ? APP_ROUTES.LOGIN : APP_ROUTES.REGISTER}
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {isSignUp ? 'Iniciar sesión' : 'Crear cuenta'}
+        </Link>
+      </p>
+    </Card>
   )
 }
