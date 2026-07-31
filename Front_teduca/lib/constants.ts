@@ -8,8 +8,11 @@ export const APP_ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   DASHBOARD: '/dashboard',
+  DISCOVER: '/discover',
   COURSES: '/courses',
   CREATE_COURSE: '/courses/create',
+  FAVORITES: '/favorites',
+  RESERVATIONS: '/reservations',
   PROFILE: '/profile',
   SETTINGS: '/settings',
 } as const
