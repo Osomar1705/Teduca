@@ -5,7 +5,6 @@ from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from teduca.core.config import settings
 from teduca.core.database import Base
@@ -45,10 +44,10 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-    )
+    # Reutiliza el engine del proyecto: ya aplica SSL y statement_cache_size=0
+    # cuando el host no es local (necesario para Neon/pgBouncer).
+    from teduca.core.database import engine as connectable
+
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
     await connectable.dispose()
