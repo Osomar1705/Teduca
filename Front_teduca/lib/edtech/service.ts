@@ -23,6 +23,7 @@ import type {
 
 const FAV_KEY = 'teduca_favorites'
 const SEEN_KEY = 'teduca_seen_teachers'
+const PROFILE_KEY = 'teduca_my_profile'
 
 const delay = <T>(value: T, ms = 260): Promise<T> =>
   new Promise((resolve) => setTimeout(() => resolve(value), ms))
@@ -44,6 +45,64 @@ function writeSet(key: string, set: Set<string>): void {
 // --- Usuario -------------------------------------------------------------
 export async function getCurrentUser(): Promise<CurrentUser> {
   return delay(mockCurrentUser, 120)
+}
+
+// --- Mi perfil (docente editable) ---------------------------------------
+/** Campos editables por el docente. Rating/alumnos/reseñas son de solo lectura. */
+export type EditableProfile = Omit<
+  TeacherProfile,
+  'rating' | 'reviewsCount' | 'studentsCount'
+>
+
+/** Perfil docente por defecto para el usuario en sesión (mock). */
+const defaultProfile: TeacherProfile = {
+  id: 'me',
+  userId: 'me',
+  name: 'Estudiante TEDUCA',
+  avatar: 'https://i.pravatar.cc/400?img=12',
+  specialty: '',
+  bio: '',
+  experienceYears: 0,
+  university: '',
+  courseIds: [],
+  modality: 'virtual',
+  hourlyPrice: 20,
+  currency: 'USD',
+  languages: ['Español'],
+  availability: [],
+  rating: 0,
+  reviewsCount: 0,
+  studentsCount: 0,
+  categories: [],
+  location: '',
+  socials: [],
+}
+
+export async function getMyProfile(): Promise<TeacherProfile> {
+  if (typeof window !== 'undefined') {
+    const raw = window.localStorage.getItem(PROFILE_KEY)
+    if (raw) {
+      try {
+        return delay({ ...defaultProfile, ...JSON.parse(raw) }, 120)
+      } catch {
+        /* cae al default */
+      }
+    }
+  }
+  return delay(defaultProfile, 120)
+}
+
+export async function saveMyProfile(
+  profile: EditableProfile
+): Promise<TeacherProfile> {
+  const merged: TeacherProfile = {
+    ...defaultProfile,
+    ...profile,
+  }
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(PROFILE_KEY, JSON.stringify(merged))
+  }
+  return delay(merged, 200)
 }
 
 // --- Profesores ----------------------------------------------------------
