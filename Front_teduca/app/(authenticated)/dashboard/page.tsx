@@ -39,7 +39,7 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-6xl">
       <FadeIn>
         <div className="relative mb-8 overflow-hidden rounded-2xl bg-gradient-brand p-8 text-white shadow-lg">
-          <div className="bg-grid absolute inset-0 opacity-20" />
+          <div className="bg-grid-light absolute inset-0" />
           <div className="relative">
             <p className="text-sm font-medium text-white/80">
               Hola{name ? `, ${name}` : ''} 👋

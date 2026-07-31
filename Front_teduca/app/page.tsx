@@ -116,7 +116,7 @@ export default function Home() {
         <div className="mx-auto max-w-5xl">
           <FadeIn>
             <div className="relative overflow-hidden rounded-3xl bg-gradient-brand px-8 py-14 text-center shadow-xl">
-              <div className="bg-grid absolute inset-0 opacity-20" />
+              <div className="bg-grid-light absolute inset-0" />
               <div className="relative">
                 <Image
                   src="/teduca-mark-white.png"

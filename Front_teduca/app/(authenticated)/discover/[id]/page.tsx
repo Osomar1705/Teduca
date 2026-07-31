@@ -109,7 +109,7 @@ export default function TeacherProfilePage({
       <FadeIn>
         <Card className="overflow-hidden p-0">
           <div className="bg-gradient-brand relative h-32">
-            <div className="bg-grid absolute inset-0 opacity-20" />
+            <div className="bg-grid-light absolute inset-0" />
           </div>
           <div className="px-6 pb-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">

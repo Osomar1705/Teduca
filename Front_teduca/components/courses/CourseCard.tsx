@@ -54,7 +54,7 @@ export function CourseCard({
         </div>
       ) : (
         <div className="bg-gradient-brand relative h-40 overflow-hidden">
-          <div className="bg-grid absolute inset-0 opacity-25" />
+          <div className="bg-grid-light absolute inset-0" />
           <BookOpen className="absolute right-4 bottom-4 size-12 text-white/30" />
         </div>
       )}

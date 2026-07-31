@@ -26,8 +26,10 @@ export function CourseCard({ course }: { course: Course }) {
             alt={course.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
+          {/* Scrim para legibilidad del badge sobre imágenes variadas */}
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
           <span className="absolute left-3 top-3">
-            <Badge variant="solid" className="backdrop-blur">
+            <Badge className="border-0 bg-white/90 text-slate-900 shadow-sm backdrop-blur">
               {course.category}
             </Badge>
           </span>
