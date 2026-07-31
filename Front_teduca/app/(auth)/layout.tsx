@@ -6,9 +6,11 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <div className="aura pointer-events-none absolute inset-x-0 top-0 h-[480px]" />
+      <div className="bg-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_55%_45%_at_50%_0%,black,transparent)]" />
       <Navbar />
-      <div className="flex flex-col items-center justify-center px-4 py-12">
+      <div className="relative flex flex-col items-center justify-center px-4 py-16">
         <div className="w-full max-w-md">{children}</div>
       </div>
     </div>

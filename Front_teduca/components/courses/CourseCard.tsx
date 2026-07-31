@@ -1,7 +1,20 @@
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { BookOpen, Users, Star } from 'lucide-react'
+
+const levelVariant = {
+  beginner: 'success',
+  intermediate: 'info',
+  advanced: 'warning',
+} as const
+
+const levelLabel = {
+  beginner: 'Principiante',
+  intermediate: 'Intermedio',
+  advanced: 'Avanzado',
+} as const
 
 interface CourseCardProps {
   id: string
@@ -29,15 +42,20 @@ export function CourseCard({
   action = 'view',
 }: CourseCardProps) {
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card className="group overflow-hidden hover:-translate-y-1 hover:shadow-lg">
       {/* Image */}
-      {image && (
-        <div className="h-40 bg-muted overflow-hidden">
+      {image ? (
+        <div className="h-40 overflow-hidden bg-muted">
           <img
             src={image}
             alt={title}
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
+        </div>
+      ) : (
+        <div className="bg-gradient-brand relative h-40 overflow-hidden">
+          <div className="bg-grid absolute inset-0 opacity-25" />
+          <BookOpen className="absolute right-4 bottom-4 size-12 text-white/30" />
         </div>
       )}
 
@@ -65,10 +83,7 @@ export function CourseCard({
             <Users className="h-4 w-4" />
             <span>{students} estudiantes</span>
           </div>
-          <div className="flex items-center gap-1">
-            <BookOpen className="h-4 w-4" />
-            <span className="capitalize">{level}</span>
-          </div>
+          <Badge variant={levelVariant[level]}>{levelLabel[level]}</Badge>
         </div>
 
         <p className="text-sm font-medium text-muted-foreground mb-4">
