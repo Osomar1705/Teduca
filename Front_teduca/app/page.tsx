@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Navbar } from '@/components/layout/Navbar'
@@ -5,7 +6,7 @@ import { LogoMark } from '@/components/common/Logo'
 import { FadeIn, Stagger, StaggerItem, HoverLift } from '@/components/common/Motion'
 import Link from 'next/link'
 import { APP_ROUTES } from '@/lib/constants'
-import { BookOpen, Users, Award, ArrowRight, Sparkles } from 'lucide-react'
+import { BookOpen, Users, Award, ArrowRight } from 'lucide-react'
 
 const features = [
   {
@@ -40,11 +41,7 @@ export default function Home() {
 
         <div className="relative mx-auto max-w-3xl text-center">
           <FadeIn>
-            <Badge
-              variant="default"
-              className="mb-6 gap-1.5 px-3 py-1"
-            >
-              <Sparkles className="size-3.5" />
+            <Badge variant="default" className="mb-6 px-3 py-1">
               Plataforma educativa de nueva generación
             </Badge>
           </FadeIn>
@@ -121,7 +118,13 @@ export default function Home() {
             <div className="relative overflow-hidden rounded-3xl bg-gradient-brand px-8 py-14 text-center shadow-xl">
               <div className="bg-grid absolute inset-0 opacity-20" />
               <div className="relative">
-                <LogoMark className="mx-auto mb-5 size-14 opacity-95" />
+                <Image
+                  src="/teduca-mark-white.png"
+                  alt=""
+                  width={579}
+                  height={398}
+                  className="mx-auto mb-5 h-16 w-auto opacity-95"
+                />
                 <h2 className="text-3xl font-bold tracking-tight text-white">
                   Empezá tu camino hoy
                 </h2>
@@ -148,7 +151,7 @@ export default function Home() {
       <footer className="border-t border-border px-4 py-10">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
           <div className="flex items-center gap-2">
-            <LogoMark className="size-6" />
+            <LogoMark className="h-7 w-auto" />
             <span className="font-semibold text-foreground">TEDUCA</span>
           </div>
           <p>&copy; {new Date().getFullYear()} TEDUCA. Todos los derechos reservados.</p>
