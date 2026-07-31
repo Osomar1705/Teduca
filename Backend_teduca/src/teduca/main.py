@@ -48,11 +48,12 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Rate limiting global (Redis-backed en producción vía storage_uri)
+    # Rate limiting global. Redis-backed si hay REDIS_URL; si no (serverless sin
+    # Redis), almacenamiento en memoria para no romper el arranque.
     limiter = Limiter(
         key_func=get_remote_address,
         default_limits=[settings.rate_limit_default],
-        storage_uri=settings.redis_url,
+        storage_uri=settings.redis_url or "memory://",
     )
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

@@ -34,10 +34,18 @@ async def get_token_payload(
         raise UnauthorizedError("Token inválido o expirado.") from exc
     if payload.get("type") != "access":
         raise UnauthorizedError("Se esperaba un access token.")
-    # Blacklist de access tokens revocados (logout)
+    # Blacklist de access tokens revocados (logout). Redis es opcional en
+    # serverless: si no está disponible, se omite la comprobación (los access
+    # tokens ya expiran en minutos).
     redis = get_redis()
-    if await redis.exists(f"bl:access:{payload.get('jti')}"):
-        raise UnauthorizedError("Token revocado.")
+    if redis is not None:
+        try:
+            if await redis.exists(f"bl:access:{payload.get('jti')}"):
+                raise UnauthorizedError("Token revocado.")
+        except UnauthorizedError:
+            raise
+        except Exception:  # noqa: BLE001 — Redis caído: degradar sin romper el login
+            pass
     return payload
 
 

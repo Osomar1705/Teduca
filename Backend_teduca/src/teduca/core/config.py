@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://teduca:teduca@localhost:5432/teduca"
 
-    # Redis
-    redis_url: str = "redis://localhost:6379/0"
+    # Redis (opcional). Vacío = deshabilitado (serverless sin Redis).
+    redis_url: str = ""
 
     # Security / JWT
     secret_key: str = "change-me-in-production"

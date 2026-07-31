@@ -78,10 +78,15 @@ class AuthService:
 
     async def logout(self, *, access_payload: dict, refresh_token: str | None) -> None:
         # Blacklist del access token vigente hasta su expiración.
+        # Redis es opcional: sin él, el logout solo revoca el refresh token.
         redis = get_redis()
-        exp = access_payload.get("exp", 0)
-        ttl = max(int(exp - datetime.now(UTC).timestamp()), 1)
-        await redis.set(f"bl:access:{access_payload['jti']}", "1", ex=ttl)
+        if redis is not None:
+            exp = access_payload.get("exp", 0)
+            ttl = max(int(exp - datetime.now(UTC).timestamp()), 1)
+            try:
+                await redis.set(f"bl:access:{access_payload['jti']}", "1", ex=ttl)
+            except Exception:  # noqa: BLE001 — Redis caído: no bloquear el logout
+                pass
 
         # Revoca el refresh token si se envía.
         if refresh_token:
