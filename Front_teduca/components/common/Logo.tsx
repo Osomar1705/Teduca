@@ -2,8 +2,25 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 /**
- * Marca TEDUCA — tardígrado (oso de agua) del isotipo oficial, recortado con
- * fondo transparente desde el logo original.
+ * Logo principal TEDUCA — lockup oficial completo (tardígrado + wordmark),
+ * recortado con fondo transparente desde el logo original.
+ */
+export function Logo({ className }: { className?: string }) {
+  return (
+    <Image
+      src="/teduca-logo.png"
+      alt="TEDUCA"
+      width={944}
+      height={576}
+      priority
+      className={cn('h-10 w-auto object-contain', className)}
+    />
+  )
+}
+
+/**
+ * Solo el isotipo (tardígrado), para espacios compactos o superficies donde
+ * el wordmark no entra.
  */
 export function LogoMark({ className }: { className?: string }) {
   return (
@@ -12,28 +29,7 @@ export function LogoMark({ className }: { className?: string }) {
       alt="TEDUCA"
       width={579}
       height={398}
-      priority
       className={cn('h-9 w-auto object-contain', className)}
     />
-  )
-}
-
-/** Logo completo: tardígrado + wordmark geométrico. */
-export function Logo({
-  className,
-  showWordmark = true,
-}: {
-  className?: string
-  showWordmark?: boolean
-}) {
-  return (
-    <span className={cn('inline-flex items-center gap-2.5', className)}>
-      <LogoMark />
-      {showWordmark && (
-        <span className="text-lg font-bold tracking-tight text-foreground">
-          TEDUCA
-        </span>
-      )}
-    </span>
   )
 }

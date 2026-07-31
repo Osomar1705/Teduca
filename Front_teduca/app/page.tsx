@@ -2,7 +2,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Navbar } from '@/components/layout/Navbar'
-import { LogoMark } from '@/components/common/Logo'
+import { Logo } from '@/components/common/Logo'
 import { FadeIn, Stagger, StaggerItem, HoverLift } from '@/components/common/Motion'
 import Link from 'next/link'
 import { APP_ROUTES } from '@/lib/constants'
@@ -150,10 +150,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-border px-4 py-10">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
-          <div className="flex items-center gap-2">
-            <LogoMark className="h-7 w-auto" />
-            <span className="font-semibold text-foreground">TEDUCA</span>
-          </div>
+          <Logo className="h-8 w-auto" />
           <p>&copy; {new Date().getFullYear()} TEDUCA. Todos los derechos reservados.</p>
         </div>
       </footer>
