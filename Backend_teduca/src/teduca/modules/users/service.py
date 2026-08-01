@@ -39,6 +39,42 @@ class UserService:
         )
         return await self.users.add(user)
 
+    async def get_or_create_google_user(
+        self, *, google_sub: str, email: str, name: str, avatar: str | None = None
+    ) -> User:
+        """Resuelve la cuenta de un usuario de Google.
+
+        Estrategia: buscar por `google_sub`; si no existe, enlazar por email a una
+        cuenta previa (marcándola como verificada); si tampoco existe, crear una
+        cuenta nueva sin contraseña (auth_provider="google").
+        """
+        email = email.lower()
+        user = await self.users.get_by_google_sub(google_sub)
+        if user is not None:
+            return user
+
+        user = await self.users.get_by_email(email)
+        if user is not None:
+            user.google_sub = google_sub
+            user.email_verified = True
+            if not user.avatar and avatar:
+                user.avatar = avatar
+            await self.session.flush()
+            return user
+
+        role_obj = await self.roles.get_or_create(DEFAULT_ROLE)
+        user = User(
+            email=email,
+            name=name or email.split("@")[0],
+            password_hash=None,
+            auth_provider="google",
+            google_sub=google_sub,
+            email_verified=True,
+            avatar=avatar,
+            roles=[role_obj],
+        )
+        return await self.users.add(user)
+
     async def get_by_id(self, user_id: uuid.UUID) -> User:
         user = await self.users.get_by_id(user_id)
         if user is None or user.deleted_at is not None:

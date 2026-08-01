@@ -61,6 +61,38 @@ async function register(
   }
 }
 
+interface AuthConfig {
+  google_enabled: boolean
+  google_client_id: string | null
+}
+
+/** Configuración pública de auth: decide si mostrar el botón de Google. */
+async function getAuthConfig(): Promise<AuthConfig> {
+  try {
+    return await apiClient.get<AuthConfig>(API_ENDPOINTS.AUTH.CONFIG, {
+      auth: false,
+    })
+  } catch {
+    // Si el backend no responde, degradar a "sin Google" en vez de romper.
+    return { google_enabled: false, google_client_id: null }
+  }
+}
+
+/** Login/registro con el credential (ID token) de Google Identity Services. */
+async function googleLogin(credential: string): Promise<Result<User>> {
+  try {
+    const res = await apiClient.post<AuthResponse>(
+      API_ENDPOINTS.AUTH.GOOGLE,
+      { credential },
+      { auth: false }
+    )
+    setTokens(res.tokens)
+    return { data: res.user, error: null }
+  } catch (err) {
+    return { error: { message: (err as Error).message } }
+  }
+}
+
 async function logout(): Promise<void> {
   try {
     await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, {
@@ -100,12 +132,15 @@ export const authClient = {
       role?: 'student' | 'teacher'
     }) => register(email, password, name, role),
   },
+  signInWithGoogle: (credential: string) => googleLogin(credential),
   signOut: async (opts?: { fetchOptions?: { onSuccess?: () => void } }) => {
     await logout()
     opts?.fetchOptions?.onSuccess?.()
     return { error: null }
   },
   getSession,
+  getConfig: getAuthConfig,
 }
 
-export { login, register, logout, getSession }
+export { login, register, googleLogin, getAuthConfig, logout, getSession }
+export type { AuthConfig }
