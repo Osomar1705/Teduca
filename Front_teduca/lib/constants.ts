@@ -10,9 +10,9 @@ export const APP_ROUTES = {
   DASHBOARD: '/dashboard',
   DISCOVER: '/discover',
   COURSES: '/courses',
-  CREATE_COURSE: '/courses/create',
   FAVORITES: '/favorites',
   RESERVATIONS: '/reservations',
+  MESSAGES: '/messages',
   PROFILE: '/profile',
   SETTINGS: '/settings',
 } as const

@@ -1,18 +1,18 @@
 /**
- * Capa de servicio del dominio EdTech.
+ * Capa de servicio del dominio EdTech, cableada al backend FastAPI.
  *
- * Firma pensada para ser idéntica cuando se cablee el backend FastAPI:
- * funciones async que devuelven Promesas. Hoy resuelven contra el mock y
- * persisten los favoritos en localStorage para dar sensación de sesión real.
+ * Mantiene las mismas firmas que consumía la UI (async, tipos camelCase de
+ * `./types`) y por debajo llama a `/api/v1/edtech/*` mapeando el snake_case
+ * del backend. Toda la persistencia (favoritos, swipes, reservas, perfil,
+ * chat) vive ahora en la base de datos.
  */
 
-import {
-  mockCourses,
-  mockCurrentUser,
-  mockReservations,
-  mockTeachers,
-} from './mock'
+import { apiClient } from '../api-client'
+import { API_ENDPOINTS } from '../constants'
+import type { User } from '../types'
 import type {
+  ChatMessage,
+  ChatThread,
   Course,
   CurrentUser,
   Reservation,
@@ -21,30 +21,177 @@ import type {
   TeacherProfile,
 } from './types'
 
-const FAV_KEY = 'teduca_favorites'
-const SEEN_KEY = 'teduca_seen_teachers'
-const PROFILE_KEY = 'teduca_my_profile'
+const BASE = '/api/v1/edtech'
 
-const delay = <T>(value: T, ms = 260): Promise<T> =>
-  new Promise((resolve) => setTimeout(() => resolve(value), ms))
+// --- DTOs del backend (snake_case) ---------------------------------------
+interface ApiCourse {
+  id: string
+  teacher_profile_id: string
+  teacher_name: string
+  title: string
+  image: string
+  category: string
+  description: string
+  level: Course['level']
+  duration_hours: number
+  price: number
+  currency: string
+  rating: number
+  reviews_count: number
+}
 
-function readSet(key: string): Set<string> {
-  if (typeof window === 'undefined') return new Set()
-  try {
-    return new Set(JSON.parse(window.localStorage.getItem(key) ?? '[]'))
-  } catch {
-    return new Set()
+interface ApiTeacher {
+  id: string
+  user_id: string
+  name: string
+  avatar: string | null
+  specialty: string
+  bio: string
+  experience_years: number
+  university: string
+  modality: TeacherProfile['modality']
+  hourly_price: number
+  currency: string
+  location: string
+  languages: string[]
+  availability: TeacherProfile['availability']
+  categories: string[]
+  socials: TeacherProfile['socials']
+  is_published: boolean
+  rating: number
+  reviews_count: number
+  students_count: number
+  courses: ApiCourse[]
+}
+
+interface ApiReservation {
+  id: string
+  teacher_profile_id: string
+  teacher_name: string
+  teacher_avatar: string | null
+  marketplace_course_id: string | null
+  course_title: string | null
+  date: string
+  time: string
+  modality: Reservation['modality']
+  price: number
+  currency: string
+  status: Reservation['status']
+  created_at: string
+}
+
+interface ApiThread {
+  id: string
+  teacher_profile_id: string
+  teacher_name: string
+  teacher_avatar: string | null
+  updated_at: string
+}
+
+interface ApiMessage {
+  id: string
+  thread_id: string
+  sender_id: string
+  body: string
+  created_at: string
+}
+
+const FALLBACK_AVATAR = '/placeholder-user.jpg'
+
+function toCourse(c: ApiCourse): Course {
+  return {
+    id: c.id,
+    title: c.title,
+    image: c.image || '/placeholder.jpg',
+    category: c.category,
+    description: c.description,
+    level: c.level,
+    durationHours: c.duration_hours,
+    teacherId: c.teacher_profile_id,
+    teacherName: c.teacher_name,
+    price: Number(c.price),
+    currency: c.currency,
+    rating: Number(c.rating),
+    reviewsCount: c.reviews_count,
   }
 }
 
-function writeSet(key: string, set: Set<string>): void {
-  if (typeof window === 'undefined') return
-  window.localStorage.setItem(key, JSON.stringify([...set]))
+function toTeacher(t: ApiTeacher): TeacherProfile {
+  return {
+    id: t.id,
+    userId: t.user_id,
+    name: t.name,
+    avatar: t.avatar || FALLBACK_AVATAR,
+    specialty: t.specialty,
+    bio: t.bio,
+    experienceYears: t.experience_years,
+    university: t.university,
+    courseIds: t.courses.map((c) => c.id),
+    modality: t.modality,
+    hourlyPrice: Number(t.hourly_price),
+    currency: t.currency,
+    languages: t.languages,
+    availability: t.availability,
+    rating: Number(t.rating),
+    reviewsCount: t.reviews_count,
+    studentsCount: t.students_count,
+    categories: t.categories,
+    location: t.location || undefined,
+    socials: t.socials?.length ? t.socials : undefined,
+  }
+}
+
+function toReservation(r: ApiReservation): Reservation {
+  return {
+    id: r.id,
+    teacherId: r.teacher_profile_id,
+    teacherName: r.teacher_name,
+    teacherAvatar: r.teacher_avatar || FALLBACK_AVATAR,
+    courseId: r.marketplace_course_id ?? undefined,
+    courseTitle: r.course_title ?? undefined,
+    date: r.date,
+    time: r.time,
+    modality: r.modality,
+    price: Number(r.price),
+    currency: r.currency,
+    status: r.status,
+    createdAt: r.created_at,
+  }
+}
+
+function toThread(t: ApiThread): ChatThread {
+  return {
+    id: t.id,
+    teacherId: t.teacher_profile_id,
+    teacherName: t.teacher_name,
+    teacherAvatar: t.teacher_avatar || FALLBACK_AVATAR,
+    updatedAt: t.updated_at,
+  }
+}
+
+function toMessage(m: ApiMessage): ChatMessage {
+  return {
+    id: m.id,
+    threadId: m.thread_id,
+    senderId: m.sender_id,
+    body: m.body,
+    createdAt: m.created_at,
+  }
 }
 
 // --- Usuario -------------------------------------------------------------
 export async function getCurrentUser(): Promise<CurrentUser> {
-  return delay(mockCurrentUser, 120)
+  const user = await apiClient.get<User & { roles?: { name: string }[] }>(
+    API_ENDPOINTS.AUTH.SESSION
+  )
+  const roles = user.roles?.map((r) => r.name) ?? []
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar ?? undefined,
+    role: roles.includes('teacher') ? 'teacher' : 'student',
+  }
 }
 
 // --- Mi perfil (docente editable) ---------------------------------------
@@ -54,154 +201,165 @@ export type EditableProfile = Omit<
   'rating' | 'reviewsCount' | 'studentsCount'
 >
 
-/** Perfil docente por defecto para el usuario en sesión (mock). */
-const defaultProfile: TeacherProfile = {
-  id: 'me',
-  userId: 'me',
-  name: 'Estudiante TEDUCA',
-  avatar: 'https://i.pravatar.cc/400?img=12',
-  specialty: '',
-  bio: '',
-  experienceYears: 0,
-  university: '',
-  courseIds: [],
-  modality: 'virtual',
-  hourlyPrice: 20,
-  currency: 'USD',
-  languages: ['Español'],
-  availability: [],
-  rating: 0,
-  reviewsCount: 0,
-  studentsCount: 0,
-  categories: [],
-  location: '',
-  socials: [],
-}
-
 export async function getMyProfile(): Promise<TeacherProfile> {
-  if (typeof window !== 'undefined') {
-    const raw = window.localStorage.getItem(PROFILE_KEY)
-    if (raw) {
-      try {
-        return delay({ ...defaultProfile, ...JSON.parse(raw) }, 120)
-      } catch {
-        /* cae al default */
-      }
-    }
-  }
-  return delay(defaultProfile, 120)
+  const profile = await apiClient.get<ApiTeacher>(`${BASE}/me/profile`)
+  return toTeacher(profile)
 }
 
 export async function saveMyProfile(
   profile: EditableProfile
 ): Promise<TeacherProfile> {
-  const merged: TeacherProfile = {
-    ...defaultProfile,
-    ...profile,
-  }
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem(PROFILE_KEY, JSON.stringify(merged))
-  }
-  return delay(merged, 200)
+  // Nombre y avatar viven en la cuenta de usuario (PATCH /users/me).
+  await apiClient.patch(API_ENDPOINTS.USER.PROFILE, {
+    name: profile.name,
+    avatar: profile.avatar,
+  })
+  const updated = await apiClient.put<ApiTeacher>(`${BASE}/me/profile`, {
+    specialty: profile.specialty,
+    bio: profile.bio,
+    experience_years: profile.experienceYears,
+    university: profile.university,
+    modality: profile.modality,
+    hourly_price: profile.hourlyPrice,
+    currency: profile.currency,
+    location: profile.location ?? '',
+    languages: profile.languages,
+    availability: profile.availability,
+    categories: profile.categories,
+    socials: profile.socials ?? [],
+    is_published: true,
+  })
+  return toTeacher(updated)
 }
 
 // --- Profesores ----------------------------------------------------------
 export async function getTeachers(): Promise<TeacherProfile[]> {
-  return delay(mockTeachers)
+  const teachers = await apiClient.get<ApiTeacher[]>(`${BASE}/teachers`)
+  return teachers.map(toTeacher)
 }
 
 export async function getTeacher(id: string): Promise<TeacherProfile | null> {
-  return delay(mockTeachers.find((t) => t.id === id) ?? null)
+  try {
+    return toTeacher(await apiClient.get<ApiTeacher>(`${BASE}/teachers/${id}`))
+  } catch {
+    return null
+  }
 }
 
 // --- Cursos --------------------------------------------------------------
 export async function getCourses(): Promise<Course[]> {
-  return delay(mockCourses)
+  const courses = await apiClient.get<ApiCourse[]>(`${BASE}/courses`)
+  return courses.map(toCourse)
 }
 
 export async function getCourse(id: string): Promise<Course | null> {
-  return delay(mockCourses.find((c) => c.id === id) ?? null)
+  try {
+    return toCourse(await apiClient.get<ApiCourse>(`${BASE}/courses/${id}`))
+  } catch {
+    return null
+  }
 }
 
 export async function getCoursesByTeacher(
   teacherId: string
 ): Promise<Course[]> {
-  return delay(mockCourses.filter((c) => c.teacherId === teacherId))
+  const courses = await apiClient.get<ApiCourse[]>(
+    `${BASE}/courses?teacher_profile_id=${teacherId}`
+  )
+  return courses.map(toCourse)
 }
 
 // --- Descubrir (deck para swipe) ----------------------------------------
 export async function getDiscoverDeck(): Promise<TeacherProfile[]> {
-  const seen = readSet(SEEN_KEY)
-  const deck = mockTeachers.filter((t) => !seen.has(t.id))
-  return delay(deck.length ? deck : mockTeachers, 200)
+  const deck = await apiClient.get<ApiTeacher[]>(`${BASE}/discover`)
+  return deck.map(toTeacher)
 }
 
 export async function swipeTeacher(
   teacherId: string,
   direction: SwipeDirection
 ): Promise<SwipeResult> {
-  const teacher = mockTeachers.find((t) => t.id === teacherId)!
-  const seen = readSet(SEEN_KEY)
-  seen.add(teacherId)
-  writeSet(SEEN_KEY, seen)
-
-  let matched = false
-  if (direction === 'right') {
-    const favs = readSet(FAV_KEY)
-    favs.add(teacherId)
-    writeSet(FAV_KEY, favs)
-    matched = true
-  }
-  return delay({ matched, teacher }, 80)
+  const result = await apiClient.post<{ matched: boolean; teacher: ApiTeacher }>(
+    `${BASE}/discover/${teacherId}/swipe`,
+    { direction }
+  )
+  return { matched: result.matched, teacher: toTeacher(result.teacher) }
 }
 
 export async function resetDeck(): Promise<void> {
-  writeSet(SEEN_KEY, new Set())
-  return delay(undefined, 60)
+  await apiClient.post(`${BASE}/discover/reset`)
 }
 
 // --- Favoritos -----------------------------------------------------------
 export async function getFavorites(): Promise<TeacherProfile[]> {
-  const favs = readSet(FAV_KEY)
-  return delay(mockTeachers.filter((t) => favs.has(t.id)))
+  const favorites = await apiClient.get<ApiTeacher[]>(`${BASE}/favorites`)
+  return favorites.map(toTeacher)
 }
 
 export async function isFavorite(teacherId: string): Promise<boolean> {
-  return delay(readSet(FAV_KEY).has(teacherId), 40)
+  const res = await apiClient.get<{ is_favorite: boolean }>(
+    `${BASE}/favorites/${teacherId}`
+  )
+  return res.is_favorite
 }
 
 export async function toggleFavorite(teacherId: string): Promise<boolean> {
-  const favs = readSet(FAV_KEY)
-  const now = !favs.has(teacherId)
-  if (now) favs.add(teacherId)
-  else favs.delete(teacherId)
-  writeSet(FAV_KEY, favs)
-  return delay(now, 60)
+  const res = await apiClient.post<{ is_favorite: boolean }>(
+    `${BASE}/favorites/${teacherId}/toggle`
+  )
+  return res.is_favorite
 }
 
 // --- Reservas ------------------------------------------------------------
-let reservations: Reservation[] = [...mockReservations]
-
 export async function getReservations(): Promise<Reservation[]> {
-  return delay([...reservations])
+  const reservations = await apiClient.get<ApiReservation[]>(`${BASE}/reservations`)
+  return reservations.map(toReservation)
 }
 
 export async function createReservation(
   input: Omit<Reservation, 'id' | 'status' | 'createdAt'>
 ): Promise<Reservation> {
-  const reservation: Reservation = {
-    ...input,
-    id: `r${Date.now()}`,
-    status: 'pending',
-    createdAt: new Date().toISOString(),
-  }
-  reservations = [reservation, ...reservations]
-  return delay(reservation, 200)
+  const reservation = await apiClient.post<ApiReservation>(`${BASE}/reservations`, {
+    teacher_profile_id: input.teacherId,
+    marketplace_course_id: input.courseId ?? null,
+    date: input.date,
+    time: input.time,
+    modality: input.modality,
+    price: input.price,
+    currency: input.currency,
+  })
+  return toReservation(reservation)
 }
 
 export async function cancelReservation(id: string): Promise<void> {
-  reservations = reservations.map((r) =>
-    r.id === id ? { ...r, status: 'cancelled' } : r
+  await apiClient.post(`${BASE}/reservations/${id}/cancel`)
+}
+
+// --- Chat (habilitado tras un match) -------------------------------------
+export async function getChatThreads(): Promise<ChatThread[]> {
+  const threads = await apiClient.get<ApiThread[]>(`${BASE}/chat/threads`)
+  return threads.map(toThread)
+}
+
+export async function openChatThread(teacherId: string): Promise<ChatThread> {
+  const thread = await apiClient.post<ApiThread>(`${BASE}/chat/threads/${teacherId}`)
+  return toThread(thread)
+}
+
+export async function getChatMessages(threadId: string): Promise<ChatMessage[]> {
+  const messages = await apiClient.get<ApiMessage[]>(
+    `${BASE}/chat/threads/${threadId}/messages`
   )
-  return delay(undefined, 120)
+  return messages.map(toMessage)
+}
+
+export async function sendChatMessage(
+  threadId: string,
+  body: string
+): Promise<ChatMessage> {
+  const message = await apiClient.post<ApiMessage>(
+    `${BASE}/chat/threads/${threadId}/messages`,
+    { body }
+  )
+  return toMessage(message)
 }

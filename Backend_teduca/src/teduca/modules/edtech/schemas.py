@@ -33,6 +33,7 @@ class MarketplaceCourseRead(MarketplaceCourseBase):
 
     id: uuid.UUID
     teacher_profile_id: uuid.UUID
+    teacher_name: str = ""
     rating: float = 0
     reviews_count: int = 0
 
@@ -117,6 +118,7 @@ class ReservationRead(BaseModel):
     teacher_name: str
     teacher_avatar: str | None = None
     marketplace_course_id: uuid.UUID | None = None
+    course_title: str | None = None
     date: str
     time: str
     modality: Modality

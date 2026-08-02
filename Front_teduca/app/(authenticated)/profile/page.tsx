@@ -13,7 +13,7 @@ import { FadeIn } from '@/components/common/Motion'
 import {
   getMyProfile,
   saveMyProfile,
-  getCourses,
+  getCoursesByTeacher,
 } from '@/lib/edtech/service'
 import { formatPrice, MODALITY_LABEL } from '@/lib/format'
 import type {
@@ -41,8 +41,11 @@ export default function ProfileEditorPage() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    getMyProfile().then(setProfile)
-    getCourses().then(setCourses)
+    getMyProfile().then((p) => {
+      setProfile(p)
+      // Solo los cursos que dicta este perfil (el catálogo global ya no aplica).
+      getCoursesByTeacher(p.id).then(setCourses)
+    })
   }, [])
 
   function set<K extends keyof TeacherProfile>(key: K, value: TeacherProfile[K]) {
@@ -53,8 +56,8 @@ export default function ProfileEditorPage() {
   async function handleSave() {
     if (!profile) return
     setSaving(true)
-    const { rating: _r, reviewsCount: _rc, studentsCount: _sc, ...editable } = profile
-    await saveMyProfile(editable)
+    // saveMyProfile solo envía los campos editables; los agregados se ignoran.
+    await saveMyProfile(profile)
     setSaving(false)
     setSaved(true)
   }
@@ -203,33 +206,16 @@ export default function ProfileEditorPage() {
           <Card className="p-6">
             <h2 className="mb-1 font-semibold text-foreground">Cursos que enseña</h2>
             <p className="mb-4 text-sm text-muted-foreground">
-              Elegí de los cursos disponibles.
+              {courses.length
+                ? 'Estos son los cursos publicados en tu perfil.'
+                : 'Todavía no tenés cursos publicados en tu perfil.'}
             </p>
             <div className="flex flex-wrap gap-2">
-              {courses.map((c) => {
-                const active = profile.courseIds.includes(c.id)
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() =>
-                      set(
-                        'courseIds',
-                        active
-                          ? profile.courseIds.filter((id) => id !== c.id)
-                          : [...profile.courseIds, c.id]
-                      )
-                    }
-                    className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-                      active
-                        ? 'border-transparent bg-primary text-primary-foreground'
-                        : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {c.title}
-                  </button>
-                )
-              })}
+              {courses.map((c) => (
+                <Badge key={c.id} variant="secondary" className="px-3 py-1.5 text-sm">
+                  {c.title}
+                </Badge>
+              ))}
             </div>
           </Card>
 

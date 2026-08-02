@@ -86,7 +86,11 @@ class MarketplaceCourse(UUIDMixin, TimestampMixin, Base):
     rating: Mapped[float] = mapped_column(Numeric(3, 2), default=0, nullable=False)
     reviews_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    teacher: Mapped[TeacherProfile] = relationship(back_populates="courses")
+    teacher: Mapped[TeacherProfile] = relationship(back_populates="courses", lazy="joined")
+
+    @property
+    def teacher_name(self) -> str:
+        return self.teacher.name
 
 
 class Favorite(UUIDMixin, TimestampMixin, Base):
@@ -135,6 +139,7 @@ class Reservation(UUIDMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False, index=True)
 
     teacher: Mapped[TeacherProfile] = relationship(lazy="joined")
+    course: Mapped["MarketplaceCourse | None"] = relationship(lazy="joined")
 
     @property
     def teacher_name(self) -> str:
@@ -143,6 +148,10 @@ class Reservation(UUIDMixin, TimestampMixin, Base):
     @property
     def teacher_avatar(self) -> str | None:
         return self.teacher.avatar
+
+    @property
+    def course_title(self) -> str | None:
+        return self.course.title if self.course else None
 
 
 class ChatThread(UUIDMixin, TimestampMixin, Base):

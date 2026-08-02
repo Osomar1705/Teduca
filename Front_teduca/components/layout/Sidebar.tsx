@@ -9,6 +9,7 @@ import {
   BookOpen,
   Heart,
   CalendarCheck,
+  MessageCircle,
   User,
   Settings,
   type LucideIcon,
@@ -29,6 +30,7 @@ const NAV: NavItem[] = [
   { label: 'Cursos', href: APP_ROUTES.COURSES, icon: BookOpen },
   { label: 'Favoritos', href: APP_ROUTES.FAVORITES, icon: Heart },
   { label: 'Mis Reservas', href: APP_ROUTES.RESERVATIONS, icon: CalendarCheck },
+  { label: 'Mensajes', href: APP_ROUTES.MESSAGES, icon: MessageCircle },
   { label: 'Perfil', href: APP_ROUTES.PROFILE, icon: User },
   { label: 'Configuración', href: APP_ROUTES.SETTINGS, icon: Settings },
 ]
