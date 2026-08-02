@@ -16,6 +16,7 @@ from teduca.modules.edtech.schemas import (
     SwipeRequest,
     SwipeResult,
     TeacherProfileRead,
+    TeacherProfileWrite,
 )
 from teduca.modules.edtech.service import EdtechService
 
@@ -39,9 +40,9 @@ async def get_my_profile(current_user: CurrentUser, session: DbSession) -> Teach
 async def update_my_profile(
     data: MyProfileUpdate, current_user: CurrentUser, session: DbSession
 ) -> TeacherProfileRead:
-    profile_fields = data.model_dump(exclude={"courses"})
+    profile_fields = TeacherProfileWrite(**data.model_dump(exclude={"courses"}))
     profile = await EdtechService(session).update_my_profile(
-        current_user, MyProfileUpdate(**profile_fields), data.courses
+        current_user, profile_fields, data.courses
     )
     return TeacherProfileRead.model_validate(profile)
 

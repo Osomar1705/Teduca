@@ -33,9 +33,11 @@ class EdtechService:
     async def get_or_create_my_profile(self, user: User) -> TeacherProfile:
         profile = await self.repo.get_profile_by_user(user.id)
         if profile is None:
-            profile = TeacherProfile(user_id=user.id)
+            profile = TeacherProfile(user_id=user.id, languages=[], availability=[], categories=[], socials=[])
             await self.repo.add(profile)
-            await self.session.refresh(profile)
+            # Re-consulta con selectinload para que `courses` quede cargado
+            # (el serializado fuera del contexto async no puede lazy-loadear).
+            profile = await self.get_teacher_or_404(profile.id)
         return profile
 
     async def get_teacher_or_404(self, profile_id: uuid.UUID) -> TeacherProfile:
@@ -64,6 +66,8 @@ class EdtechService:
                 )
             await self.session.flush()
 
+        # Expira la colección para que la re-consulta traiga los cursos frescos.
+        self.session.expire(profile, ["courses"])
         return await self.get_teacher_or_404(profile.id)
 
     # --- Cursos -----------------------------------------------------------
