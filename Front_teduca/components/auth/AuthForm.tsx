@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { Logo } from '@/components/common/Logo'
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 
 export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const router = useRouter()
@@ -133,6 +134,8 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
               : 'Iniciar sesión'}
         </Button>
       </form>
+
+      <GoogleSignInButton onError={setError} />
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {isSignUp ? '¿Ya tenés cuenta? ' : '¿No tenés cuenta? '}

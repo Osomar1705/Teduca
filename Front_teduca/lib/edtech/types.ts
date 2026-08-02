@@ -99,7 +99,23 @@ export interface SwipeResult {
   teacher: TeacherProfile
 }
 
-/** Usuario en sesión (mock hasta cablear Auth.js + backend). */
+export interface ChatThread {
+  id: string
+  teacherId: string
+  teacherName: string
+  teacherAvatar: string
+  updatedAt: string
+}
+
+export interface ChatMessage {
+  id: string
+  threadId: string
+  senderId: string
+  body: string
+  createdAt: string
+}
+
+/** Usuario en sesión (desde el backend FastAPI). */
 export interface CurrentUser {
   id: string
   name: string

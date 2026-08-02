@@ -5,9 +5,12 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
+from teduca.core.config import settings
 from teduca.core.dependencies import DbSession, get_token_payload
 from teduca.modules.auth.schemas import (
+    AuthConfig,
     AuthResponse,
+    GoogleAuthRequest,
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
@@ -16,6 +19,15 @@ from teduca.modules.auth.schemas import (
 from teduca.modules.auth.service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.get("/config", response_model=AuthConfig)
+async def auth_config() -> AuthConfig:
+    """Indica al front si debe mostrar el botón de Google (y con qué client_id)."""
+    return AuthConfig(
+        google_enabled=settings.google_enabled,
+        google_client_id=settings.google_client_id if settings.google_enabled else None,
+    )
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
@@ -28,6 +40,12 @@ async def register(data: RegisterRequest, session: DbSession) -> AuthResponse:
 @router.post("/login", response_model=AuthResponse)
 async def login(data: LoginRequest, session: DbSession) -> AuthResponse:
     return await AuthService(session).login(email=data.email, password=data.password)
+
+
+@router.post("/google", response_model=AuthResponse)
+async def google_login(data: GoogleAuthRequest, session: DbSession) -> AuthResponse:
+    """Login/registro con Google. Solo funciona si ENABLE_GOOGLE_AUTH y hay client_id."""
+    return await AuthService(session).google_login(data.credential)
 
 
 @router.post("/token", response_model=TokenPair, include_in_schema=False)

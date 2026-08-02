@@ -9,10 +9,12 @@ from teduca.core.config import settings
 from teduca.core.exceptions import UnauthorizedError
 from teduca.core.redis import get_redis
 from teduca.core.security import (
+    GoogleAuthError,
     JWTError,
     create_access_token,
     create_refresh_token,
     decode_token,
+    verify_google_id_token,
     verify_password,
 )
 from teduca.modules.auth.schemas import AuthResponse, TokenPair
@@ -50,8 +52,30 @@ class AuthService:
 
     async def login(self, *, email: str, password: str) -> AuthResponse:
         user = await self.users.get_by_email(email)
-        if user is None or not verify_password(password, user.password_hash):
+        # password_hash es None en cuentas creadas vía Google: no permiten login local.
+        if user is None or user.password_hash is None or not verify_password(
+            password, user.password_hash
+        ):
             raise UnauthorizedError("Credenciales inválidas.")
+        if not user.is_active:
+            raise UnauthorizedError("Cuenta desactivada.")
+        tokens = await self._issue_tokens(user)
+        return AuthResponse(user=user, tokens=tokens)
+
+    async def google_login(self, id_token: str) -> AuthResponse:
+        if not settings.google_enabled:
+            raise UnauthorizedError("El login con Google no está habilitado.")
+        try:
+            claims = verify_google_id_token(id_token, client_id=settings.google_client_id)
+        except GoogleAuthError as exc:
+            raise UnauthorizedError(str(exc)) from exc
+
+        user = await self.user_service.get_or_create_google_user(
+            google_sub=claims["sub"],
+            email=claims["email"],
+            name=claims.get("name", ""),
+            avatar=claims.get("picture"),
+        )
         if not user.is_active:
             raise UnauthorizedError("Cuenta desactivada.")
         tokens = await self._issue_tokens(user)

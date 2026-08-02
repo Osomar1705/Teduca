@@ -10,9 +10,9 @@ export const APP_ROUTES = {
   DASHBOARD: '/dashboard',
   DISCOVER: '/discover',
   COURSES: '/courses',
-  CREATE_COURSE: '/courses/create',
   FAVORITES: '/favorites',
   RESERVATIONS: '/reservations',
+  MESSAGES: '/messages',
   PROFILE: '/profile',
   SETTINGS: '/settings',
 } as const
@@ -25,6 +25,8 @@ export const API_ENDPOINTS = {
     LOGOUT: '/api/v1/auth/logout',
     REFRESH: '/api/v1/auth/refresh',
     SESSION: '/api/v1/users/me',
+    CONFIG: '/api/v1/auth/config',
+    GOOGLE: '/api/v1/auth/google',
   },
   COURSES: {
     LIST: '/api/v1/courses',

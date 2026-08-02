@@ -27,11 +27,24 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 7
     jwt_algorithm: str = "HS256"
 
+    # Google OAuth (OPCIONAL). El login con Google es configurable y NO obligatorio.
+    # - enable_google_auth: interruptor maestro (ENABLE_GOOGLE_AUTH=true/false).
+    # - google_client_id / google_client_secret: credenciales OAuth.
+    # El botón de Google solo se ofrece si el interruptor está activo Y hay client_id.
+    enable_google_auth: bool = False
+    google_client_id: str = ""
+    google_client_secret: str = ""
+
     # CORS (lista separada por comas en el .env)
     cors_origins: str = "http://localhost:3000"
 
     # Rate limiting
     rate_limit_default: str = "100/minute"
+
+    @property
+    def google_enabled(self) -> bool:
+        """Google solo se ofrece si está activado Y hay client_id configurado."""
+        return self.enable_google_auth and bool(self.google_client_id.strip())
 
     @property
     def cors_origins_list(self) -> list[str]:

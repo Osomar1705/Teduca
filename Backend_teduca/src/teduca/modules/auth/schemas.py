@@ -21,6 +21,19 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class GoogleAuthRequest(BaseModel):
+    """ID token (credential) devuelto por Google Identity Services en el front."""
+
+    credential: str
+
+
+class AuthConfig(BaseModel):
+    """Configuración pública de auth para que el front decida qué mostrar."""
+
+    google_enabled: bool
+    google_client_id: str | None = None
+
+
 class TokenPair(BaseModel):
     access_token: str
     refresh_token: str

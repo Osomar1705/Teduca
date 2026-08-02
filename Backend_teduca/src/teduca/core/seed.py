@@ -44,6 +44,11 @@ async def seed(session: AsyncSession) -> None:
 
     await session.commit()
 
+    # Profesores demo del marketplace (idempotente, hace su propio commit).
+    from teduca.modules.edtech.seed import seed_marketplace
+
+    await seed_marketplace(session)
+
 
 async def _main() -> None:
     """Permite sembrar la BD manualmente: `python -m teduca.core.seed`."""

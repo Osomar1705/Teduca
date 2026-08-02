@@ -22,6 +22,12 @@ class UserRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_by_google_sub(self, google_sub: str) -> User | None:
+        result = await self.session.execute(
+            select(User).where(User.google_sub == google_sub, User.deleted_at.is_(None))
+        )
+        return result.scalar_one_or_none()
+
     async def add(self, user: User) -> User:
         self.session.add(user)
         await self.session.flush()

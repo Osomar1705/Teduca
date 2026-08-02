@@ -10,6 +10,7 @@ from teduca.modules.assignments.router import (
 )
 from teduca.modules.auth.router import router as auth_router
 from teduca.modules.courses.router import router as courses_router
+from teduca.modules.edtech.router import router as edtech_router
 from teduca.modules.enrollments.router import course_enroll_router, enrollments_router
 from teduca.modules.gamification.router import router as gamification_router
 from teduca.modules.lessons.router import course_lessons_router, lessons_router
@@ -33,6 +34,7 @@ async def ping() -> dict[str, str]:
 api_router.include_router(auth_router)
 api_router.include_router(users_router)
 api_router.include_router(courses_router)
+api_router.include_router(edtech_router)
 api_router.include_router(course_lessons_router)
 api_router.include_router(lessons_router)
 api_router.include_router(course_enroll_router)

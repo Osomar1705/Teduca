@@ -345,8 +345,13 @@ function MatchModal({
                     Solicitar una clase
                   </Link>
                 </Button>
-                <Button variant="outline" onClick={onClose}>
-                  <MessageCircle className="size-4" />
+                <Button variant="outline" asChild>
+                  <Link href={`/messages?teacher=${teacher.id}`}>
+                    <MessageCircle className="size-4" />
+                    Enviar mensaje
+                  </Link>
+                </Button>
+                <Button variant="ghost" onClick={onClose}>
                   Seguir descubriendo
                 </Button>
               </div>
