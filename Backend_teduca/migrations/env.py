@@ -14,6 +14,7 @@ from teduca.modules.achievements import models as _achievements  # noqa: E402, F
 from teduca.modules.analytics import models as _analytics  # noqa: E402, F401
 from teduca.modules.assignments import models as _assignments  # noqa: E402, F401
 from teduca.modules.courses import models as _courses  # noqa: E402, F401
+from teduca.modules.edtech import models as _edtech  # noqa: E402, F401
 from teduca.modules.enrollments import models as _enrollments  # noqa: E402, F401
 from teduca.modules.gamification import models as _gamification  # noqa: E402, F401
 from teduca.modules.lessons import models as _lessons  # noqa: E402, F401
