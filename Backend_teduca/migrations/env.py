@@ -19,6 +19,7 @@ from teduca.modules.enrollments import models as _enrollments  # noqa: E402, F40
 from teduca.modules.gamification import models as _gamification  # noqa: E402, F401
 from teduca.modules.lessons import models as _lessons  # noqa: E402, F401
 from teduca.modules.machine_learning import models as _ml  # noqa: E402, F401
+from teduca.modules.onboarding import models as _onboarding  # noqa: E402, F401
 from teduca.modules.notifications import models as _notifications  # noqa: E402, F401
 from teduca.modules.quizzes import models as _quizzes  # noqa: E402, F401
 from teduca.modules.submissions import models as _submissions  # noqa: E402, F401

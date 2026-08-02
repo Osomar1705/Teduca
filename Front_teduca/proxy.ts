@@ -22,6 +22,7 @@ const PROTECTED_PREFIXES = [
   '/profile',
   '/settings',
   '/assignments',
+  '/onboarding',
 ]
 
 export async function proxy(request: NextRequest) {

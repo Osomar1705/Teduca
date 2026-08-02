@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { APP_ROUTES } from '@/lib/constants'
+import { getOnboardingStatus } from '@/lib/onboarding/service'
 
 const GSI_SRC = 'https://accounts.google.com/gsi/client'
 
@@ -98,7 +99,9 @@ export function GoogleSignInButton({
               onError?.(error.message ?? 'No se pudo iniciar sesión con Google.')
               return
             }
-            router.push(APP_ROUTES.DASHBOARD)
+            const onboarding = await getOnboardingStatus().catch(() => null)
+            const dest = onboarding?.completed ? APP_ROUTES.DASHBOARD : APP_ROUTES.ONBOARDING
+            router.push(dest)
             router.refresh()
           },
         })

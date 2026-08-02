@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { APP_ROUTES } from '@/lib/constants'
+import { getOnboardingStatus } from '@/lib/onboarding/service'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -40,7 +41,9 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
       return
     }
 
-    router.push(APP_ROUTES.DASHBOARD)
+    const onboarding = await getOnboardingStatus().catch(() => null)
+    const dest = onboarding?.completed ? APP_ROUTES.DASHBOARD : APP_ROUTES.ONBOARDING
+    router.push(dest)
     router.refresh()
   }
 

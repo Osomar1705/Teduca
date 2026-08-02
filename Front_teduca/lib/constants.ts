@@ -7,6 +7,7 @@ export const APP_ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
+  ONBOARDING: '/onboarding',
   DASHBOARD: '/dashboard',
   DISCOVER: '/discover',
   COURSES: '/courses',
@@ -50,6 +51,15 @@ export const API_ENDPOINTS = {
   },
   USER: {
     PROFILE: '/api/v1/users/me',
+  },
+  ONBOARDING: {
+    STATUS: '/api/v1/onboarding/status',
+    ME: '/api/v1/onboarding/me',
+    CHECK_USERNAME: '/api/v1/onboarding/check-username',
+    STEP1: '/api/v1/onboarding/step/1',
+    STEP2: '/api/v1/onboarding/step/2',
+    STEP3: '/api/v1/onboarding/step/3',
+    COMPLETE: '/api/v1/onboarding/complete',
   },
 } as const
 
