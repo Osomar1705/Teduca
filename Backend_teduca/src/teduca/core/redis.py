@@ -15,10 +15,11 @@ def redis_enabled() -> bool:
 def get_redis() -> Redis | None:
     """Devuelve el cliente Redis singleton (lazy), o None si no está configurado."""
     global _redis
+    if _redis is not None:
+        return _redis
     if not redis_enabled():
         return None
-    if _redis is None:
-        _redis = from_url(settings.redis_url, encoding="utf-8", decode_responses=True)
+    _redis = from_url(settings.redis_url, encoding="utf-8", decode_responses=True)
     return _redis
 
 

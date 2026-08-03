@@ -28,6 +28,7 @@ from teduca.modules.notifications import models as _notifications  # noqa: F401
 from teduca.modules.quizzes import models as _quizzes  # noqa: F401
 from teduca.modules.submissions import models as _submissions  # noqa: F401
 from teduca.modules.users import models as _users  # noqa: F401
+from teduca.modules.onboarding import models as _onboarding  # noqa: F401
 
 
 @pytest.fixture

@@ -2,11 +2,33 @@
 
 import uuid
 
-from sqlalchemy import Boolean, Date, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Date, ForeignKey, Integer, String, Text, TypeDecorator
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from teduca.core.database import Base, TimestampMixin, UUIDMixin
+
+
+class _TextList(TypeDecorator):
+    """ARRAY(Text) en PostgreSQL, JSON en otros dialectos (ej. SQLite para tests)."""
+
+    impl = Text
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(ARRAY(Text()))
+        return dialect.type_descriptor(JSON())
+
+    def process_bind_param(self, value, dialect):
+        if dialect.name == "postgresql":
+            return value
+        return value  # JSON serializa listas directamente
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return []
+        return value
 
 
 class UserOnboarding(UUIDMixin, TimestampMixin, Base):
@@ -29,13 +51,12 @@ class UserOnboarding(UUIDMixin, TimestampMixin, Base):
     institution: Mapped[str | None] = mapped_column(String(120))
     career: Mapped[str | None] = mapped_column(String(120))
     academic_year: Mapped[str | None] = mapped_column(String(30))  # "1er ciclo" … "Profesional"
-    # Múltiples objetivos: ["learn", "mentorship", "teach", "team", "research", "content"]
-    goals: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, nullable=False)
+    goals: Mapped[list[str]] = mapped_column(_TextList, default=list, nullable=False)
 
     # ── Paso 3: Intereses ─────────────────────────────────────────────────
-    subject_tags: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, nullable=False)
-    project_interests: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, nullable=False)
-    learning_styles: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, nullable=False)
+    subject_tags: Mapped[list[str]] = mapped_column(_TextList, default=list, nullable=False)
+    project_interests: Mapped[list[str]] = mapped_column(_TextList, default=list, nullable=False)
+    learning_styles: Mapped[list[str]] = mapped_column(_TextList, default=list, nullable=False)
 
     # ── Estado ────────────────────────────────────────────────────────────
     current_step: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
