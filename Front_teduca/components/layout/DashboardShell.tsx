@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Menu, X, Bell, Search } from 'lucide-react'
 import { Sidebar, SidebarNav } from '@/components/layout/Sidebar'
@@ -9,9 +11,17 @@ import { Logo } from '@/components/common/Logo'
 import { Button } from '@/components/ui/button'
 import { APP_ROUTES } from '@/lib/constants'
 import { useUIStore } from '@/store/uiStore'
+import { getOnboardingStatus } from '@/lib/onboarding/service'
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { isMobileMenuOpen, setMobileMenuOpen, closeMobileMenu } = useUIStore()
+  const router = useRouter()
+
+  useEffect(() => {
+    getOnboardingStatus()
+      .then((s) => { if (!s.completed) router.replace(APP_ROUTES.ONBOARDING) })
+      .catch(() => {})
+  }, [router])
 
   return (
     <div className="flex min-h-svh bg-background">
