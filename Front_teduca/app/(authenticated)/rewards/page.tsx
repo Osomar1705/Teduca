@@ -6,13 +6,12 @@ import {
   ArrowUpRight,
   Gift,
   Sparkles,
-  Star,
   Trophy,
   Wallet,
 } from 'lucide-react'
 import { PageHeader } from '@/components/common/PageHeader'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/common/EmptyState'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
@@ -50,13 +49,13 @@ export default function RewardsPage() {
   const [tab, setTab] = useState<Tab>('balance')
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-5xl">
       <PageHeader
         title="Recompensas"
-        description="Gana puntos por tu participación académica y canjéalos por beneficios."
+        description="Ganá puntos por tu participación académica y canjéalos por beneficios."
       />
 
-      <div className="mb-8 flex gap-2 overflow-x-auto">
+      <div className="mb-6 flex gap-0 border-b border-border">
         {TABS.map((t) => {
           const active = tab === t.key
           return (
@@ -64,10 +63,10 @@ export default function RewardsPage() {
               key={t.key}
               onClick={() => setTab(t.key)}
               className={cn(
-                'inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition-colors',
+                '-mb-px inline-flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
                 active
-                  ? 'border-transparent bg-primary text-primary-foreground'
-                  : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground',
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
               <t.icon className="size-4" />
@@ -103,31 +102,32 @@ function BalanceTab() {
   const empty = balance.total === 0 && transactions.length === 0
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <FadeIn>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-brand p-6 text-white shadow-lg md:p-8">
-          <div className="bg-grid-light absolute inset-0" />
-          <div className="relative">
-            <div className="flex items-center gap-2 text-sm text-white/80">
-              <Star className="size-4" /> {balance.label}
-            </div>
-            <p className="mt-2 font-mono text-5xl font-bold tracking-tight md:text-6xl">
+        <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 to-primary/3 p-6">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-primary">
+            {balance.label}
+          </p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-5xl font-bold tracking-tight text-foreground">
               {balance.total}
-              <span className="ml-2 text-lg font-normal text-white/70">{balance.unit}</span>
-            </p>
-            <div className="mt-6 flex flex-wrap gap-6">
-              <div>
-                <p className="text-xs text-white/70">Esta semana</p>
-                <p className="text-lg font-semibold">+{balance.weeklyEarned}</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/70">Este mes</p>
-                <p className="text-lg font-semibold">+{balance.monthlyEarned}</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/70">Total ganado</p>
-                <p className="text-lg font-semibold">{balance.totalEarned}</p>
-              </div>
+            </span>
+            <span className="text-lg text-muted-foreground">{balance.unit}</span>
+          </div>
+          <div className="mt-4 flex gap-6">
+            <div>
+              <p className="text-2xl font-semibold text-success">+{balance.weeklyEarned}</p>
+              <p className="text-xs text-muted-foreground">esta semana</p>
+            </div>
+            <div className="w-px bg-border" />
+            <div>
+              <p className="text-2xl font-semibold text-foreground">{balance.monthlyEarned}</p>
+              <p className="text-xs text-muted-foreground">este mes</p>
+            </div>
+            <div className="w-px bg-border" />
+            <div>
+              <p className="text-2xl font-semibold text-foreground">{balance.totalEarned}</p>
+              <p className="text-xs text-muted-foreground">total ganado</p>
             </div>
           </div>
         </div>
@@ -136,8 +136,8 @@ function BalanceTab() {
       {empty ? (
         <EmptyState
           icon={Sparkles}
-          title="¡Empieza a ganar puntos!"
-          description="Tu primer login ya vale 5 puntos. Asiste a mentorías y completa cursos para sumar más."
+          title="¡Empezá a ganar puntos!"
+          description="Tu primer login ya vale puntos. Asistí a mentorías y completá cursos para sumar más."
           action={
             <Button variant="brand" asChild>
               <Link href={APP_ROUTES.DISCOVER}>Descubrir profesores</Link>
@@ -147,24 +147,23 @@ function BalanceTab() {
       ) : (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">
-              Historial reciente
-            </h2>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={APP_ROUTES.REWARDS_HISTORY}>
-                Ver historial completo <ArrowUpRight className="size-4" />
-              </Link>
-            </Button>
+            <h2 className="text-lg font-semibold text-foreground">Historial reciente</h2>
+            <Link
+              href={APP_ROUTES.REWARDS_HISTORY}
+              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            >
+              Ver todo <ArrowUpRight className="size-3" />
+            </Link>
           </div>
-          <Card className="divide-y divide-border px-5 py-1">
+          <div className="divide-y divide-border rounded-xl border border-border px-4">
             {recent.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">
-                Aún no tienes movimientos.
+                Aún no tenés movimientos.
               </p>
             ) : (
               recent.map((tx) => <TransactionRow key={tx.id} tx={tx} />)
             )}
-          </Card>
+          </div>
           {transactions.length > 5 && (
             <div className="mt-3 text-center">
               <Button variant="outline" size="sm" onClick={() => setShowAll((v) => !v)}>
@@ -176,41 +175,40 @@ function BalanceTab() {
       )}
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold tracking-tight text-foreground">
-          Cómo ganar más
-        </h2>
-        <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">Cómo ganar más</h2>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {rules.map((rule) => {
             const Icon = getEarnIcon(rule.icon)
             return (
-              <StaggerItem key={rule.event}>
-                <Card
-                  className={cn(
-                    'flex h-full flex-col p-5',
-                    !rule.isActive && 'opacity-60',
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <span className="inline-flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <Icon className="size-5" />
-                    </span>
-                    {rule.isActive ? (
-                      <span className="text-sm font-bold text-primary">
-                        +{rule.pointsAwarded}
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-                        Próximamente
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="mt-3 font-semibold text-foreground">{rule.label}</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{rule.description}</p>
-                </Card>
-              </StaggerItem>
+              <div
+                key={rule.event}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg border p-3 transition-colors',
+                  rule.isActive
+                    ? 'border-border hover:border-primary/30'
+                    : 'border-border/50 opacity-60',
+                )}
+              >
+                <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+                  <Icon className="size-4 text-muted-foreground" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium text-foreground">{rule.label}</p>
+                  <p className="truncate text-[10px] text-muted-foreground">{rule.description}</p>
+                </div>
+                {rule.isActive ? (
+                  <span className="flex-shrink-0 text-xs font-bold text-primary">
+                    +{rule.pointsAwarded}
+                  </span>
+                ) : (
+                  <Badge variant="secondary" className="flex-shrink-0 text-[10px]">
+                    Pronto
+                  </Badge>
+                )}
+              </div>
             )
           })}
-        </Stagger>
+        </div>
       </section>
     </div>
   )
@@ -242,24 +240,23 @@ function RedeemTab() {
 
   return (
     <div className="space-y-6">
-      <Card className="flex items-center justify-between gap-4 p-5">
+      <div className="flex items-center justify-between gap-4 rounded-xl bg-primary/5 px-5 py-4">
         <div>
-          <p className="text-sm text-muted-foreground">Balance disponible</p>
-          <p className="font-mono text-2xl font-bold text-foreground">
+          <p className="text-xs text-muted-foreground">Balance disponible</p>
+          <p className="text-2xl font-bold text-primary">
             {balance?.total ?? 0}{' '}
             <span className="text-sm font-normal text-muted-foreground">puntos</span>
           </p>
         </div>
-        <Star className="size-8 text-primary" />
-      </Card>
+      </div>
 
-      <div className="flex gap-2 overflow-x-auto">
+      <div className="flex flex-wrap gap-2">
         {CATEGORIES.map((c) => (
           <button
             key={c.key}
             onClick={() => setCategory(c.key)}
             className={cn(
-              'whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+              'whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium transition-colors',
               category === c.key
                 ? 'border-transparent bg-primary text-primary-foreground'
                 : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -274,35 +271,31 @@ function RedeemTab() {
         <EmptyState
           icon={Gift}
           title="Sin recompensas en esta categoría"
-          description="Prueba con otra categoría o vuelve más tarde."
+          description="Probá con otra categoría o volvé más tarde."
         />
       ) : (
-        <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((item) => (
             <StaggerItem key={item.id}>
-              <RewardCard
-                reward={item}
-                balance={balance?.total}
-                onRedeem={redeemItem}
-              />
+              <RewardCard reward={item} balance={balance?.total} onRedeem={redeemItem} />
             </StaggerItem>
           ))}
         </Stagger>
       )}
 
-      <Card className="flex flex-wrap items-center justify-between gap-3 border-dashed p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border p-5">
         <div>
-          <p className="font-semibold text-foreground">
-            ¿Eres una empresa o universidad?
+          <p className="text-sm font-medium text-foreground">
+            ¿Sos una empresa o universidad?
           </p>
-          <p className="text-sm text-muted-foreground">
-            Escríbenos para convertirte en Partner de TEDUCA.
+          <p className="text-xs text-muted-foreground">
+            Escribinos para convertirte en Partner de TEDUCA.
           </p>
         </div>
         <Button variant="outline" size="sm" asChild>
           <a href="mailto:partners@teduca.app">Ser Partner</a>
         </Button>
-      </Card>
+      </div>
     </div>
   )
 }
@@ -334,13 +327,13 @@ function RankingTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 overflow-x-auto">
+      <div className="flex flex-wrap gap-2">
         {[...RANK_TABS, { key: 'friends' as RankTab, label: 'Amigos' }].map((t) => (
           <button
             key={t.key}
             onClick={() => setSub(t.key)}
             className={cn(
-              'whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+              'whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium transition-colors',
               sub === t.key
                 ? 'border-transparent bg-primary text-primary-foreground'
                 : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -354,8 +347,8 @@ function RankingTab() {
       {sub === 'friends' && entries.length === 0 ? (
         <EmptyState
           icon={Trophy}
-          title="Invita compañeros para ver tu ranking entre amigos."
-          description="Cuando tus amigos se unan a TEDUCA aparecerán aquí."
+          title="Invitá compañeros para ver tu ranking entre amigos."
+          description="Cuando tus amigos se unan a TEDUCA aparecerán acá."
         />
       ) : (
         <RankingTable entries={entries} />

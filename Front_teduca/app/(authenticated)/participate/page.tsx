@@ -10,12 +10,8 @@ import {
   GraduationCap,
   Clock,
   BarChart3,
-  Sparkles,
 } from 'lucide-react'
-import { PageHeader } from '@/components/common/PageHeader'
-import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { EmptyState } from '@/components/common/EmptyState'
 import { Stagger, StaggerItem } from '@/components/common/Motion'
 import { getParticipationStats } from '@/lib/participation/service'
 import type { ParticipationStats } from '@/lib/participation/types'
@@ -55,57 +51,49 @@ export default function ParticipatePage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader
-        title="Mi Participación"
-        description="Tu impacto en la comunidad académica: ranking, asistencia, ayudas y más."
-      />
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Participación Académica
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">Tu impacto en la comunidad TEDUCA</p>
+      </div>
 
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-xl" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {[...Array(METRICS.length)].map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-xl" />
           ))}
         </div>
       ) : !stats ? (
-        <div className="space-y-6">
-          <EmptyState
-            icon={Sparkles}
-            title="Todavía no hay actividad registrada"
-            description="Esta sección se activará cuando tengas actividad registrada. Participá en cursos, mentorías y ayudá a tus compañeros para empezar a sumar."
-          />
-          <Stagger className="grid gap-4 opacity-60 sm:grid-cols-2 lg:grid-cols-3">
+        <>
+          <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {METRICS.map(({ key, label, icon: Icon }) => (
-              <StaggerItem key={key}>
-                <Card className="p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="inline-flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-                      <Icon className="size-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{label}</p>
-                      <Skeleton className="mt-1.5 h-5 w-16" />
-                    </div>
-                  </div>
-                </Card>
-              </StaggerItem>
+              <div key={key} className="rounded-xl border border-border p-4 opacity-50">
+                <Icon className="mb-2 size-4 text-muted-foreground" />
+                <p className="text-2xl font-bold text-foreground">—</p>
+                <p className="text-xs text-muted-foreground">{label}</p>
+              </div>
             ))}
-          </Stagger>
-        </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted/30 p-6 text-center">
+            <BarChart3 className="mx-auto mb-3 size-10 text-muted-foreground/40" />
+            <p className="font-medium text-foreground">Datos en camino</p>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+              Tu participación se registrará automáticamente a medida que uses la plataforma.
+              Asistí a mentorías, completá cursos y ayudá a otros estudiantes.
+            </p>
+          </div>
+        </>
       ) : (
-        <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Stagger className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {METRICS.map(({ key, label, icon: Icon }) => (
             <StaggerItem key={key}>
-              <Card className="p-5">
-                <div className="flex items-center gap-3">
-                  <div className="inline-flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="size-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{label}</p>
-                    <p className="text-lg font-bold text-foreground">{renderValue(key)}</p>
-                  </div>
-                </div>
-              </Card>
+              <div className="rounded-xl border border-border p-4">
+                <Icon className="mb-2 size-4 text-primary" />
+                <p className="text-2xl font-bold text-foreground">{renderValue(key)}</p>
+                <p className="text-xs text-muted-foreground">{label}</p>
+              </div>
             </StaggerItem>
           ))}
         </Stagger>

@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Target, Check } from 'lucide-react'
-import { Card } from '@/components/ui/card'
+import { Check } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
@@ -29,63 +28,54 @@ export function WeeklyGoals({
   }
 
   return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-muted-foreground">Objetivos semanales</p>
-        <Target className="size-5 text-primary" />
-      </div>
+    <div className="rounded-xl border border-border p-4">
+      <p className="mb-3 text-sm font-medium text-foreground">Esta semana</p>
 
-      <div className="mt-3">
-        <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
-          <span>Progreso semanal</span>
-          <span>
-            {weeklyXP}/{weeklyGoal} XP
-          </span>
-        </div>
-        <Progress value={pct} />
+      <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
+        <span>Progreso</span>
+        <span>
+          {weeklyXP}/{weeklyGoal} XP
+        </span>
       </div>
+      <Progress value={pct} className="h-1.5" />
 
       {list.length > 0 ? (
-        <ul className="mt-4 space-y-2">
+        <div className="mt-3">
           {list.map((goal, i) => {
             const checked = done.has(i)
             return (
-              <li key={i}>
-                <button
-                  type="button"
-                  onClick={() => toggle(i)}
-                  className="flex w-full items-center gap-2.5 text-left"
+              <button
+                key={i}
+                type="button"
+                onClick={() => toggle(i)}
+                className="flex w-full items-center gap-2 py-1.5 text-left text-sm"
+              >
+                <span
+                  className={cn(
+                    'flex size-4 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors',
+                    checked
+                      ? 'border-transparent bg-primary text-primary-foreground'
+                      : 'border-border'
+                  )}
                 >
-                  <span
-                    className={cn(
-                      'inline-flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors',
-                      checked
-                        ? 'border-transparent bg-primary text-primary-foreground'
-                        : 'border-border'
-                    )}
-                  >
-                    {checked && <Check className="size-3.5" />}
-                  </span>
-                  <span
-                    className={cn(
-                      'text-sm',
-                      checked
-                        ? 'text-muted-foreground line-through'
-                        : 'text-foreground'
-                    )}
-                  >
-                    {goal}
-                  </span>
-                </button>
-              </li>
+                  {checked && <Check className="size-2.5" />}
+                </span>
+                <span
+                  className={cn(
+                    checked ? 'text-muted-foreground line-through' : 'text-muted-foreground'
+                  )}
+                >
+                  {goal}
+                </span>
+              </button>
             )
           })}
-        </ul>
+        </div>
       ) : (
-        <p className="mt-4 text-sm text-muted-foreground">
+        <p className="mt-3 text-xs text-muted-foreground">
           Definí tus objetivos en el perfil para verlos acá.
         </p>
       )}
-    </Card>
+    </div>
   )
 }

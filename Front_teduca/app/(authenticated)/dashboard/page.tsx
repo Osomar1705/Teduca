@@ -3,17 +3,12 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  Compass,
-  BookOpen,
-  Heart,
   CalendarCheck,
   ArrowRight,
   Flame,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { StatsCard } from '@/components/dashboard/StatsCard'
 import { StreakCard } from '@/components/dashboard/StreakCard'
 import { LevelCard } from '@/components/dashboard/LevelCard'
 import { WeeklyGoals } from '@/components/dashboard/WeeklyGoals'
@@ -93,58 +88,56 @@ export default function DashboardPage() {
     </>
   )
 
+  const stats = [
+    { label: 'Profesores', value: teacherCount || 0, href: APP_ROUTES.DISCOVER },
+    { label: 'Cursos', value: courseCount || 0, href: APP_ROUTES.COURSES },
+    { label: 'Favoritos', value: favCount, href: APP_ROUTES.FAVORITES },
+    { label: 'Reservas', value: activeReservations.length, href: APP_ROUTES.RESERVATIONS },
+  ]
+
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
-        <div className="min-w-0">
+    <div className="mx-auto max-w-6xl">
+      <div className="flex gap-6">
+        <div className="min-w-0 flex-1">
           <FadeIn>
-            <div className="relative mb-6 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl bg-gradient-brand p-6 text-white shadow-lg">
-              <div className="bg-grid-light absolute inset-0" />
-              <div className="relative">
-                <p className="text-sm text-white/80">Hola{name ? `, ${name}` : ''} 👋</p>
-                <h1 className="mt-1 text-xl font-bold tracking-tight md:text-2xl">
-                  Seguí construyendo tu camino académico
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Hola de nuevo,</p>
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                  {name || 'Estudiante'}
                 </h1>
               </div>
-              {game && (
-                <div className="relative flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-xs text-white/70">Nivel</p>
-                    <p className="font-semibold">{game.level.title}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-2">
-                    <Flame className="size-4" />
-                    <span className="font-semibold">{game.streak.current}</span>
-                  </div>
+              {game && game.streak.current > 0 && (
+                <div className="flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1.5 text-sm font-medium text-orange-600 dark:text-orange-400">
+                  <Flame className="size-3.5" />
+                  {game.streak.current} días
                 </div>
               )}
             </div>
           </FadeIn>
 
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {stats.map((s) => (
+              <Link
+                key={s.label}
+                href={s.href}
+                className="rounded-lg bg-muted/40 px-4 py-3 transition-colors hover:bg-muted/70"
+              >
+                <p className="text-2xl font-bold text-foreground">{s.value}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+              </Link>
+            ))}
+          </div>
+
           {/* Widgets compactos en mobile */}
           {game && (
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3 lg:hidden">{widgets}</div>
+            <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:hidden">{widgets}</div>
           )}
 
-          <Stagger className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { title: 'Profesores', value: teacherCount || '—', icon: Compass, href: APP_ROUTES.DISCOVER },
-              { title: 'Cursos', value: courseCount || '—', icon: BookOpen, href: APP_ROUTES.COURSES },
-              { title: 'Favoritos', value: favCount, icon: Heart, href: APP_ROUTES.FAVORITES },
-              { title: 'Reservas', value: activeReservations.length, icon: CalendarCheck, href: APP_ROUTES.RESERVATIONS },
-            ].map((s) => (
-              <StaggerItem key={s.title}>
-                <Link href={s.href} className="block">
-                  <StatsCard title={s.title} value={s.value} icon={s.icon} />
-                </Link>
-              </StaggerItem>
-            ))}
-          </Stagger>
-
-          <section className="mb-8">
+          <section className="mb-6">
             <SectionHeader title="Próximas mentorías" href={APP_ROUTES.RESERVATIONS} />
             {loading ? (
-              <Skeleton className="h-24 rounded-xl" />
+              <Skeleton className="h-20 rounded-xl" />
             ) : upcoming.length === 0 ? (
               <EmptyState
                 icon={CalendarCheck}
@@ -157,35 +150,37 @@ export default function DashboardPage() {
                 }
               />
             ) : (
-              <div className="space-y-3">
+              <div className="divide-y divide-border rounded-xl border border-border">
                 {upcoming.map((r) => (
-                  <Card key={r.id} className="flex items-center justify-between gap-4 p-4">
+                  <div key={r.id} className="flex items-center justify-between gap-4 px-4 py-3">
                     <div className="min-w-0">
-                      <p className="truncate font-semibold text-foreground">{r.teacherName}</p>
-                      <p className="truncate text-sm text-muted-foreground">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {r.teacherName}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
                         {r.courseTitle ?? 'Clase particular'}
                       </p>
                     </div>
-                    <div className="shrink-0 text-right text-sm">
-                      <p className="font-medium text-foreground">{formatDate(r.date)}</p>
-                      <p className="text-muted-foreground">{r.time}</p>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-medium text-foreground">{formatDate(r.date)}</p>
+                      <p className="text-xs text-muted-foreground">{r.time}</p>
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
             )}
           </section>
 
-          <section className="mb-8">
+          <section className="mb-6">
             <SectionHeader title="Continuar aprendiendo" href={APP_ROUTES.COURSES} />
             {loading ? (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-72 rounded-xl" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[...Array(2)].map((_, i) => (
+                  <Skeleton key={i} className="h-24 rounded-xl" />
                 ))}
               </div>
             ) : (
-              <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <Stagger className="grid gap-3 sm:grid-cols-2">
                 {courses.map((c) => (
                   <StaggerItem key={c.id}>
                     <CourseCard course={c} />
@@ -196,15 +191,15 @@ export default function DashboardPage() {
           </section>
 
           <section>
-            <SectionHeader title="Descubrir" href={APP_ROUTES.DISCOVER} />
+            <SectionHeader title="Profesores recomendados" href={APP_ROUTES.DISCOVER} />
             {loading ? (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-72 rounded-xl" />
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[...Array(2)].map((_, i) => (
+                  <Skeleton key={i} className="h-40 rounded-xl" />
                 ))}
               </div>
             ) : (
-              <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <Stagger className="grid gap-4 sm:grid-cols-2">
                 {teachers.map((t) => (
                   <StaggerItem key={t.id}>
                     <TeacherCard teacher={t} />
@@ -216,8 +211,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Columna derecha sticky (desktop) */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-24 space-y-4">{widgets}</div>
+        <aside className="hidden w-72 shrink-0 lg:block">
+          <div className="sticky top-20 space-y-4">{widgets}</div>
         </aside>
       </div>
     </div>
@@ -227,12 +222,12 @@ export default function DashboardPage() {
 function SectionHeader({ title, href }: { title: string; href: string }) {
   return (
     <div className="mb-4 flex items-center justify-between">
-      <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       <Link
         href={href}
-        className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+        className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
       >
-        Ver todos <ArrowRight className="size-3.5" />
+        Ver más <ArrowRight className="size-3" />
       </Link>
     </div>
   )

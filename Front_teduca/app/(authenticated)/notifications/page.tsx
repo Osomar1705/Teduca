@@ -1,9 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { BellOff, CheckCheck } from 'lucide-react'
-import { PageHeader } from '@/components/common/PageHeader'
-import { Button } from '@/components/ui/button'
+import { BellOff } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/common/EmptyState'
 import { NotificationItem } from '@/components/notifications/NotificationItem'
@@ -65,16 +63,22 @@ export default function NotificationsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader
-        title="Notificaciones"
-        description="Todo lo que pasa en tu experiencia académica, en un solo lugar."
-        actions={
-          <Button variant="outline" size="sm" onClick={handleMarkAll} disabled={unreadTotal === 0}>
-            <CheckCheck className="size-4" />
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Notificaciones</h1>
+          <p className="text-sm text-muted-foreground">
+            Todo lo que pasa en tu experiencia académica.
+          </p>
+        </div>
+        {unreadTotal > 0 && (
+          <button
+            onClick={handleMarkAll}
+            className="shrink-0 text-xs text-primary hover:underline"
+          >
             Marcar todas como leídas
-          </Button>
-        }
-      />
+          </button>
+        )}
+      </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
         {TABS.map((t) => (
@@ -82,7 +86,7 @@ export default function NotificationsPage() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
               tab === t.key
                 ? 'border-transparent bg-primary text-primary-foreground'
                 : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -92,7 +96,7 @@ export default function NotificationsPage() {
             {t.key !== 'all' && counts[t.key] ? (
               <span
                 className={cn(
-                  'inline-flex min-w-4 items-center justify-center rounded-full px-1 text-xs',
+                  'inline-flex min-w-4 items-center justify-center rounded-full px-1 text-[10px]',
                   tab === t.key ? 'bg-white/20' : 'bg-primary/10 text-primary'
                 )}
               >
@@ -106,7 +110,7 @@ export default function NotificationsPage() {
       {loading ? (
         <div className="space-y-2">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-xl" />
+            <Skeleton key={i} className="h-16 rounded-xl" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -117,7 +121,7 @@ export default function NotificationsPage() {
         />
       ) : (
         <FadeIn>
-          <div className="divide-y divide-border rounded-2xl border border-border bg-card">
+          <div className="divide-y divide-border">
             {filtered.map((n) => (
               <NotificationItem key={n.id} notification={n} onMarkRead={handleMarkRead} />
             ))}
