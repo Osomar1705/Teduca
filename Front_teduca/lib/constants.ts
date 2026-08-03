@@ -16,6 +16,10 @@ export const APP_ROUTES = {
   MESSAGES: '/messages',
   PROFILE: '/profile',
   SETTINGS: '/settings',
+  FOR_YOU: '/for-you',
+  NOTIFICATIONS: '/notifications',
+  ACHIEVEMENTS: '/achievements',
+  PARTICIPATE: '/participate',
 } as const
 
 // API endpoints (backend FastAPI, versionado /api/v1)

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Menu, X, Bell, Search } from 'lucide-react'
@@ -12,14 +12,23 @@ import { Button } from '@/components/ui/button'
 import { APP_ROUTES } from '@/lib/constants'
 import { useUIStore } from '@/store/uiStore'
 import { getOnboardingStatus } from '@/lib/onboarding/service'
+import { getNotifications } from '@/lib/notifications/service'
+import { recordDailyActivity } from '@/lib/gamification/service'
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { isMobileMenuOpen, setMobileMenuOpen, closeMobileMenu } = useUIStore()
   const router = useRouter()
+  const [unread, setUnread] = useState(0)
 
   useEffect(() => {
+    recordDailyActivity()
     getOnboardingStatus()
-      .then((s) => { if (!s.completed) router.replace(APP_ROUTES.ONBOARDING) })
+      .then((s) => {
+        if (!s.completed) router.replace(APP_ROUTES.ONBOARDING)
+      })
+      .catch(() => {})
+    getNotifications()
+      .then((n) => setUnread(n.filter((x) => !x.isRead).length))
       .catch(() => {})
   }, [router])
 
@@ -80,14 +89,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="ml-auto flex items-center gap-1.5">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="size-5" />
-              <span className="absolute right-2 top-2 size-1.5 rounded-full bg-primary" />
-              <span className="sr-only">Notificaciones</span>
+            <Button variant="ghost" size="icon" className="relative" asChild>
+              <Link href={APP_ROUTES.NOTIFICATIONS}>
+                <Bell className="size-5" />
+                {unread > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-4 text-white">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
+                <span className="sr-only">Notificaciones</span>
+              </Link>
             </Button>
             <ThemeToggle />
             <Button variant="brand" size="sm" asChild className="ml-1">
-              <Link href={APP_ROUTES.DISCOVER}>Descubrir</Link>
+              <Link href={APP_ROUTES.FOR_YOU}>Para Ti</Link>
             </Button>
           </div>
         </header>
