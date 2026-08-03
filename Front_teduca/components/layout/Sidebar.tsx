@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Home,
@@ -123,11 +123,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function GamificationFooter() {
-  const [game, setGame] = useState<GamificationState | null>(null)
-
-  useEffect(() => {
-    setGame(getGamificationState())
-  }, [])
+  const [game] = useState<GamificationState | null>(getGamificationState)
 
   if (!game) return null
 

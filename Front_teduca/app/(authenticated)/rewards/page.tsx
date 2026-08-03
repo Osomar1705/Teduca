@@ -84,14 +84,9 @@ export default function RewardsPage() {
 }
 
 function BalanceTab() {
-  const [balance, setBalance] = useState<RewardBalance | null>(null)
-  const [transactions, setTransactions] = useState<RewardTransaction[]>([])
+  const [balance] = useState<RewardBalance | null>(getRewardBalance)
+  const [transactions] = useState<RewardTransaction[]>(getTransactions)
   const [showAll, setShowAll] = useState(false)
-
-  useEffect(() => {
-    setBalance(getRewardBalance())
-    setTransactions(getTransactions())
-  }, [])
 
   if (!balance) {
     return <Skeleton className="h-64 rounded-2xl" />
@@ -224,14 +219,9 @@ const CATEGORIES: { key: RewardCategory | 'all'; label: string }[] = [
 ]
 
 function RedeemTab() {
-  const [items, setItems] = useState<RewardItem[]>([])
-  const [balance, setBalance] = useState<RewardBalance | null>(null)
+  const [items] = useState<RewardItem[]>(getMarketplaceItems)
+  const [balance] = useState<RewardBalance | null>(getRewardBalance)
   const [category, setCategory] = useState<RewardCategory | 'all'>('all')
-
-  useEffect(() => {
-    setItems(getMarketplaceItems())
-    setBalance(getRewardBalance())
-  }, [])
 
   const filtered = useMemo(
     () => (category === 'all' ? items : items.filter((i) => i.category === category)),

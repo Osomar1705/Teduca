@@ -43,12 +43,10 @@ interface Identity {
 export default function ProfilePage() {
   const [tab, setTab] = useState<Tab>('profile')
   const [identity, setIdentity] = useState<Identity | null>(null)
-  const [game, setGame] = useState<GamificationState | null>(null)
+  const [game] = useState<GamificationState | null>(getGamificationState)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setGame(getGamificationState())
-
     async function load() {
       const user = await getCurrentUser()
       const onboarding = await getOnboarding().catch(() => null as OnboardingData | null)

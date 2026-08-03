@@ -6,12 +6,10 @@ Los datos de nombre/avatar viven en `users`; aquí solo el perfil profesional.
 """
 
 import uuid
-from datetime import datetime
 
 from sqlalchemy import (
     JSON,
     Boolean,
-    DateTime,
     ForeignKey,
     Integer,
     Numeric,

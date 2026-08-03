@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
   getMarketplaceItems,
   getRewardBalance,
@@ -10,32 +10,19 @@ import {
 import type { RewardBalance, RewardItem, RewardTransaction } from './types'
 
 export function useRewardBalance() {
-  const [balance, setBalance] = useState<RewardBalance | null>(null)
-  const [transactions, setTransactions] = useState<RewardTransaction[]>([])
-  const [loading, setLoading] = useState(true)
+  const [balance] = useState<RewardBalance | null>(getRewardBalance)
+  const [transactions] = useState<RewardTransaction[]>(getTransactions)
 
-  useEffect(() => {
-    setBalance(getRewardBalance())
-    setTransactions(getTransactions())
-    setLoading(false)
-  }, [])
-
-  return { balance, transactions, loading }
+  return { balance, transactions, loading: false }
 }
 
 export function useMarketplace() {
-  const [items, setItems] = useState<RewardItem[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    setItems(getMarketplaceItems())
-    setLoading(false)
-  }, [])
+  const [items] = useState<RewardItem[]>(getMarketplaceItems)
 
   const redeem = useCallback(
     (itemId: string) => redeemItem(itemId),
     [],
   )
 
-  return { items, redeem, loading }
+  return { items, redeem, loading: false }
 }

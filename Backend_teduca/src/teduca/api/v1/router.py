@@ -15,8 +15,8 @@ from teduca.modules.enrollments.router import course_enroll_router, enrollments_
 from teduca.modules.gamification.router import router as gamification_router
 from teduca.modules.lessons.router import course_lessons_router, lessons_router
 from teduca.modules.machine_learning.router import router as ml_router
-from teduca.modules.onboarding.router import router as onboarding_router
 from teduca.modules.notifications.router import router as notifications_router
+from teduca.modules.onboarding.router import router as onboarding_router
 from teduca.modules.quizzes.router import course_quizzes_router, quizzes_router
 from teduca.modules.submissions.router import (
     assignment_submissions_router,

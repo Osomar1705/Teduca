@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ArrowDownRight, ArrowUpRight, Receipt, Wallet } from 'lucide-react'
 import { PageHeader } from '@/components/common/PageHeader'
@@ -25,19 +25,12 @@ const FILTERS: { key: Filter; label: string }[] = [
 ]
 
 export default function RewardsHistoryPage() {
-  const [balance, setBalance] = useState<RewardBalance | null>(null)
-  const [transactions, setTransactions] = useState<RewardTransaction[]>([])
-  const [loading, setLoading] = useState(true)
+  const [balance] = useState<RewardBalance | null>(getRewardBalance)
+  const [transactions] = useState<RewardTransaction[]>(getTransactions)
   const [filter, setFilter] = useState<Filter>('all')
-
-  useEffect(() => {
-    setBalance(getRewardBalance())
-    setTransactions(getTransactions())
-    setLoading(false)
-  }, [])
+  const [now] = useState(() => Date.now())
 
   const filtered = useMemo(() => {
-    const now = Date.now()
     return transactions.filter((t) => {
       if (filter === 'earned') return t.type === 'earned'
       if (filter === 'redeemed') return t.type === 'redeemed'
@@ -45,7 +38,7 @@ export default function RewardsHistoryPage() {
       if (filter === 'month') return new Date(t.createdAt).getTime() >= now - 30 * 86_400_000
       return true
     })
-  }, [transactions, filter])
+  }, [transactions, filter, now])
 
   const grouped = useMemo(() => {
     const map = new Map<string, RewardTransaction[]>()
@@ -76,7 +69,7 @@ export default function RewardsHistoryPage() {
         }
       />
 
-      {loading || !balance ? (
+      {!balance ? (
         <div className="mb-8 grid gap-4 sm:grid-cols-3">
           {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-xl" />
@@ -119,7 +112,7 @@ export default function RewardsHistoryPage() {
         ))}
       </div>
 
-      {loading ? (
+      {!balance ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
             <Skeleton key={i} className="h-14 rounded-xl" />

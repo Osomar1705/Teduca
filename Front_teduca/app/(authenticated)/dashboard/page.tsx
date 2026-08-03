@@ -43,12 +43,11 @@ export default function DashboardPage() {
   const [teacherCount, setTeacherCount] = useState(0)
   const [courseCount, setCourseCount] = useState(0)
   const [goals, setGoals] = useState<string[]>([])
-  const [game, setGame] = useState<GamificationState | null>(null)
+  const [game] = useState<GamificationState | null>(getGamificationState)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     recordDailyActivity()
-    setGame(getGamificationState())
 
     async function load() {
       const [user, t, c, f, r] = await Promise.all([

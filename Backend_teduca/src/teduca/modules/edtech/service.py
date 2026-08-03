@@ -33,7 +33,9 @@ class EdtechService:
     async def get_or_create_my_profile(self, user: User) -> TeacherProfile:
         profile = await self.repo.get_profile_by_user(user.id)
         if profile is None:
-            profile = TeacherProfile(user_id=user.id, languages=[], availability=[], categories=[], socials=[])
+            profile = TeacherProfile(
+                user_id=user.id, languages=[], availability=[], categories=[], socials=[]
+            )
             await self.repo.add(profile)
             # Re-consulta con selectinload para que `courses` quede cargado
             # (el serializado fuera del contexto async no puede lazy-loadear).

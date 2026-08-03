@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Skeleton } from '@/components/ui/skeleton'
 import { APP_ROUTES } from '@/lib/constants'
@@ -8,11 +8,7 @@ import { getRewardBalance } from '@/lib/rewards/service'
 import type { RewardBalance } from '@/lib/rewards/types'
 
 export function RewardSummaryWidget() {
-  const [balance, setBalance] = useState<RewardBalance | null>(null)
-
-  useEffect(() => {
-    setBalance(getRewardBalance())
-  }, [])
+  const [balance] = useState<RewardBalance | null>(getRewardBalance)
 
   if (!balance) return <Skeleton className="h-24 rounded-xl" />
 

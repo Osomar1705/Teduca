@@ -1,5 +1,6 @@
 """Lógica de autenticación: registro, login, rotación de refresh y logout."""
 
+import contextlib
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -107,10 +108,8 @@ class AuthService:
         if redis is not None:
             exp = access_payload.get("exp", 0)
             ttl = max(int(exp - datetime.now(UTC).timestamp()), 1)
-            try:
+            with contextlib.suppress(Exception):  # noqa: BLE001 — Redis caído: no bloquear el logout
                 await redis.set(f"bl:access:{access_payload['jti']}", "1", ex=ttl)
-            except Exception:  # noqa: BLE001 — Redis caído: no bloquear el logout
-                pass
 
         # Revoca el refresh token si se envía.
         if refresh_token:

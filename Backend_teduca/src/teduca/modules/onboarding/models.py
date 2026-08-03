@@ -1,6 +1,12 @@
 """Modelo de onboarding de usuario."""
 
+from __future__ import annotations
+
 import uuid
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from teduca.modules.users.models import User
 
 from sqlalchemy import JSON, Boolean, Date, ForeignKey, Integer, String, Text, TypeDecorator
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -62,6 +68,6 @@ class UserOnboarding(UUIDMixin, TimestampMixin, Base):
     current_step: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
-    user: Mapped["teduca.modules.users.models.User"] = relationship(  # type: ignore[name-defined]
+    user: Mapped[User] = relationship(
         "User", foreign_keys=[user_id]
     )
