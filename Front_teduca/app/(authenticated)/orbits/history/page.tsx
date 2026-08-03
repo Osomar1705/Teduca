@@ -58,8 +58,8 @@ export default function RewardsHistoryPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader
-        title="Historial de recompensas"
-        description="Todos tus movimientos de puntos, como un estado de cuenta."
+        title="Mis Orbits"
+        description="Todos tus movimientos de Orbits, como una billetera digital."
         actions={
           <Button variant="outline" size="sm" asChild>
             <Link href={APP_ROUTES.REWARDS}>
@@ -79,17 +79,17 @@ export default function RewardsHistoryPage() {
         <div className="mb-8 grid gap-4 sm:grid-cols-3">
           <StatCard
             icon={<ArrowUpRight className="size-5 text-success" />}
-            label="Total ganado"
+            label="Orbits ganados"
             value={balance.totalEarned}
           />
           <StatCard
             icon={<ArrowDownRight className="size-5 text-destructive" />}
-            label="Total canjeado"
+            label="Orbits usados"
             value={balance.totalRedeemed}
           />
           <StatCard
             icon={<Wallet className="size-5 text-primary" />}
-            label="Balance actual"
+            label="Orbits actuales"
             value={balance.total}
           />
         </div>
@@ -122,7 +122,7 @@ export default function RewardsHistoryPage() {
         <EmptyState
           icon={Receipt}
           title="Sin movimientos"
-          description="Aún no tienes transacciones para este filtro."
+          description="Aún no tenés Orbits para este filtro."
         />
       ) : (
         <div className="space-y-6">

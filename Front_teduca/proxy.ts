@@ -27,7 +27,7 @@ const PROTECTED_PREFIXES = [
   '/notifications',
   '/achievements',
   '/for-you',
-  '/rewards',
+  '/orbits',
   '/participate',
 ]
 

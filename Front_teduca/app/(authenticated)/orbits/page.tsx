@@ -40,8 +40,8 @@ import type {
 type Tab = 'balance' | 'redeem' | 'ranking'
 
 const TABS: { key: Tab; label: string; icon: typeof Wallet }[] = [
-  { key: 'balance', label: 'Mi Balance', icon: Wallet },
-  { key: 'redeem', label: 'Canjear', icon: Gift },
+  { key: 'balance', label: 'Mis Orbits', icon: Wallet },
+  { key: 'redeem', label: 'Tienda', icon: Gift },
   { key: 'ranking', label: 'Ranking', icon: Trophy },
 ]
 
@@ -51,8 +51,8 @@ export default function RewardsPage() {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
-        title="Recompensas"
-        description="Ganá puntos por tu participación académica y canjéalos por beneficios."
+        title="Mis Orbits"
+        description="Tus Orbits representan tu impacto y participación en TEDUCA. Ganá más siendo activo."
       />
 
       <div className="mb-6 flex gap-0 border-b border-border">
@@ -101,13 +101,13 @@ function BalanceTab() {
       <FadeIn>
         <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/8 to-primary/3 p-6">
           <p className="mb-2 text-xs font-medium uppercase tracking-wider text-primary">
-            {balance.label}
+            Balance actual
           </p>
           <div className="flex items-baseline gap-2">
             <span className="text-5xl font-bold tracking-tight text-foreground">
               {balance.total}
             </span>
-            <span className="text-lg text-muted-foreground">{balance.unit}</span>
+            <span className="text-lg font-semibold text-primary">Orbits</span>
           </div>
           <div className="mt-4 flex gap-6">
             <div>
@@ -131,8 +131,8 @@ function BalanceTab() {
       {empty ? (
         <EmptyState
           icon={Sparkles}
-          title="¡Empezá a ganar puntos!"
-          description="Tu primer login ya vale puntos. Asistí a mentorías y completá cursos para sumar más."
+          title="¡Empezá a ganar Orbits!"
+          description="Tu primer login ya vale Orbits. Asistí a mentorías y completá cursos para sumar más."
           action={
             <Button variant="brand" asChild>
               <Link href={APP_ROUTES.DISCOVER}>Descubrir profesores</Link>
@@ -170,7 +170,7 @@ function BalanceTab() {
       )}
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold text-foreground">Cómo ganar más</h2>
+        <h2 className="mb-4 text-lg font-semibold text-foreground">Cómo ganar más Orbits</h2>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {rules.map((rule) => {
             const Icon = getEarnIcon(rule.icon)
@@ -193,7 +193,7 @@ function BalanceTab() {
                 </div>
                 {rule.isActive ? (
                   <span className="flex-shrink-0 text-xs font-bold text-primary">
-                    +{rule.pointsAwarded}
+                    +{rule.pointsAwarded} <span className="font-normal">Orbits</span>
                   </span>
                 ) : (
                   <Badge variant="secondary" className="flex-shrink-0 text-[10px]">
@@ -232,10 +232,10 @@ function RedeemTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 rounded-xl bg-primary/5 px-5 py-4">
         <div>
-          <p className="text-xs text-muted-foreground">Balance disponible</p>
+          <p className="text-xs text-muted-foreground">Orbits disponibles</p>
           <p className="text-2xl font-bold text-primary">
             {balance?.total ?? 0}{' '}
-            <span className="text-sm font-normal text-muted-foreground">puntos</span>
+            <span className="text-sm font-semibold text-primary">Orbits</span>
           </p>
         </div>
       </div>
@@ -260,7 +260,7 @@ function RedeemTab() {
       {filtered.length === 0 ? (
         <EmptyState
           icon={Gift}
-          title="Sin recompensas en esta categoría"
+          title="Sin ítems en esta categoría"
           description="Probá con otra categoría o volvé más tarde."
         />
       ) : (
@@ -345,7 +345,7 @@ function RankingTab() {
       )}
 
       <p className="text-center text-xs text-muted-foreground">
-        El ranking se basa principalmente en participación académica, no solo en puntos.
+        El ranking se basa principalmente en participación académica y Orbits acumulados.
       </p>
     </div>
   )

@@ -27,7 +27,7 @@ const FREE_FEATURES = [
 const PREMIUM_FEATURES = [
   'Mentorías premium 1:1 ilimitadas',
   'Recomendaciones IA avanzadas',
-  'Insignias y recompensas exclusivas',
+  'Insignias y Orbits exclusivos',
   'Prioridad en matches académicos',
   'Estadísticas de participación detalladas',
 ]

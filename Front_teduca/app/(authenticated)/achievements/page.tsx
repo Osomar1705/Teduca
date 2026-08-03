@@ -78,12 +78,12 @@ export default function AchievementsPage() {
 
       <section className="mb-8">
         <div className="mb-4 flex items-end justify-between gap-3">
-          <h2 className="text-lg font-semibold text-foreground">Recompensas disponibles</h2>
+          <h2 className="text-lg font-semibold text-foreground">Canjeá tus Orbits</h2>
           <Link
             href={APP_ROUTES.REWARDS}
             className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
           >
-            <Gift className="size-3.5" /> Marketplace <ArrowRight className="size-3" />
+            <Gift className="size-3.5" /> Tienda de Orbits <ArrowRight className="size-3" />
           </Link>
         </div>
         <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

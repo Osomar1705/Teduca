@@ -32,7 +32,7 @@ export const EARN_RULES: EarnRule[] = [
   {
     event: 'daily_login',
     label: 'Ingreso diario',
-    description: 'Entra a TEDUCA cada día para sumar puntos.',
+    description: 'Entra a TEDUCA cada día para sumar Orbits.',
     pointsAwarded: 5,
     isActive: true,
     maxPerDay: 1,
@@ -65,7 +65,7 @@ export const EARN_RULES: EarnRule[] = [
   {
     event: 'course_completed',
     label: 'Completar un curso',
-    description: 'Termina un curso completo y obtén tu recompensa.',
+    description: 'Termina un curso completo y acumulá Orbits.',
     pointsAwarded: 100,
     isActive: true,
     icon: 'BookOpen',
@@ -97,7 +97,7 @@ export const EARN_RULES: EarnRule[] = [
   {
     event: 'referral',
     label: 'Invitar a un compañero',
-    description: 'Trae a un amigo a TEDUCA y ambos ganan puntos.',
+    description: 'Trae a un amigo a TEDUCA y ambos ganan Orbits.',
     pointsAwarded: 75,
     isActive: true,
     maxPerWeek: 5,
@@ -177,7 +177,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'food',
     category: 'food',
     value: 300,
-    displayValue: '300 puntos',
+    displayValue: '300 Orbits',
     partner: 'Cafetería Central',
     stock: 50,
     conditions: ['Solo para estudiantes activos', 'Válido de lunes a viernes'],
@@ -191,7 +191,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'discount',
     category: 'food',
     value: 450,
-    displayValue: '450 puntos',
+    displayValue: '450 Orbits',
     partner: 'Comedor Universitario',
     conditions: ['Máximo 1 por semana'],
     status: 'locked',
@@ -203,7 +203,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'transport',
     category: 'transport',
     value: 800,
-    displayValue: '800 puntos',
+    displayValue: '800 Orbits',
     partner: 'Movilidad Campus',
     conditions: ['Solo para estudiantes activos', 'Máximo 1 por mes'],
     status: 'locked',
@@ -215,7 +215,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'book',
     category: 'education',
     value: 1200,
-    displayValue: '1200 puntos',
+    displayValue: '1200 Orbits',
     partner: 'Editorial Académica',
     conditions: ['Sujeto a disponibilidad del catálogo'],
     status: 'locked',
@@ -227,7 +227,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'course',
     category: 'education',
     value: 2000,
-    displayValue: '2000 puntos',
+    displayValue: '2000 Orbits',
     conditions: ['Válido por 6 meses'],
     status: 'locked',
     featured: true,
@@ -239,7 +239,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'certificate',
     category: 'education',
     value: 1500,
-    displayValue: '1500 puntos',
+    displayValue: '1500 Orbits',
     conditions: ['Requiere completar un curso'],
     status: 'locked',
   },
@@ -250,7 +250,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'event',
     category: 'university',
     value: 1000,
-    displayValue: '1000 puntos',
+    displayValue: '1000 Orbits',
     conditions: ['Sujeto a fechas disponibles'],
     status: 'locked',
   },
@@ -261,7 +261,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'gift_card',
     category: 'partner',
     value: 2500,
-    displayValue: '2500 puntos',
+    displayValue: '2500 Orbits',
     partner: 'Librería Universitaria',
     conditions: ['No acumulable con otras promociones'],
     status: 'locked',
@@ -273,7 +273,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'merchandise',
     category: 'lifestyle',
     value: 600,
-    displayValue: '600 puntos',
+    displayValue: '600 Orbits',
     stock: 100,
     conditions: ['Retiro en campus'],
     status: 'available',
@@ -285,7 +285,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'benefit',
     category: 'education',
     value: 1800,
-    displayValue: '1800 puntos',
+    displayValue: '1800 Orbits',
     conditions: ['Sujeto a agenda del mentor'],
     status: 'locked',
     featured: true,
@@ -297,7 +297,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'discount',
     category: 'lifestyle',
     value: 900,
-    displayValue: '900 puntos',
+    displayValue: '900 Orbits',
     partner: 'Aliado Digital',
     conditions: ['Máximo 1 por mes'],
     status: 'locked',
@@ -309,7 +309,7 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
     type: 'benefit',
     category: 'partner',
     value: 1400,
-    displayValue: '1400 puntos',
+    displayValue: '1400 Orbits',
     partner: 'Coworking Hub',
     conditions: ['Reserva con 48h de anticipación'],
     status: 'locked',
@@ -369,8 +369,8 @@ export function getRewardBalance(): RewardBalance {
 
   return {
     total: stored.total,
-    unit: 'puntos',
-    label: 'Puntos académicos',
+    unit: 'Orbits',
+    label: 'Orbits',
     weeklyEarned: sumSince(txs, weekMs),
     monthlyEarned: sumSince(txs, monthMs),
     totalEarned: stored.totalEarned,
@@ -411,7 +411,7 @@ export function addEarnTransaction(
 }
 
 /**
- * Otorga 5 puntos por ingreso diario. Idempotente por día usando la misma
+ * Otorga 5 Orbits por ingreso diario. Idempotente por día usando la misma
  * fecha que la racha (`teduca_last_active`).
  */
 export function maybeAwardDailyLogin(): RewardTransaction | null {
@@ -422,7 +422,7 @@ export function maybeAwardDailyLogin(): RewardTransaction | null {
   if (lastAwarded === today) return null
 
   window.localStorage.setItem(DAILY_LOGIN_KEY, today)
-  return addEarnTransaction('daily_login', 'Ingreso diario a TEDUCA')
+  return addEarnTransaction('daily_login', 'Ingreso diario — Orbits ganados')
 }
 
 export function getEarnRules(): EarnRule[] {

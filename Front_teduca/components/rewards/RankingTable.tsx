@@ -15,7 +15,7 @@ export function RankingTable({ entries }: { entries: RankingEntry[] }) {
             <th className="px-4 py-3 font-medium">#</th>
             <th className="px-4 py-3 font-medium">Estudiante</th>
             <th className="hidden px-4 py-3 font-medium sm:table-cell">Score</th>
-            <th className="px-4 py-3 font-medium">Puntos</th>
+            <th className="px-4 py-3 font-medium">Orbits</th>
             <th className="hidden px-4 py-3 font-medium sm:table-cell">Racha</th>
           </tr>
         </thead>

@@ -37,7 +37,7 @@ export function TransactionRow({ tx }: { tx: RewardTransaction }) {
           {earned ? '+' : '−'}
           {Math.abs(tx.points)}
         </p>
-        <p className="text-xs text-muted-foreground">Saldo {tx.balance}</p>
+        <p className="text-xs text-muted-foreground">{tx.balance} Orbits</p>
       </div>
     </div>
   )

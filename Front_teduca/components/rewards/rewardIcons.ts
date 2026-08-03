@@ -43,7 +43,7 @@ export const REWARD_TYPE_ICON: Record<RewardType, LucideIcon> = {
 }
 
 export const REWARD_TYPE_LABEL: Record<RewardType, string> = {
-  points: 'Puntos',
+  points: 'Orbits',
   discount: 'Descuento',
   food: 'Alimentos',
   transport: 'Transporte',

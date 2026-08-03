@@ -20,9 +20,9 @@ export const APP_ROUTES = {
   NOTIFICATIONS: '/notifications',
   ACHIEVEMENTS: '/achievements',
   PARTICIPATE: '/participate',
-  REWARDS: '/rewards',
-  REWARDS_HISTORY: '/rewards/history',
-  RANKING: '/rewards',
+  REWARDS: '/orbits',
+  REWARDS_HISTORY: '/orbits/history',
+  RANKING: '/orbits',
 } as const
 
 // API endpoints (backend FastAPI, versionado /api/v1)
