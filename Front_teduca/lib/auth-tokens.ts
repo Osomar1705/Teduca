@@ -30,7 +30,8 @@ export function setTokens(tokens: TokenPair): void {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(ACCESS_KEY, tokens.access_token)
   window.localStorage.setItem(REFRESH_KEY, tokens.refresh_token)
-  document.cookie = `${AUTH_COOKIE}=1; path=/; max-age=604800; samesite=lax`
+  const secure = location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${AUTH_COOKIE}=1; path=/; max-age=604800; SameSite=Lax${secure}`
 }
 
 export function clearTokens(): void {

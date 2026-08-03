@@ -271,7 +271,7 @@ export default function TeacherProfilePage({
                     return (
                       <a
                         key={s.type}
-                        href={s.url}
+                        href={s.url?.startsWith('https://') ? s.url : '#'}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex size-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"

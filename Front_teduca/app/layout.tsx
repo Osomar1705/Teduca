@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'TEDUCA - Plataforma Educativa',
   description: 'Plataforma educativa moderna para estudiantes y docentes',
-  generator: 'v0.app',
+
   icons: {
     icon: [
       {
