@@ -1,30 +1,39 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Flame, Trophy, Zap } from 'lucide-react'
+import Link from 'next/link'
+import { Flame, Gift, Star, Trophy, Zap } from 'lucide-react'
 import { PageHeader } from '@/components/common/PageHeader'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AchievementCard } from '@/components/gamification/AchievementCard'
 import { RewardCard } from '@/components/gamification/RewardCard'
 import { Stagger, StaggerItem } from '@/components/common/Motion'
 import { ACHIEVEMENTS } from '@/lib/gamification/achievements'
-import { getGamificationState } from '@/lib/gamification/service'
-import { getAvailableRewards } from '@/lib/rewards/service'
+import {
+  getGamificationState,
+  recordDailyActivity,
+} from '@/lib/gamification/service'
+import { getMarketplaceItems, getRewardBalance } from '@/lib/rewards/service'
+import { APP_ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import type { GamificationState } from '@/lib/gamification/types'
-import type { Reward } from '@/lib/rewards/types'
+import type { RewardItem } from '@/lib/rewards/types'
 
 type Filter = 'all' | 'unlocked' | 'locked'
 
 export default function AchievementsPage() {
   const [state, setState] = useState<GamificationState | null>(null)
-  const [rewards, setRewards] = useState<Reward[]>([])
+  const [rewards, setRewards] = useState<RewardItem[]>([])
+  const [points, setPoints] = useState<number | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
 
   useEffect(() => {
+    recordDailyActivity()
     setState(getGamificationState())
-    setRewards(getAvailableRewards())
+    setRewards(getMarketplaceItems().slice(0, 4))
+    setPoints(getRewardBalance().total)
   }, [])
 
   const filtered = useMemo(() => {
@@ -38,6 +47,14 @@ export default function AchievementsPage() {
       <PageHeader
         title="Logros"
         description="Tu progreso, recompensas y objetivos desbloqueables."
+        actions={
+          points !== null ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary">
+              <Star className="size-4" />
+              {points} puntos
+            </span>
+          ) : null
+        }
       />
 
       {!state ? (
@@ -70,9 +87,16 @@ export default function AchievementsPage() {
       )}
 
       <section className="mb-10">
-        <h2 className="mb-4 text-lg font-semibold tracking-tight text-foreground">
-          Recompensas disponibles
-        </h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">
+            Recompensas disponibles
+          </h2>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={APP_ROUTES.REWARDS}>
+              <Gift className="size-4" /> Ir al Marketplace
+            </Link>
+          </Button>
+        </div>
         <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {rewards.map((r) => (
             <StaggerItem key={r.id}>

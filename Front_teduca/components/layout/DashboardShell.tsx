@@ -14,6 +14,7 @@ import { useUIStore } from '@/store/uiStore'
 import { getOnboardingStatus } from '@/lib/onboarding/service'
 import { getNotifications } from '@/lib/notifications/service'
 import { recordDailyActivity } from '@/lib/gamification/service'
+import { maybeAwardDailyLogin } from '@/lib/rewards/service'
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { isMobileMenuOpen, setMobileMenuOpen, closeMobileMenu } = useUIStore()
@@ -22,6 +23,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     recordDailyActivity()
+    maybeAwardDailyLogin()
     getOnboardingStatus()
       .then((s) => {
         if (!s.completed) router.replace(APP_ROUTES.ONBOARDING)

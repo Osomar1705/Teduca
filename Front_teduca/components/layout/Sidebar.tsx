@@ -14,6 +14,7 @@ import {
   Heart,
   BarChart3,
   Trophy,
+  Gift,
   User,
   Bell,
   Settings,
@@ -59,6 +60,7 @@ const NAV: NavGroup[] = [
       { label: 'Favoritos', href: APP_ROUTES.FAVORITES, icon: Heart },
       { label: 'Participación', href: APP_ROUTES.PARTICIPATE, icon: BarChart3 },
       { label: 'Logros', href: APP_ROUTES.ACHIEVEMENTS, icon: Trophy },
+      { label: 'Recompensas', href: APP_ROUTES.REWARDS, icon: Gift },
     ],
   },
   {

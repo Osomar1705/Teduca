@@ -17,6 +17,7 @@ import { StatsCard } from '@/components/dashboard/StatsCard'
 import { StreakCard } from '@/components/dashboard/StreakCard'
 import { LevelCard } from '@/components/dashboard/LevelCard'
 import { WeeklyGoals } from '@/components/dashboard/WeeklyGoals'
+import { RewardSummaryWidget } from '@/components/dashboard/RewardSummaryWidget'
 import { TeacherCard } from '@/components/edtech/TeacherCard'
 import { CourseCard } from '@/components/edtech/CourseCard'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -30,7 +31,10 @@ import {
   getTeachers,
 } from '@/lib/edtech/service'
 import { getOnboarding } from '@/lib/onboarding/service'
-import { getGamificationState } from '@/lib/gamification/service'
+import {
+  getGamificationState,
+  recordDailyActivity,
+} from '@/lib/gamification/service'
 import { formatDate } from '@/lib/format'
 import type { Course, Reservation, TeacherProfile } from '@/lib/edtech/types'
 import type { GamificationState } from '@/lib/gamification/types'
@@ -48,6 +52,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    recordDailyActivity()
     setGame(getGamificationState())
 
     async function load() {
@@ -83,6 +88,7 @@ export default function DashboardPage() {
     <>
       <StreakCard streak={game.streak} />
       <LevelCard xp={game.xp} level={game.level} />
+      <RewardSummaryWidget />
       <WeeklyGoals weeklyXP={game.weeklyXP} weeklyGoal={game.weeklyGoal} goals={goals} />
     </>
   )
