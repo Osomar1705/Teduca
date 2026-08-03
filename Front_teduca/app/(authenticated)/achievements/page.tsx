@@ -48,7 +48,7 @@ export default function AchievementsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Logros</h1>
         <p className="text-sm text-muted-foreground">
-          Tu progreso, recompensas y objetivos desbloqueables.
+          Tu progreso, Orbits y objetivos desbloqueables.
         </p>
       </div>
 
