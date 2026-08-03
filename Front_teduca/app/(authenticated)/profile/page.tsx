@@ -4,22 +4,18 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   Flame,
-  Trophy,
-  Zap,
-  BookOpen,
   GraduationCap,
-  Target,
-  Sparkles,
-  Code2,
+  Building2,
+  CalendarDays,
   UserCog,
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/common/EmptyState'
 import { FadeIn } from '@/components/common/Motion'
+import { LevelCard } from '@/components/dashboard/LevelCard'
 import { AchievementCard } from '@/components/gamification/AchievementCard'
 import { ProfileEditor } from '@/components/profile/ProfileEditor'
 import { APP_ROUTES } from '@/lib/constants'
@@ -48,7 +44,6 @@ export default function ProfilePage() {
   const [tab, setTab] = useState<Tab>('profile')
   const [identity, setIdentity] = useState<Identity | null>(null)
   const [game, setGame] = useState<GamificationState | null>(null)
-  const [courseCount, setCourseCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -57,9 +52,7 @@ export default function ProfilePage() {
     async function load() {
       const user = await getCurrentUser()
       const onboarding = await getOnboarding().catch(() => null as OnboardingData | null)
-      getReservations()
-        .then((r) => setCourseCount(new Set(r.filter((x) => x.courseId).map((x) => x.courseId)).size))
-        .catch(() => {})
+      getReservations().catch(() => {})
       setIdentity({
         name: onboarding?.full_name || user.name,
         avatar: user.avatar,
@@ -78,7 +71,7 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="mb-6 flex gap-2">
+      <div className="mb-6 flex gap-0 border-b border-border">
         {(
           [
             { key: 'profile', label: 'Mi Perfil' },
@@ -89,10 +82,10 @@ export default function ProfilePage() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={cn(
-              'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
+              '-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
               tab === t.key
-                ? 'border-transparent bg-primary text-primary-foreground'
-                : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             )}
           >
             {t.label}
@@ -108,142 +101,122 @@ export default function ProfilePage() {
           <Skeleton className="h-24 rounded-2xl" />
         </div>
       ) : (
-        <FadeIn className="space-y-6">
-          <Card className="overflow-hidden p-0">
-            <div className="bg-gradient-brand h-28" />
-            <div className="px-6 pb-6">
-              <div className="-mt-10 flex items-end gap-4">
-                <Avatar
-                  src={identity.avatar}
-                  name={identity.name}
-                  size="xl"
-                  className="rounded-2xl border-4 border-card shadow-md"
-                />
-                <div className="pb-1">
-                  <h1 className="text-xl font-bold text-foreground">{identity.name}</h1>
-                  {identity.username && (
-                    <p className="text-sm text-muted-foreground">@{identity.username}</p>
-                  )}
+        <FadeIn>
+          <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
+            <aside>
+              <Avatar src={identity.avatar} name={identity.name} size="xl" className="mb-3" />
+              <h1 className="text-xl font-bold text-foreground">{identity.name}</h1>
+              {identity.username && (
+                <p className="text-sm text-muted-foreground">@{identity.username}</p>
+              )}
+
+              <div className="mt-4 flex gap-4 text-sm">
+                <div>
+                  <span className="font-semibold text-foreground">{game.xp}</span>{' '}
+                  <span className="text-muted-foreground">XP</span>
+                </div>
+                <div className="inline-flex items-center gap-1">
+                  <Flame className="size-3.5 text-orange-500" />
+                  <span className="font-semibold text-foreground">{game.streak.current}</span>{' '}
+                  <span className="text-muted-foreground">días</span>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted-foreground">
+
+              <div className="mt-4 space-y-2">
                 {identity.institution && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <GraduationCap className="size-4" /> {identity.institution}
-                  </span>
+                  <div className="flex items-center gap-2 text-sm text-foreground">
+                    <Building2 className="size-3.5 text-muted-foreground" />
+                    {identity.institution}
+                  </div>
                 )}
-                {identity.career && <span>· {identity.career}</span>}
-                {identity.academicYear && <span>· {identity.academicYear}</span>}
+                {identity.career && (
+                  <div className="flex items-center gap-2 text-sm text-foreground">
+                    <GraduationCap className="size-3.5 text-muted-foreground" />
+                    {identity.career}
+                  </div>
+                )}
+                {identity.academicYear && (
+                  <div className="flex items-center gap-2 text-sm text-foreground">
+                    <CalendarDays className="size-3.5 text-muted-foreground" />
+                    {identity.academicYear}
+                  </div>
+                )}
               </div>
-            </div>
-          </Card>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <StatMini icon={<Zap className="size-4" />} label="XP" value={`${game.xp}`} />
-            <StatMini
-              icon={<Flame className="size-4 text-orange-500" />}
-              label="Racha"
-              value={`${game.streak.current}`}
-            />
-            <StatMini icon={<Trophy className="size-4" />} label="Nivel" value={game.level.title} />
-            <StatMini icon={<BookOpen className="size-4" />} label="Cursos" value={`${courseCount}`} />
+              {identity.subjects.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {identity.subjects.slice(0, 6).map((t) => (
+                    <Badge key={t} variant="secondary" className="text-xs">
+                      {t}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </aside>
+
+            <div className="space-y-6">
+              <section>
+                <h2 className="mb-3 text-base font-semibold text-foreground">
+                  Progreso académico
+                </h2>
+                <LevelCard xp={game.xp} level={game.level} />
+              </section>
+
+              {identity.goals.length > 0 && (
+                <section>
+                  <h2 className="mb-3 text-base font-semibold text-foreground">Objetivos</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {identity.goals.map((g) => (
+                      <Badge key={g} variant="outline">
+                        {g}
+                      </Badge>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {identity.projects.length > 0 && (
+                <section>
+                  <h2 className="mb-3 text-base font-semibold text-foreground">
+                    Intereses de proyecto
+                  </h2>
+                  <div className="flex flex-wrap gap-1.5">
+                    {identity.projects.map((p) => (
+                      <Badge key={p} variant="secondary">
+                        {p}
+                      </Badge>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <section>
+                <h2 className="mb-3 text-base font-semibold text-foreground">Logros</h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {ACHIEVEMENTS.slice(0, 4).map((a) => (
+                    <AchievementCard key={a.id} achievement={a} />
+                  ))}
+                </div>
+              </section>
+
+              {identity.goals.length === 0 &&
+                identity.subjects.length === 0 &&
+                identity.projects.length === 0 && (
+                  <EmptyState
+                    icon={UserCog}
+                    title="Completá tu identidad académica"
+                    description="Agregá objetivos e intereses para que tu perfil brille."
+                    action={
+                      <Button variant="brand" asChild>
+                        <Link href={APP_ROUTES.ONBOARDING}>Completar</Link>
+                      </Button>
+                    }
+                  />
+                )}
+            </div>
           </div>
-
-          <ChipSection
-            icon={<Target className="size-4" />}
-            title="Objetivos"
-            items={identity.goals}
-            empty="Definí tus objetivos en el onboarding."
-          />
-          <ChipSection
-            icon={<Sparkles className="size-4" />}
-            title="Intereses"
-            items={identity.subjects}
-            empty="Agregá tus áreas de interés."
-          />
-          <ChipSection
-            icon={<Code2 className="size-4" />}
-            title="Tecnologías y proyectos"
-            items={identity.projects}
-            empty="Contanos qué te gusta construir."
-          />
-
-          <section>
-            <h2 className="mb-3 text-lg font-semibold text-foreground">Logros</h2>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {ACHIEVEMENTS.slice(0, 3).map((a) => (
-                <AchievementCard key={a.id} achievement={a} />
-              ))}
-            </div>
-          </section>
-
-          {identity.goals.length === 0 &&
-            identity.subjects.length === 0 &&
-            identity.projects.length === 0 && (
-              <EmptyState
-                icon={UserCog}
-                title="Completá tu identidad académica"
-                description="Agregá objetivos e intereses para que tu perfil brille."
-                action={
-                  <Button variant="brand" asChild>
-                    <Link href={APP_ROUTES.ONBOARDING}>Completar</Link>
-                  </Button>
-                }
-              />
-            )}
         </FadeIn>
       )}
     </div>
-  )
-}
-
-function StatMini({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-}) {
-  return (
-    <Card className="p-4">
-      <div className="flex items-center gap-1.5 text-muted-foreground">
-        {icon}
-        <span className="text-xs">{label}</span>
-      </div>
-      <p className="mt-1 text-lg font-bold text-foreground">{value}</p>
-    </Card>
-  )
-}
-
-function ChipSection({
-  icon,
-  title,
-  items,
-  empty,
-}: {
-  icon: React.ReactNode
-  title: string
-  items: string[]
-  empty: string
-}) {
-  return (
-    <section>
-      <h2 className="mb-3 flex items-center gap-1.5 text-lg font-semibold text-foreground">
-        {icon} {title}
-      </h2>
-      {items.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {items.map((i) => (
-            <Badge key={i} variant="secondary" className="px-3 py-1.5 text-sm">
-              {i}
-            </Badge>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">{empty}</p>
-      )}
-    </section>
   )
 }

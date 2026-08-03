@@ -2,10 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Flame, Gift, Star, Trophy, Zap } from 'lucide-react'
-import { PageHeader } from '@/components/common/PageHeader'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { Gift, ArrowRight } from 'lucide-react'
+import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AchievementCard } from '@/components/gamification/AchievementCard'
 import { RewardCard } from '@/components/gamification/RewardCard'
@@ -15,7 +13,7 @@ import {
   getGamificationState,
   recordDailyActivity,
 } from '@/lib/gamification/service'
-import { getMarketplaceItems, getRewardBalance } from '@/lib/rewards/service'
+import { getMarketplaceItems } from '@/lib/rewards/service'
 import { APP_ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import type { GamificationState } from '@/lib/gamification/types'
@@ -26,14 +24,12 @@ type Filter = 'all' | 'unlocked' | 'locked'
 export default function AchievementsPage() {
   const [state, setState] = useState<GamificationState | null>(null)
   const [rewards, setRewards] = useState<RewardItem[]>([])
-  const [points, setPoints] = useState<number | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
 
   useEffect(() => {
     recordDailyActivity()
     setState(getGamificationState())
     setRewards(getMarketplaceItems().slice(0, 4))
-    setPoints(getRewardBalance().total)
   }, [])
 
   const filtered = useMemo(() => {
@@ -42,62 +38,57 @@ export default function AchievementsPage() {
     return ACHIEVEMENTS
   }, [filter])
 
+  const xpPct = useMemo(() => {
+    if (!state) return 0
+    const { xp, level } = state
+    if (level.xpMax === Infinity) return 100
+    return ((xp - level.xpMin) / (level.xpMax - level.xpMin)) * 100
+  }, [state])
+
   return (
-    <div className="mx-auto max-w-6xl">
-      <PageHeader
-        title="Logros"
-        description="Tu progreso, recompensas y objetivos desbloqueables."
-        actions={
-          points !== null ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary">
-              <Star className="size-4" />
-              {points} puntos
-            </span>
-          ) : null
-        }
-      />
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Logros</h1>
+        <p className="text-sm text-muted-foreground">
+          Tu progreso, recompensas y objetivos desbloqueables.
+        </p>
+      </div>
 
       {!state ? (
-        <div className="mb-10 grid gap-4 sm:grid-cols-3">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
-          ))}
-        </div>
+        <Skeleton className="mb-8 h-20 rounded-xl" />
       ) : (
-        <div className="mb-10 grid gap-4 sm:grid-cols-3">
-          <SummaryCard
-            icon={<Trophy className="size-5" />}
-            label="Nivel"
-            value={state.level.title}
-            hint={`Nivel ${state.level.level}`}
-          />
-          <SummaryCard
-            icon={<Zap className="size-5" />}
-            label="Experiencia"
-            value={`${state.xp} XP`}
-            hint="Puntos acumulados"
-          />
-          <SummaryCard
-            icon={<Flame className="size-5 text-orange-500" />}
-            label="Racha"
-            value={`${state.streak.current} días`}
-            hint={`Récord: ${state.streak.longest}`}
-          />
+        <div className="mb-8 flex flex-wrap items-center gap-4 rounded-xl bg-muted/50 p-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Nivel actual</p>
+            <p className="text-xl font-bold text-foreground">{state.level.title}</p>
+          </div>
+          <div className="h-10 w-px bg-border" />
+          <div>
+            <p className="text-xs text-muted-foreground">XP total</p>
+            <p className="text-xl font-bold text-foreground">{state.xp}</p>
+          </div>
+          <div className="ml-auto w-full sm:w-auto">
+            <Progress value={xpPct} className="h-1.5 w-full sm:w-32" />
+            <p className="mt-1 text-right text-[10px] text-muted-foreground">
+              {state.level.xpMax === Infinity
+                ? 'Nivel máximo'
+                : `${state.xp}/${state.level.xpMax} para el siguiente nivel`}
+            </p>
+          </div>
         </div>
       )}
 
-      <section className="mb-10">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
-            Recompensas disponibles
-          </h2>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={APP_ROUTES.REWARDS}>
-              <Gift className="size-4" /> Ir al Marketplace
-            </Link>
-          </Button>
+      <section className="mb-8">
+        <div className="mb-4 flex items-end justify-between gap-3">
+          <h2 className="text-lg font-semibold text-foreground">Recompensas disponibles</h2>
+          <Link
+            href={APP_ROUTES.REWARDS}
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            <Gift className="size-3.5" /> Marketplace <ArrowRight className="size-3" />
+          </Link>
         </div>
-        <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {rewards.map((r) => (
             <StaggerItem key={r.id}>
               <RewardCard reward={r} />
@@ -108,7 +99,7 @@ export default function AchievementsPage() {
 
       <section>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">Logros</h2>
+          <h2 className="text-lg font-semibold text-foreground">Logros</h2>
           <div className="flex gap-2">
             {(
               [
@@ -121,7 +112,7 @@ export default function AchievementsPage() {
                 key={f.key}
                 onClick={() => setFilter(f.key)}
                 className={cn(
-                  'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+                  'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                   filter === f.key
                     ? 'border-transparent bg-primary text-primary-foreground'
                     : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -133,7 +124,7 @@ export default function AchievementsPage() {
           </div>
         </div>
 
-        <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <Stagger className="grid gap-3 sm:grid-cols-2">
           {filtered.map((a) => (
             <StaggerItem key={a.id}>
               <AchievementCard achievement={a} />
@@ -142,32 +133,5 @@ export default function AchievementsPage() {
         </Stagger>
       </section>
     </div>
-  )
-}
-
-function SummaryCard({
-  icon,
-  label,
-  value,
-  hint,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-  hint: string
-}) {
-  return (
-    <Card className="p-5">
-      <div className="flex items-center gap-3">
-        <div className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          {icon}
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-lg font-bold text-foreground">{value}</p>
-          <p className="text-xs text-muted-foreground">{hint}</p>
-        </div>
-      </div>
-    </Card>
   )
 }

@@ -1,14 +1,15 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Search, BookOpen } from 'lucide-react'
-import { PageHeader } from '@/components/common/PageHeader'
+import Link from 'next/link'
+import { Search, BookOpen, ArrowRight } from 'lucide-react'
 import { CourseCard } from '@/components/edtech/CourseCard'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/common/EmptyState'
 import { Stagger, StaggerItem } from '@/components/common/Motion'
 import { getCourses, getReservations } from '@/lib/edtech/service'
 import { getOnboarding } from '@/lib/onboarding/service'
+import { APP_ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import type { Course, Reservation } from '@/lib/edtech/types'
 
@@ -68,13 +69,29 @@ export default function CoursesPage() {
     [searched, category]
   )
 
+  const searchBox = (
+    <div className="relative w-full sm:w-64">
+      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Buscar cursos..."
+        className="h-9 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20"
+      />
+    </div>
+  )
+
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl">
-        <PageHeader title="Cursos" description="Tu centro académico." />
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Cursos</h1>
+          <p className="text-sm text-muted-foreground">Centro académico de TEDUCA</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-72 rounded-xl" />
+            <Skeleton key={i} className="h-24 rounded-xl" />
           ))}
         </div>
       </div>
@@ -83,41 +100,47 @@ export default function CoursesPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader
-        title="Cursos"
-        description="Tu centro académico: continuá donde lo dejaste y descubrí lo nuevo."
-      />
-
-      <div className="relative mb-8 max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar cursos o profesores..."
-          className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20"
-        />
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Cursos</h1>
+          <p className="text-sm text-muted-foreground">Centro académico de TEDUCA</p>
+        </div>
+        <div className="sm:ml-auto">{searchBox}</div>
       </div>
 
       {activeCourses.length > 0 && (
-        <CourseSection title="Continuar aprendiendo" courses={activeCourses} />
+        <CourseSection
+          title="Continuar aprendiendo"
+          description="Retomá donde lo dejaste"
+          courses={activeCourses}
+        />
       )}
 
       {recommended.length > 0 && (
-        <CourseSection title="Recomendados para vos" courses={recommended.slice(0, 6)} />
+        <CourseSection
+          title="Recomendados"
+          description="Según tus intereses"
+          courses={recommended.slice(0, 6)}
+        />
       )}
 
-      <CourseSection title="Populares" courses={popular.slice(0, 6)} />
+      <CourseSection
+        title="Populares"
+        description="Los mejor valorados"
+        courses={popular.slice(0, 6)}
+      />
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold tracking-tight text-foreground">Por categoría</h2>
-        <div className="mb-6 flex flex-wrap gap-2">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-foreground">Por categoría</h2>
+        </div>
+        <div className="mb-5 flex flex-wrap gap-2">
           {categories.map((c) => (
             <button
               key={c}
               onClick={() => setCategory(c)}
               className={cn(
-                'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+                'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                 category === c
                   ? 'border-transparent bg-primary text-primary-foreground'
                   : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -135,7 +158,7 @@ export default function CoursesPage() {
             description="Probá con otra búsqueda o categoría."
           />
         ) : (
-          <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {byCategory.map((c) => (
               <StaggerItem key={c.id}>
                 <CourseCard course={c} />
@@ -148,12 +171,31 @@ export default function CoursesPage() {
   )
 }
 
-function CourseSection({ title, courses }: { title: string; courses: Course[] }) {
+function CourseSection({
+  title,
+  description,
+  courses,
+}: {
+  title: string
+  description?: string
+  courses: Course[]
+}) {
   if (courses.length === 0) return null
   return (
-    <section className="mb-10">
-      <h2 className="mb-4 text-lg font-semibold tracking-tight text-foreground">{title}</h2>
-      <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <section className="mb-8">
+      <div className="mb-4 flex items-end justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        </div>
+        <Link
+          href={APP_ROUTES.COURSES}
+          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+        >
+          Ver más <ArrowRight className="size-3" />
+        </Link>
+      </div>
+      <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {courses.map((c) => (
           <StaggerItem key={c.id}>
             <CourseCard course={c} />

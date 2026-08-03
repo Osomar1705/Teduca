@@ -14,18 +14,15 @@ import {
   CalendarDays,
   type LucideIcon,
 } from 'lucide-react'
-import { PageHeader } from '@/components/common/PageHeader'
 import { TeacherCard } from '@/components/edtech/TeacherCard'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Stagger, StaggerItem, FadeIn } from '@/components/common/Motion'
 import { getTeachers, getFavorites, toggleFavorite } from '@/lib/edtech/service'
 import { cn } from '@/lib/utils'
 import type { TeacherProfile } from '@/lib/edtech/types'
 
-type Tab = 'teachers' | 'match'
+type Tab = 'teachers' | 'match' | 'swipe'
 
 const MATCH_CATEGORIES: {
   title: string
@@ -41,6 +38,12 @@ const MATCH_CATEGORIES: {
   { title: 'Clubes académicos', description: 'Comunidades por área de interés.', icon: Award, soon: true },
   { title: 'Comunidades', description: 'Espacios de aprendizaje colaborativo.', icon: MessagesSquare, soon: true },
   { title: 'Eventos', description: 'Charlas, talleres y encuentros.', icon: CalendarDays, soon: true },
+]
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'teachers', label: 'Profesores' },
+  { key: 'match', label: 'Match Académico' },
+  { key: 'swipe', label: 'Modo Swipe' },
 ]
 
 export default function DiscoverPage() {
@@ -85,40 +88,42 @@ export default function DiscoverPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader
-        title="Descubrir"
-        description="Encontrá profesores, compañeros y comunidades para tu camino académico."
-        actions={
-          <Button variant="brand" asChild>
-            <Link href="/discover/swipe">
-              <Sparkles className="size-4" />
-              Modo swipe
-            </Link>
-          </Button>
-        }
-      />
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Descubrir</h1>
+        <p className="text-sm text-muted-foreground">
+          Encontrá profesores, compañeros y comunidades para tu camino académico.
+        </p>
+      </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
-        {(['teachers', 'match'] as const).map((key) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={cn(
-              'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
-              tab === key
-                ? 'border-transparent bg-primary text-primary-foreground'
-                : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
-            )}
-          >
-            {key === 'teachers' ? 'Profesores' : 'Match Académico'}
-          </button>
-        ))}
-        <Link
-          href="/discover/swipe"
-          className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <Sparkles className="size-3.5" /> Swipe
-        </Link>
+      <div className="mb-6 flex gap-0 border-b border-border">
+        {TABS.map((t) => {
+          const active = tab === t.key
+          if (t.key === 'swipe') {
+            return (
+              <Link
+                key={t.key}
+                href="/discover/swipe"
+                className="-mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Sparkles className="size-3.5" /> {t.label}
+              </Link>
+            )
+          }
+          return (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={cn(
+                '-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
+                active
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {t.label}
+            </button>
+          )
+        })}
       </div>
 
       {tab === 'teachers' && (
@@ -129,7 +134,7 @@ export default function DiscoverPage() {
                 key={c}
                 onClick={() => setCategory(c)}
                 className={cn(
-                  'rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+                  'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
                   category === c
                     ? 'border-transparent bg-primary text-primary-foreground'
                     : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -141,13 +146,13 @@ export default function DiscoverPage() {
           </div>
 
           {loading ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-72 rounded-xl" />
+                <Skeleton key={i} className="h-40 rounded-xl" />
               ))}
             </div>
           ) : (
-            <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((t) => (
                 <StaggerItem key={t.id}>
                   <TeacherCard
@@ -164,33 +169,27 @@ export default function DiscoverPage() {
 
       {tab === 'match' && (
         <FadeIn>
-          <Stagger className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="divide-y divide-border">
             {MATCH_CATEGORIES.map((c) => {
               const Icon = c.icon
               return (
-                <StaggerItem key={c.title}>
-                  <Card className="flex h-full flex-col p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="inline-flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <Icon className="size-5" />
-                      </div>
-                      <Badge variant={c.soon ? 'secondary' : 'default'}>
-                        {c.soon ? 'Próximamente' : 'Ver más'}
-                      </Badge>
-                    </div>
-                    <h3 className="mt-3 font-semibold text-foreground">{c.title}</h3>
-                    <p className="mt-1 flex-1 text-sm text-muted-foreground">{c.description}</p>
-                    <p className="mt-4 text-xs text-muted-foreground">
-                      {c.soon ? 'Estamos construyendo esta sección.' : 'Explorá conexiones disponibles.'}
-                    </p>
-                  </Card>
-                </StaggerItem>
+                <div key={c.title} className="group flex items-center gap-4 py-4">
+                  <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-xl bg-muted">
+                    <Icon className="size-5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground">{c.title}</p>
+                    <p className="text-xs text-muted-foreground">{c.description}</p>
+                  </div>
+                  <Badge variant={c.soon ? 'secondary' : 'default'} className="flex-shrink-0 text-xs">
+                    {c.soon ? 'Próximamente' : 'Disponible'}
+                  </Badge>
+                </div>
               )
             })}
-          </Stagger>
+          </div>
         </FadeIn>
       )}
-
     </div>
   )
 }

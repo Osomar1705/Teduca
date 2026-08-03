@@ -34,41 +34,46 @@ export function AchievementCard({ achievement }: { achievement: Achievement }) {
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-xl border p-5 transition-colors',
-        unlocked
-          ? 'border-transparent bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/20'
-          : 'border-border bg-card'
+        'flex items-start gap-3 rounded-xl border p-4 transition-colors',
+        unlocked ? 'border-primary/20 bg-primary/5' : 'border-border bg-card'
       )}
     >
-      {!unlocked && (
-        <span className="absolute right-3 top-3 inline-flex size-7 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <Lock className="size-3.5" />
-        </span>
-      )}
       <div
         className={cn(
-          'inline-flex size-12 items-center justify-center rounded-xl',
+          'flex size-10 flex-shrink-0 items-center justify-center rounded-xl',
           unlocked ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground/60'
         )}
       >
-        <Icon className="size-6" />
+        <Icon className="size-5" />
       </div>
-      <h3
-        className={cn(
-          'mt-3 font-semibold',
-          unlocked ? 'text-foreground' : 'text-muted-foreground'
-        )}
-      >
-        {achievement.title}
-      </h3>
-      <p className="mt-1 text-sm text-muted-foreground">{achievement.description}</p>
-      <div className="mt-3 flex items-center justify-between text-xs">
-        <span className={cn('font-semibold', unlocked ? 'text-primary' : 'text-muted-foreground')}>
-          +{achievement.xpReward} XP
-        </span>
-        {unlocked && achievement.unlockedAt && (
-          <span className="text-muted-foreground">{formatDate(achievement.unlockedAt)}</span>
-        )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <h3
+            className={cn(
+              'text-sm font-semibold',
+              unlocked ? 'text-foreground' : 'text-muted-foreground'
+            )}
+          >
+            {achievement.title}
+          </h3>
+          {!unlocked && (
+            <Lock className="size-3.5 flex-shrink-0 text-muted-foreground" />
+          )}
+        </div>
+        <p className="mt-0.5 text-xs text-muted-foreground">{achievement.description}</p>
+        <div className="mt-2 flex items-center justify-between text-xs">
+          <span
+            className={cn(
+              'font-semibold',
+              unlocked ? 'text-primary' : 'text-muted-foreground'
+            )}
+          >
+            +{achievement.xpReward} XP
+          </span>
+          {unlocked && achievement.unlockedAt && (
+            <span className="text-muted-foreground">{formatDate(achievement.unlockedAt)}</span>
+          )}
+        </div>
       </div>
     </div>
   )
