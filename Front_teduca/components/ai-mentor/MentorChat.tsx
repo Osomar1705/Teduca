@@ -20,9 +20,9 @@ function uid() {
 
 export function MentorChat({ context }: { context: MentorContext }) {
   const firstName = context.userName.split(' ')[0] || 'estudiante'
-  const [messages, setMessages] = useState<MentorMessage[]>([
+  const [messages, setMessages] = useState<MentorMessage[]>(() => [
     {
-      id: uid(),
+      id: 'welcome',
       role: 'mentor',
       content: `¡Hola ${firstName}! Soy tu mentor académico. Estoy acá para ayudarte a organizar tu estudio, resolver dudas y mantenerte motivado. ¿En qué querés que trabajemos hoy?`,
       createdAt: new Date().toISOString(),

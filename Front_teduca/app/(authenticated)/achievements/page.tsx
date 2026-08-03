@@ -9,10 +9,7 @@ import { AchievementCard } from '@/components/gamification/AchievementCard'
 import { RewardCard } from '@/components/gamification/RewardCard'
 import { Stagger, StaggerItem } from '@/components/common/Motion'
 import { ACHIEVEMENTS } from '@/lib/gamification/achievements'
-import {
-  getGamificationState,
-  recordDailyActivity,
-} from '@/lib/gamification/service'
+import { getGamificationState } from '@/lib/gamification/service'
 import { getAvailableRewards } from '@/lib/rewards/service'
 import { cn } from '@/lib/utils'
 import type { GamificationState } from '@/lib/gamification/types'
@@ -26,7 +23,6 @@ export default function AchievementsPage() {
   const [filter, setFilter] = useState<Filter>('all')
 
   useEffect(() => {
-    recordDailyActivity()
     setState(getGamificationState())
     setRewards(getAvailableRewards())
   }, [])

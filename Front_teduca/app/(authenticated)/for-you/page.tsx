@@ -1,19 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { Sparkles, Flame, Target, UserCog } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/common/EmptyState'
 import { MentorChat } from '@/components/ai-mentor/MentorChat'
 import { FadeIn } from '@/components/common/Motion'
-import { APP_ROUTES } from '@/lib/constants'
 import { getCurrentUser } from '@/lib/edtech/service'
 import { getOnboarding, type OnboardingData } from '@/lib/onboarding/service'
-import { recordDailyActivity, getGamificationState } from '@/lib/gamification/service'
+import { getGamificationState } from '@/lib/gamification/service'
 import type { MentorContext } from '@/lib/ai-mentor/types'
 import type { UserLevel } from '@/lib/gamification/types'
 
@@ -21,7 +18,6 @@ export default function ForYouPage() {
   const [loading, setLoading] = useState(true)
   const [context, setContext] = useState<MentorContext | null>(null)
   const [level, setLevel] = useState<UserLevel | null>(null)
-  const [needsProfile, setNeedsProfile] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -30,19 +26,14 @@ export default function ForYouPage() {
           getCurrentUser(),
           getOnboarding().catch(() => null as OnboardingData | null),
         ])
-        const streak = recordDailyActivity()
         const state = getGamificationState()
         setLevel(state.level)
-
-        if (!onboarding || !onboarding.completed) {
-          setNeedsProfile(true)
-        }
 
         setContext({
           userName: onboarding?.full_name || user.name,
           goals: onboarding?.goals ?? [],
           subjects: onboarding?.subject_tags ?? [],
-          streakDays: streak.current,
+          streakDays: state.streak.current,
           recentActivity: [],
         })
       } finally {
@@ -64,18 +55,13 @@ export default function ForYouPage() {
     )
   }
 
-  if (needsProfile || !context) {
+  if (!context) {
     return (
       <div className="mx-auto max-w-3xl">
         <EmptyState
           icon={UserCog}
-          title="Completá tu perfil académico"
-          description="Tu mentor necesita conocer tus objetivos e intereses para darte recomendaciones personalizadas."
-          action={
-            <Button variant="brand" asChild>
-              <Link href={APP_ROUTES.PROFILE}>Completar perfil</Link>
-            </Button>
-          }
+          title="No se pudo cargar el mentor"
+          description="Verificá tu conexión e intentá recargar la página."
         />
       </div>
     )

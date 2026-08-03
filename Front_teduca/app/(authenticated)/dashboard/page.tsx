@@ -30,10 +30,7 @@ import {
   getTeachers,
 } from '@/lib/edtech/service'
 import { getOnboarding } from '@/lib/onboarding/service'
-import {
-  getGamificationState,
-  recordDailyActivity,
-} from '@/lib/gamification/service'
+import { getGamificationState } from '@/lib/gamification/service'
 import { formatDate } from '@/lib/format'
 import type { Course, Reservation, TeacherProfile } from '@/lib/edtech/types'
 import type { GamificationState } from '@/lib/gamification/types'
@@ -51,7 +48,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    recordDailyActivity()
     setGame(getGamificationState())
 
     async function load() {

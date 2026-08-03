@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
   Sparkles,
-  ArrowRight,
   GraduationCap,
   Users,
   FlaskConical,
@@ -26,7 +25,7 @@ import { getTeachers, getFavorites, toggleFavorite } from '@/lib/edtech/service'
 import { cn } from '@/lib/utils'
 import type { TeacherProfile } from '@/lib/edtech/types'
 
-type Tab = 'teachers' | 'match' | 'swipe'
+type Tab = 'teachers' | 'match'
 
 const MATCH_CATEGORIES: {
   title: string
@@ -84,12 +83,6 @@ export default function DiscoverPage() {
     })
   }
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'teachers', label: 'Profesores' },
-    { key: 'match', label: 'Match Académico' },
-    { key: 'swipe', label: 'Swipe' },
-  ]
-
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
@@ -106,26 +99,26 @@ export default function DiscoverPage() {
       />
 
       <div className="mb-6 flex flex-wrap gap-2">
-        {tabs.map((t) => (
+        {(['teachers', 'match'] as const).map((key) => (
           <button
-            key={t.key}
-            onClick={() => (t.key === 'swipe' ? undefined : setTab(t.key))}
+            key={key}
+            onClick={() => setTab(key)}
             className={cn(
               'rounded-full border px-4 py-1.5 text-sm font-medium transition-colors',
-              tab === t.key && t.key !== 'swipe'
+              tab === key
                 ? 'border-transparent bg-primary text-primary-foreground'
                 : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
             )}
           >
-            {t.key === 'swipe' ? (
-              <Link href="/discover/swipe" className="inline-flex items-center gap-1.5">
-                <Sparkles className="size-3.5" /> {t.label}
-              </Link>
-            ) : (
-              t.label
-            )}
+            {key === 'teachers' ? 'Profesores' : 'Match Académico'}
           </button>
         ))}
+        <Link
+          href="/discover/swipe"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <Sparkles className="size-3.5" /> Swipe
+        </Link>
       </div>
 
       {tab === 'teachers' && (
@@ -198,25 +191,6 @@ export default function DiscoverPage() {
         </FadeIn>
       )}
 
-      {tab === 'swipe' && (
-        <Link
-          href="/discover/swipe"
-          className="flex items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border bg-gradient-subtle p-5 transition-shadow hover:shadow-md"
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-gradient-brand inline-flex size-11 items-center justify-center rounded-xl text-white">
-              <Sparkles className="size-5" />
-            </div>
-            <div>
-              <p className="font-semibold text-foreground">Ir al modo swipe</p>
-              <p className="text-sm text-muted-foreground">
-                Deslizá para encontrar profesores, como en una app de citas pero para aprender.
-              </p>
-            </div>
-          </div>
-          <ArrowRight className="hidden size-5 shrink-0 text-muted-foreground sm:block" />
-        </Link>
-      )}
     </div>
   )
 }

@@ -25,10 +25,7 @@ import { ProfileEditor } from '@/components/profile/ProfileEditor'
 import { APP_ROUTES } from '@/lib/constants'
 import { getCurrentUser, getReservations } from '@/lib/edtech/service'
 import { getOnboarding, type OnboardingData } from '@/lib/onboarding/service'
-import {
-  getGamificationState,
-  recordDailyActivity,
-} from '@/lib/gamification/service'
+import { getGamificationState } from '@/lib/gamification/service'
 import { ACHIEVEMENTS } from '@/lib/gamification/achievements'
 import { cn } from '@/lib/utils'
 import type { GamificationState } from '@/lib/gamification/types'
@@ -55,7 +52,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    recordDailyActivity()
     setGame(getGamificationState())
 
     async function load() {

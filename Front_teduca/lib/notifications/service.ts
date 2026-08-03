@@ -3,12 +3,43 @@ import { getChatThreads } from '../edtech/service'
 
 /**
  * Centro de notificaciones. Combina señales reales del backend (hilos de chat
- * recientes) con notificaciones de sistema/placeholder. La persistencia de
- * "leído" es en memoria por ahora; migrará a `/api/v1/notifications`.
+ * recientes) con notificaciones de sistema/placeholder.
+ * El estado "leído" persiste en localStorage para sobrevivir recargas.
+ * Migrará a `/api/v1/notifications` cuando el backend lo exponga.
  */
 
-let overrides: Record<string, boolean> = {}
-let allRead = false
+const READ_KEY = 'teduca_read_notifications'
+const ALL_READ_KEY = 'teduca_all_notifications_read'
+
+function isBrowser() {
+  return typeof window !== 'undefined'
+}
+
+function getReadSet(): Set<string> {
+  if (!isBrowser()) return new Set()
+  try {
+    const raw = localStorage.getItem(READ_KEY)
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+function saveReadSet(ids: Set<string>) {
+  if (!isBrowser()) return
+  localStorage.setItem(READ_KEY, JSON.stringify([...ids]))
+}
+
+function isAllRead(): boolean {
+  if (!isBrowser()) return false
+  return localStorage.getItem(ALL_READ_KEY) === '1'
+}
+
+function setAllRead(val: boolean) {
+  if (!isBrowser()) return
+  if (val) localStorage.setItem(ALL_READ_KEY, '1')
+  else localStorage.removeItem(ALL_READ_KEY)
+}
 
 function base(): Notification[] {
   const now = Date.now()
@@ -69,22 +100,26 @@ export async function getNotifications(): Promise<Notification[]> {
       })
     })
   } catch {
-    // Sin sesión de chat: se omiten las notificaciones de mensajes.
+    // Sin sesión de chat activa: se omiten notificaciones de mensajes.
   }
+
+  const readIds = getReadSet()
+  const allDone = isAllRead()
 
   return items
     .map((n) => ({
       ...n,
-      isRead: allRead || overrides[n.id] || n.isRead,
+      isRead: allDone || readIds.has(n.id) || n.isRead,
     }))
     .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
 }
 
 export async function markAsRead(id: string): Promise<void> {
-  overrides[id] = true
+  const ids = getReadSet()
+  ids.add(id)
+  saveReadSet(ids)
 }
 
 export async function markAllAsRead(): Promise<void> {
-  allRead = true
-  overrides = {}
+  setAllRead(true)
 }
