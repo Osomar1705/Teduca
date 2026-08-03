@@ -17,6 +17,7 @@ import { StatsCard } from '@/components/dashboard/StatsCard'
 import { StreakCard } from '@/components/dashboard/StreakCard'
 import { LevelCard } from '@/components/dashboard/LevelCard'
 import { WeeklyGoals } from '@/components/dashboard/WeeklyGoals'
+import { RewardSummaryWidget } from '@/components/dashboard/RewardSummaryWidget'
 import { TeacherCard } from '@/components/edtech/TeacherCard'
 import { CourseCard } from '@/components/edtech/CourseCard'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -87,6 +88,7 @@ export default function DashboardPage() {
     <>
       <StreakCard streak={game.streak} />
       <LevelCard xp={game.xp} level={game.level} />
+      <RewardSummaryWidget />
       <WeeklyGoals weeklyXP={game.weeklyXP} weeklyGoal={game.weeklyGoal} goals={goals} />
     </>
   )
