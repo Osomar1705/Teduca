@@ -21,7 +21,7 @@ export function RewardSummaryWidget() {
   }
 
   return (
-    <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/8 to-primary/3 p-4">
+    <div className="rounded-xl border border-primary/20 bg-muted/50 p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Orbit className="size-4 text-primary" />
@@ -40,17 +40,7 @@ export function RewardSummaryWidget() {
         <span className="ml-1.5 text-base font-semibold text-primary">Orbits</span>
       </p>
 
-      <div className="mt-3 grid grid-cols-3 gap-2 border-t border-primary/10 pt-3">
-        <div>
-          <p className="text-[10px] text-muted-foreground">Hoy</p>
-          <p className="text-sm font-semibold text-foreground">
-            {balance.weeklyEarned > 0 ? (
-              <span className="text-success">+{balance.weeklyEarned}</span>
-            ) : (
-              '—'
-            )}
-          </p>
-        </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-primary/10 pt-3">
         <div>
           <p className="text-[10px] text-muted-foreground">Esta semana</p>
           <p className="text-sm font-semibold text-foreground">

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
-  Sparkles,
   GraduationCap,
   Users,
   FlaskConical,
@@ -105,7 +104,7 @@ export default function DiscoverPage() {
                 href="/discover/swipe"
                 className="-mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
-                <Sparkles className="size-3.5" /> {t.label}
+                {t.label}
               </Link>
             )
           }

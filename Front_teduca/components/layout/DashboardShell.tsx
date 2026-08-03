@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X, Bell, Search, Sparkles } from 'lucide-react'
+import { Menu, X, Bell, Search, Telescope } from 'lucide-react'
 import { Sidebar, SidebarNav } from '@/components/layout/Sidebar'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
 import { Logo } from '@/components/common/Logo'
@@ -93,7 +93,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="ml-auto flex items-center gap-1.5">
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
               <Link href={APP_ROUTES.FOR_YOU}>
-                <Sparkles className="size-4 text-primary" />
+                <Telescope className="size-4 text-primary" />
                 Para Ti
               </Link>
             </Button>

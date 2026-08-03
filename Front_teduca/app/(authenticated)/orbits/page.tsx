@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   ArrowUpRight,
   Gift,
-  Sparkles,
+  Orbit,
   Trophy,
   Wallet,
 } from 'lucide-react'
@@ -130,7 +130,7 @@ function BalanceTab() {
 
       {empty ? (
         <EmptyState
-          icon={Sparkles}
+          icon={Orbit}
           title="¡Empezá a ganar Orbits!"
           description="Tu primer login ya vale Orbits. Asistí a mentorías y completá cursos para sumar más."
           action={

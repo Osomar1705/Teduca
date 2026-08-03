@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Send, Sparkles } from 'lucide-react'
+import { Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { sendMentorMessage } from '@/lib/ai-mentor/service'
@@ -106,7 +106,6 @@ export function MentorChat({ context }: { context: MentorContext }) {
                 onClick={() => send(s)}
                 className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <Sparkles className="size-3.5 text-primary" />
                 {s}
               </button>
             ))}
