@@ -23,6 +23,7 @@ from teduca.modules.submissions.router import (
     assignment_submissions_router,
     submissions_router,
 )
+from teduca.modules.community.router import router as community_router
 from teduca.modules.users.router import router as users_router
 
 api_router = APIRouter()
@@ -55,3 +56,4 @@ api_router.include_router(ml_router)
 api_router.include_router(onboarding_router)
 api_router.include_router(course_files_router)
 api_router.include_router(files_router)
+api_router.include_router(community_router)

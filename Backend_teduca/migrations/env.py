@@ -23,6 +23,7 @@ from teduca.modules.notifications import models as _notifications  # noqa: E402,
 from teduca.modules.onboarding import models as _onboarding  # noqa: E402, F401
 from teduca.modules.quizzes import models as _quizzes  # noqa: E402, F401
 from teduca.modules.submissions import models as _submissions  # noqa: E402, F401
+from teduca.modules.community import models as _community  # noqa: E402, F401
 from teduca.modules.users import models as _users  # noqa: E402, F401
 
 config = context.config

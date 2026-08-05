@@ -1,12 +1,11 @@
 'use client'
 
 import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
-
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { getTeacherProfile, updateTeacherProfile } from '@/lib/teacher/service'
 import {
-  User, Building2, GraduationCap, Globe, Link2, GitFork,
-  DollarSign, Clock, MapPin, Languages, Camera, Save,
-  Plus, X, CheckCircle2,
+  Globe, DollarSign, MapPin, Languages, Camera, Save,
+  CheckCircle2, Loader2,
 } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { Button } from '@/components/ui/button'
@@ -32,41 +31,72 @@ const MODALITY_OPTIONS: { id: Modality; label: string; desc: string }[] = [
 ]
 
 export default function TeacherProfilePage() {
-  const { isAllowed } = useTeacherGuard()
-  // Datos del perfil (mock — en producción se cargan desde /api/v1/users/me)
-  const [name,         setName]         = useState('Osmar Vilchez')
-  const [bio,          setBio]          = useState('Desarrollador Fullstack con 4 años de experiencia en React, Next.js y FastAPI. Apasionado por la educación y el desarrollo de software.')
-  const [institution,  setInstitution]  = useState('UTEC')
-  const [career,       setCareer]       = useState('Ingeniería de Software')
-  const [location,     setLocation]     = useState('Lima, Perú')
-  const [pricePerHour, setPricePerHour] = useState('80')
-  const [github,       setGithub]       = useState('osmar')
-  const [linkedin,     setLinkedin]     = useState('osmar-vilchez')
-  const [website,      setWebsite]      = useState('')
-  const [specialties,  setSpecialties]  = useState<string[]>(['React', 'Next.js', 'Python', 'FastAPI'])
-  const [languages,    setLanguages]    = useState<string[]>(['Español', 'Inglés'])
-  const [modality,     setModality]     = useState<Modality>('hibrido')
-  const [experience,   setExperience]   = useState('4 años desarrollando software. Experiencia como tutor universitario y mentor en bootcamps.')
-  const [certifications, setCerts]      = useState<string[]>(['AWS Cloud Practitioner', 'Meta Front-End Developer'])
-  const [newCert,      setNewCert]      = useState('')
+  const { isAllowed }  = useTeacherGuard()
+  const didLoad        = useRef(false)
+  const [loading,      setLoading]      = useState(true)
+  const [name,         setName]         = useState('')
+  const [bio,          setBio]          = useState('')
+  const [university,   setUniversity]   = useState('')
+  const [specialty,    setSpecialty]    = useState('')
+  const [location,     setLocation]     = useState('')
+  const [hourlyPrice,  setHourlyPrice]  = useState('')
+  const [expYears,     setExpYears]     = useState('')
+  const [languages,    setLanguages]    = useState<string[]>([])
+  const [categories,   setCategories]   = useState<string[]>([])
+  const [modality,     setModality]     = useState<Modality>('virtual')
   const [saved,        setSaved]        = useState(false)
+  const [saving,       setSaving]       = useState(false)
+
+  useEffect(() => {
+    if (didLoad.current) return
+    didLoad.current = true
+    getTeacherProfile()
+      .then((p) => {
+        setBio(p.bio ?? '')
+        setUniversity(p.university ?? '')
+        setSpecialty(p.specialty ?? '')
+        setLocation(p.location ?? '')
+        setHourlyPrice(p.hourly_price ? String(p.hourly_price) : '')
+        setExpYears(p.experience_years ? String(p.experience_years) : '')
+        setLanguages(p.languages)
+        setCategories(p.categories)
+        setModality((p.modality as Modality) ?? 'virtual')
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
 
   function toggleTag(list: string[], setList: (v: string[]) => void, tag: string) {
     setList(list.includes(tag) ? list.filter((t) => t !== tag) : [...list, tag])
   }
 
-  function addCert() {
-    const t = newCert.trim()
-    if (t && !certifications.includes(t)) setCerts([...certifications, t])
-    setNewCert('')
-  }
-
-  function handleSave() {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+  async function handleSave() {
+    setSaving(true)
+    try {
+      await updateTeacherProfile({
+        bio,
+        university,
+        specialty,
+        location,
+        hourly_price: hourlyPrice ? parseFloat(hourlyPrice) : 0,
+        experience_years: expYears ? parseInt(expYears, 10) : 0,
+        languages,
+        categories,
+        modality,
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch { /* silencioso */ }
+    finally { setSaving(false) }
   }
 
   if (!isAllowed) return null
+  if (loading) return (
+    <div className="flex items-center justify-center py-32">
+      <Loader2 className="size-6 animate-spin text-muted-foreground" />
+    </div>
+  )
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <FadeIn>
@@ -75,39 +105,43 @@ export default function TeacherProfilePage() {
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Perfil profesional</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">Este es el perfil que ven tus alumnos y la comunidad.</p>
           </div>
-          <Button size="sm" onClick={handleSave} className="gap-1.5">
-            {saved ? <><CheckCircle2 className="size-3.5 text-emerald-400" /> Guardado</> : <><Save className="size-3.5" /> Guardar</>}
+          <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1.5">
+            {saving
+              ? <><Loader2 className="size-3.5 animate-spin" /> Guardando…</>
+              : saved
+              ? <><CheckCircle2 className="size-3.5 text-emerald-400" /> Guardado</>
+              : <><Save className="size-3.5" /> Guardar</>}
           </Button>
         </div>
       </FadeIn>
 
       <Stagger className="space-y-4">
 
-        {/* Foto y nombre */}
+        {/* Identidad */}
         <StaggerItem>
           <div className="rounded-xl border border-border bg-card p-5">
             <h2 className="mb-4 text-sm font-semibold text-foreground">Identidad</h2>
             <div className="flex items-start gap-4">
               <div className="relative">
-                <Avatar name={name} size="xl" />
+                <Avatar name={name || 'P'} size="xl" />
                 <button className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
                   <Camera className="size-3" />
                 </button>
               </div>
               <div className="flex-1 space-y-3">
-                <div>
-                  <Label className="text-xs">Nombre completo</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" />
-                </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
                     <Label className="text-xs">Universidad / Institución</Label>
-                    <Input value={institution} onChange={(e) => setInstitution(e.target.value)} className="mt-1" placeholder="UTEC, PUCP..." />
+                    <Input value={university} onChange={(e) => setUniversity(e.target.value)} className="mt-1" placeholder="UTEC, PUCP..." />
                   </div>
                   <div>
-                    <Label className="text-xs">Carrera</Label>
-                    <Input value={career} onChange={(e) => setCareer(e.target.value)} className="mt-1" placeholder="Ingeniería de Software..." />
+                    <Label className="text-xs">Años de experiencia</Label>
+                    <Input type="number" min="0" value={expYears} onChange={(e) => setExpYears(e.target.value)} className="mt-1" placeholder="4" />
                   </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Especialidad principal</Label>
+                  <Input value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="mt-1" placeholder="Ej: Machine Learning, React..." />
                 </div>
                 <div>
                   <Label className="text-xs">Ubicación</Label>
@@ -125,44 +159,30 @@ export default function TeacherProfilePage() {
         <StaggerItem>
           <div className="rounded-xl border border-border bg-card p-5">
             <h2 className="mb-3 text-sm font-semibold text-foreground">Sobre mí</h2>
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs">Biografía</Label>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={3}
-                  placeholder="Cuéntale a tus alumnos quién eres..."
-                  className="mt-1 w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Experiencia</Label>
-                <textarea
-                  value={experience}
-                  onChange={(e) => setExperience(e.target.value)}
-                  rows={2}
-                  placeholder="Años de experiencia, roles anteriores..."
-                  className="mt-1 w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
-                />
-              </div>
-            </div>
+            <Label className="text-xs">Biografía</Label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={4}
+              placeholder="Cuéntale a tus alumnos quién eres y qué puedes enseñarles..."
+              className="mt-1 w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+            />
           </div>
         </StaggerItem>
 
-        {/* Especialidades */}
+        {/* Categorías */}
         <StaggerItem>
           <div className="rounded-xl border border-border bg-card p-5">
-            <h2 className="mb-3 text-sm font-semibold text-foreground">Especialidades</h2>
+            <h2 className="mb-3 text-sm font-semibold text-foreground">Categorías de enseñanza</h2>
             <div className="flex flex-wrap gap-2">
               {SPECIALTIES_SUGGESTIONS.map((s) => (
                 <button
                   key={s}
                   type="button"
-                  onClick={() => toggleTag(specialties, setSpecialties, s)}
+                  onClick={() => toggleTag(categories, setCategories, s)}
                   className={cn(
                     'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                    specialties.includes(s)
+                    categories.includes(s)
                       ? 'border-primary bg-primary text-primary-foreground'
                       : 'border-border text-muted-foreground hover:border-primary/60 hover:text-foreground'
                   )}
@@ -174,40 +194,12 @@ export default function TeacherProfilePage() {
           </div>
         </StaggerItem>
 
-        {/* Certificaciones */}
-        <StaggerItem>
-          <div className="rounded-xl border border-border bg-card p-5">
-            <h2 className="mb-3 text-sm font-semibold text-foreground">Certificaciones</h2>
-            <div className="mb-3 flex flex-wrap gap-2">
-              {certifications.map((c) => (
-                <span key={c} className="flex items-center gap-1.5 rounded-full bg-primary/8 px-3 py-1 text-xs font-medium text-primary">
-                  <CheckCircle2 className="size-3" />{c}
-                  <button onClick={() => setCerts(certifications.filter((x) => x !== c))} className="ml-0.5 opacity-60 hover:opacity-100">
-                    <X className="size-2.5" />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Input
-                value={newCert}
-                onChange={(e) => setNewCert(e.target.value)}
-                placeholder="AWS, Google, Meta, Microsoft..."
-                className="text-sm"
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCert() } }}
-              />
-              <Button type="button" variant="outline" size="sm" onClick={addCert}>
-                <Plus className="size-3.5" />
-              </Button>
-            </div>
-          </div>
-        </StaggerItem>
-
-        {/* Configuración de servicio */}
+        {/* Configuración del servicio */}
         <StaggerItem>
           <div className="rounded-xl border border-border bg-card p-5">
             <h2 className="mb-4 text-sm font-semibold text-foreground">Configuración del servicio</h2>
             <div className="space-y-4">
+
               {/* Precio */}
               <div>
                 <Label className="text-xs">Precio por hora (S/)</Label>
@@ -215,8 +207,8 @@ export default function TeacherProfilePage() {
                   <DollarSign className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="number"
-                    value={pricePerHour}
-                    onChange={(e) => setPricePerHour(e.target.value)}
+                    value={hourlyPrice}
+                    onChange={(e) => setHourlyPrice(e.target.value)}
                     className="pl-8"
                     min="10"
                     placeholder="80"
@@ -272,44 +264,14 @@ export default function TeacherProfilePage() {
           </div>
         </StaggerItem>
 
-        {/* Redes sociales */}
-        <StaggerItem>
-          <div className="rounded-xl border border-border bg-card p-5">
-            <h2 className="mb-4 text-sm font-semibold text-foreground">Redes y portafolio</h2>
-            <div className="space-y-3">
-              {[
-                { icon: GitFork, label: 'GitHub', value: github,   set: setGithub,   prefix: 'github.com/',   placeholder: 'usuario' },
-                { icon: Link2,   label: 'LinkedIn',value: linkedin, set: setLinkedin, prefix: 'linkedin.com/in/', placeholder: 'perfil' },
-                { icon: Globe,   label: 'Sitio web',value: website, set: setWebsite,  prefix: '',              placeholder: 'https://...' },
-              ].map(({ icon: Icon, label, value, set, prefix, placeholder }) => (
-                <div key={label}>
-                  <Label className="text-xs">{label}</Label>
-                  <div className="relative mt-1 flex">
-                    {prefix && (
-                      <span className="flex items-center rounded-l-lg border border-r-0 border-input bg-muted px-3 text-xs text-muted-foreground">
-                        {prefix}
-                      </span>
-                    )}
-                    <div className={cn('relative flex-1', !prefix && 'pl-0')}>
-                      {!prefix && <Icon className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />}
-                      <Input
-                        value={value}
-                        onChange={(e) => set(e.target.value)}
-                        placeholder={placeholder}
-                        className={cn(!prefix ? 'pl-8' : 'rounded-l-none')}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </StaggerItem>
-
         {/* Botón guardar */}
         <StaggerItem>
-          <Button onClick={handleSave} className="w-full gap-2" size="lg">
-            {saved ? <><CheckCircle2 className="size-4" /> Perfil guardado</> : <><Save className="size-4" /> Guardar cambios</>}
+          <Button onClick={handleSave} disabled={saving} className="w-full gap-2" size="lg">
+            {saving
+              ? <><Loader2 className="size-4 animate-spin" /> Guardando…</>
+              : saved
+              ? <><CheckCircle2 className="size-4" /> Perfil guardado</>
+              : <><Save className="size-4" /> Guardar cambios</>}
           </Button>
         </StaggerItem>
 

@@ -2,13 +2,15 @@
 
 import uuid
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from teduca.core.exceptions import ConflictError, NotFoundError
+from teduca.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from teduca.core.security import hash_password
 from teduca.modules.users.models import User
 from teduca.modules.users.repository import RoleRepository, UserRepository
-from teduca.modules.users.schemas import UserUpdate
+from teduca.modules.users.schemas import TeacherProfileUpdate, UserUpdate
+from teduca.modules.edtech.models import TeacherProfile
 
 # Roles válidos que un usuario puede auto-asignarse al registrarse.
 SELF_ASSIGNABLE_ROLES = {"student", "teacher"}
@@ -143,3 +145,34 @@ class UserService:
         await self.session.flush()
         await self.session.refresh(user)
         return user
+
+    # ── TeacherProfile ─────────────────────────────────────────────────────
+
+    def _require_teacher_or_admin(self, user: User) -> None:
+        if not ({"teacher", "admin"} & set(user.role_names)):
+            raise ForbiddenError("Se requiere rol de profesor o administrador.")
+
+    async def get_teacher_profile(self, user: User) -> TeacherProfile:
+        """Devuelve el perfil de docente, creándolo vacío si no existe."""
+        self._require_teacher_or_admin(user)
+        result = await self.session.execute(
+            select(TeacherProfile).where(TeacherProfile.user_id == user.id)
+        )
+        profile = result.scalar_one_or_none()
+        if profile is None:
+            profile = TeacherProfile(user_id=user.id)
+            self.session.add(profile)
+            await self.session.flush()
+            await self.session.refresh(profile)
+        return profile
+
+    async def update_teacher_profile(
+        self, user: User, data: TeacherProfileUpdate
+    ) -> TeacherProfile:
+        """Actualiza (o crea) el perfil de docente con los campos provistos."""
+        profile = await self.get_teacher_profile(user)  # también verifica rol
+        for field, value in data.model_dump(exclude_unset=True).items():
+            setattr(profile, field, value)
+        await self.session.flush()
+        await self.session.refresh(profile)
+        return profile

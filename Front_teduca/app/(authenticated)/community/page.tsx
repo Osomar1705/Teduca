@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Plus, Heart, MessageCircle, Bookmark, Share2,
@@ -14,6 +14,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { ImageUploader, type PostImage } from '@/components/community/ImageUploader'
+import { fetchPosts, createPost, toggleLike, toggleSave, type ApiPost } from '@/lib/community/service'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -171,40 +172,51 @@ const TRENDS = ['IAGenerativa','GoogleSolutionChallenge','Fullbright2025','React
 // ── Modal Crear Publicación ────────────────────────────────────────────────
 
 function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublish: (p: Post) => void }) {
-  const [content,   setContent]   = useState('')
-  const [category,  setCategory]  = useState<Category>('networking')
-  const [tagsInput, setTagsInput] = useState('')
-  const [link,      setLink]      = useState('')
-  const [showLink,  setShowLink]  = useState(false)
-  const [title,     setTitle]     = useState('')
+  const [content,    setContent]    = useState('')
+  const [category,   setCategory]   = useState<Category>('networking')
+  const [tagsInput,  setTagsInput]  = useState('')
+  const [link,       setLink]       = useState('')
+  const [showLink,   setShowLink]   = useState(false)
+  const [title,      setTitle]      = useState('')
   const [postImages, setPostImages] = useState<PostImage[]>([])
+  const [publishing, setPublishing] = useState(false)
 
   const isUploading = postImages.some((img) => img.status === 'uploading')
   const hasError    = postImages.some((img) => img.status === 'error' && img.previewUrl !== '')
   const remaining   = 600 - content.length
-  const canPublish  = content.trim().length > 0 && !isUploading
+  const canPublish  = content.trim().length > 0 && !isUploading && !publishing
 
-  function handlePublish() {
+  async function handlePublish() {
     if (!canPublish) return
-    const tags = tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
-    // Imagen principal: URL de Supabase si está subida, preview local si no
-    const primaryImage = postImages.find((img) => img.status === 'done' || img.previewUrl)
-    const newPost: Post = {
-      id:       Date.now().toString(),
-      author:   { name: 'Tú', username: 'yo', role: 'Estudiante', verified: false },
-      category,
-      title:    title.trim() || undefined,
-      content,
-      tags,
-      link:     link.trim() || undefined,
-      image:    primaryImage?.url ?? primaryImage?.previewUrl,
-      likes:    0,
-      comments: 0,
-      saves:    0,
-      timeAgo:  'ahora',
+    setPublishing(true)
+    const tags       = tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
+    const image_urls = postImages.filter((i) => i.status === 'done' && i.url).map((i) => i.url!)
+    try {
+      const apiPost = await createPost({
+        content,
+        category,
+        title:      title.trim() || undefined,
+        link:       link.trim() || undefined,
+        tags,
+        image_urls,
+      })
+      onPublish(apiToPost(apiPost))
+      onClose()
+    } catch {
+      // Fallback: optimistic local post
+      const primaryImage = postImages.find((img) => img.status === 'done' || img.previewUrl)
+      onPublish({
+        id: Date.now().toString(),
+        author: { name: 'Tú', username: 'yo', role: 'Estudiante', verified: false },
+        category, title: title.trim() || undefined, content, tags,
+        link: link.trim() || undefined,
+        image: primaryImage?.url ?? primaryImage?.previewUrl,
+        likes: 0, comments: 0, saves: 0, timeAgo: 'ahora',
+      })
+      onClose()
+    } finally {
+      setPublishing(false)
     }
-    onPublish(newPost)
-    onClose()
   }
 
   return (
@@ -345,8 +357,8 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
               onClick={handlePublish}
               className="gap-1.5"
             >
-              {isUploading
-                ? <><Loader2 className="size-3.5 animate-spin" /> Subiendo…</>
+              {isUploading || publishing
+                ? <><Loader2 className="size-3.5 animate-spin" /> {isUploading ? 'Subiendo…' : 'Publicando…'}</>
                 : <><Send className="size-3.5" /> Publicar</>
               }
             </Button>
@@ -376,8 +388,29 @@ function PostCard({ post }: { post: Post }) {
   const [liked, setLiked]   = useState(false)
   const [saved, setSaved]   = useState(false)
   const [likes, setLikes]   = useState(post.likes)
+  const [saves, setSaves]   = useState(post.saves)
   const [expanded, setExp]  = useState(false)
   const isLong = post.content.length > 200
+
+  async function handleLike() {
+    setLiked((p) => !p)
+    setLikes((p) => liked ? p - 1 : p + 1)
+    try {
+      const res = await toggleLike(post.id)
+      setLiked(res.liked)
+      setLikes(res.likes_count)
+    } catch { /* keep optimistic */ }
+  }
+
+  async function handleSave() {
+    setSaved((p) => !p)
+    setSaves((p) => saved ? p - 1 : p + 1)
+    try {
+      const res = await toggleSave(post.id)
+      setSaved(res.saved)
+      setSaves(res.saves_count)
+    } catch { /* keep optimistic */ }
+  }
 
   return (
     <article className="group overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-border/80 hover:shadow-sm">
@@ -459,7 +492,7 @@ function PostCard({ post }: { post: Post }) {
         {/* Acciones */}
         <div className="mt-4 flex items-center gap-0.5 border-t border-border/60 pt-3">
           <button
-            onClick={() => { setLiked((p) => !p); setLikes((p) => liked ? p - 1 : p + 1) }}
+            onClick={handleLike}
             className={cn(
               'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
               liked ? 'text-rose-500 hover:bg-rose-500/8' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -471,13 +504,13 @@ function PostCard({ post }: { post: Post }) {
             <MessageCircle className="size-3.5" />{post.comments}
           </button>
           <button
-            onClick={() => setSaved((p) => !p)}
+            onClick={handleSave}
             className={cn(
               'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
               saved ? 'text-primary hover:bg-primary/8' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             )}
           >
-            <Bookmark className={cn('size-3.5', saved && 'fill-current')} />{post.saves}
+            <Bookmark className={cn('size-3.5', saved && 'fill-current')} />{saves}
           </button>
           <button className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
             <Share2 className="size-3.5" />Compartir
@@ -606,24 +639,64 @@ function RightPanel({ onPublish }: { onPublish: () => void }) {
 
 // ── Página ─────────────────────────────────────────────────────────────────
 
+function apiToPost(a: ApiPost): Post {
+  return {
+    id:       a.id,
+    author:   { name: a.author.name, username: a.author.id, avatar: a.author.avatar ?? undefined, role: undefined, verified: false },
+    category: (a.category as Category) ?? 'todo',
+    title:    a.title ?? undefined,
+    content:  a.content,
+    tags:     a.tags,
+    location: a.location ?? undefined,
+    deadline: a.deadline ?? undefined,
+    link:     a.link ?? undefined,
+    image:    a.image_urls[0] ?? undefined,
+    likes:    a.likes_count,
+    comments: a.comments_count,
+    saves:    a.saves_count,
+    timeAgo:  new Date(a.created_at).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }),
+  }
+}
+
 export default function CommunityPage() {
   const [activeTab, setActiveTab]             = useState<Tab>('feed')
   const [activeCategory, setActiveCategory]   = useState<Category>('todo')
   const [search, setSearch]                   = useState('')
   const [netSearch, setNetSearch]             = useState('')
   const [showModal, setShowModal]             = useState(false)
-  const [posts, setPosts]                     = useState<Post[]>(MOCK_POSTS)
+  const [posts, setPosts]                     = useState<Post[]>([])
+  const [loadingPosts, setLoadingPosts]        = useState(true)
+  const didFetch                               = useRef(false)
 
-  function handleNewPost(p: Post) {
+  const loadPosts = useCallback(async (category: Category, q: string) => {
+    setLoadingPosts(true)
+    try {
+      const feed = await fetchPosts({ category, search: q || undefined, page_size: 50 })
+      setPosts(feed.items.map(apiToPost))
+    } catch {
+      setPosts(MOCK_POSTS)
+    } finally {
+      setLoadingPosts(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (didFetch.current) return
+    didFetch.current = true
+    loadPosts('todo', '')
+  }, [loadPosts])
+
+  useEffect(() => {
+    if (!didFetch.current) return
+    const t = setTimeout(() => loadPosts(activeCategory, search), 400)
+    return () => clearTimeout(t)
+  }, [activeCategory, search, loadPosts])
+
+  async function handleNewPost(p: Post) {
     setPosts((prev) => [p, ...prev])
   }
 
-  const filteredPosts = posts.filter((p) => {
-    const matchCat  = activeCategory === 'todo' || p.category === activeCategory
-    const q         = search.toLowerCase()
-    const matchText = !q || p.content.toLowerCase().includes(q) || (p.title?.toLowerCase().includes(q) ?? false) || p.tags.some((t) => t.toLowerCase().includes(q))
-    return matchCat && matchText
-  })
+  const filteredPosts = posts
 
   const filteredPeople = MOCK_PEOPLE.filter((p) => {
     const q = netSearch.toLowerCase()
@@ -717,13 +790,17 @@ export default function CommunityPage() {
               {/* Posts */}
               <AnimatePresence mode="wait">
                 <motion.div key={activeCategory + search} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>
-                  {filteredPosts.length === 0 ? (
+                  {loadingPosts ? (
+                    <div className="flex items-center justify-center py-20">
+                      <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : filteredPosts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                       <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-muted">
                         <Search className="size-5 text-muted-foreground" />
                       </div>
                       <p className="text-sm font-medium text-foreground">Sin resultados</p>
-                      <p className="text-xs text-muted-foreground">Prueba con otro filtro</p>
+                      <p className="text-xs text-muted-foreground">Prueba con otro filtro o sé el primero en publicar</p>
                     </div>
                   ) : (
                     <Stagger className="flex flex-col gap-3">

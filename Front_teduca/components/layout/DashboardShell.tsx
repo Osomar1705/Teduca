@@ -4,14 +4,14 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X, Bell, Search, Users } from 'lucide-react'
+import { Menu, X, Bell, Search, Users, Clock } from 'lucide-react'
 import { Sidebar, SidebarNav } from '@/components/layout/Sidebar'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
 import { Logo } from '@/components/common/Logo'
 import { Button } from '@/components/ui/button'
 import { APP_ROUTES, UserRole } from '@/lib/constants'
-import { useUIStore } from '@/store/uiStore'
 import { usePlatformStore } from '@/store/platformStore'
+import { useUIStore } from '@/store/uiStore'
 import { getOnboardingStatus } from '@/lib/onboarding/service'
 import { getNotifications } from '@/lib/notifications/service'
 import { recordDailyActivity } from '@/lib/gamification/service'
@@ -20,6 +20,8 @@ import { getSession } from '@/lib/auth-client'
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { isMobileMenuOpen, setMobileMenuOpen, closeMobileMenu } = useUIStore()
+  const { userRole } = usePlatformStore()
+  const isPending = userRole === UserRole.TEACHER_PENDING
   // Accedemos al store directamente para el setter (no necesitamos suscripción reactiva aquí)
   const setUserRole = usePlatformStore.getState().setUserRole
   const router = useRouter()
@@ -135,6 +137,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
+        {isPending && (
+          <div className="flex items-center gap-2.5 border-b border-amber-500/20 bg-amber-500/8 px-4 py-2.5 text-xs text-amber-700 dark:text-amber-400">
+            <Clock className="size-3.5 shrink-0" />
+            <span>Tu solicitud para ser Profesor está <strong>en revisión</strong>. Te notificaremos cuando sea aprobada.</span>
+            <Link href={APP_ROUTES.EVALUATION} className="ml-auto shrink-0 font-medium underline underline-offset-2 hover:opacity-80">Ver detalles</Link>
+          </div>
+        )}
         <main className="flex-1 px-4 py-5 md:px-6 md:py-6">{children}</main>
       </div>
     </div>
