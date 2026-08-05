@@ -5,85 +5,105 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Home,
-  Users,
-  Compass,
-  BookOpen,
-  MessageCircle,
-  CalendarCheck,
-  Heart,
-  BarChart3,
-  Trophy,
-  Gift,
-  User,
-  Bell,
-  Settings,
-  Flame,
+  Home, Users, Compass, BookOpen, MessageCircle, CalendarCheck,
+  Heart, BarChart3, Trophy, Gift, User, Bell, Settings, Flame,
+  LayoutDashboard, GraduationCap, CalendarDays, LineChart, UserSquare2,
   type LucideIcon,
 } from 'lucide-react'
 import { APP_ROUTES } from '@/lib/constants'
-import { Logo } from '@/components/common/Logo'
 import { cn } from '@/lib/utils'
 import { getGamificationState } from '@/lib/gamification/service'
 import type { GamificationState } from '@/lib/gamification/types'
+import { PlatformSwitcher } from './PlatformSwitcher'
+import { usePlatformStore } from '@/store/platformStore'
 
-interface NavItem {
-  label: string
-  href: string
-  icon: LucideIcon
-}
+// ── Tipos ──────────────────────────────────────────────────────────────────
 
-interface NavGroup {
-  title?: string
-  items: NavItem[]
-}
+interface NavItem  { label: string; href: string; icon: LucideIcon }
+interface NavGroup { title?: string; items: NavItem[] }
 
-const NAV: NavGroup[] = [
+// ── Navegación ALUMNO ──────────────────────────────────────────────────────
+
+const NAV_ALUMNO: NavGroup[] = [
   {
     items: [
-      { label: 'Inicio', href: APP_ROUTES.DASHBOARD, icon: Home },
-      { label: 'Comunidad', href: APP_ROUTES.COMMUNITY, icon: Users },
+      { label: 'Inicio',     href: APP_ROUTES.DASHBOARD,  icon: Home  },
+      { label: 'Comunidad',  href: APP_ROUTES.COMMUNITY,  icon: Users },
     ],
   },
   {
     title: 'Aprender',
     items: [
-      { label: 'Descubrir', href: APP_ROUTES.DISCOVER, icon: Compass },
-      { label: 'Cursos', href: APP_ROUTES.COURSES, icon: BookOpen },
-      { label: 'Mensajes', href: APP_ROUTES.MESSAGES, icon: MessageCircle },
+      { label: 'Descubrir', href: APP_ROUTES.DISCOVER,  icon: Compass       },
+      { label: 'Cursos',    href: APP_ROUTES.COURSES,   icon: BookOpen      },
+      { label: 'Mensajes',  href: APP_ROUTES.MESSAGES,  icon: MessageCircle },
     ],
   },
   {
     title: 'Mi espacio',
     items: [
-      { label: 'Mis Reservas', href: APP_ROUTES.RESERVATIONS, icon: CalendarCheck },
-      { label: 'Favoritos', href: APP_ROUTES.FAVORITES, icon: Heart },
-      { label: 'Participación', href: APP_ROUTES.PARTICIPATE, icon: BarChart3 },
-      { label: 'Logros', href: APP_ROUTES.ACHIEVEMENTS, icon: Trophy },
-      { label: 'Orbits', href: APP_ROUTES.REWARDS, icon: Gift },
+      { label: 'Mis Reservas',  href: APP_ROUTES.RESERVATIONS, icon: CalendarCheck },
+      { label: 'Favoritos',     href: APP_ROUTES.FAVORITES,    icon: Heart         },
+      { label: 'Participación', href: APP_ROUTES.PARTICIPATE,  icon: BarChart3     },
+      { label: 'Logros',        href: APP_ROUTES.ACHIEVEMENTS, icon: Trophy        },
+      { label: 'Orbits',        href: APP_ROUTES.REWARDS,      icon: Gift          },
     ],
   },
   {
     title: 'Cuenta',
     items: [
-      { label: 'Perfil', href: APP_ROUTES.PROFILE, icon: User },
-      { label: 'Notificaciones', href: APP_ROUTES.NOTIFICATIONS, icon: Bell },
-      { label: 'Configuración', href: APP_ROUTES.SETTINGS, icon: Settings },
+      { label: 'Perfil',          href: APP_ROUTES.PROFILE,       icon: User     },
+      { label: 'Notificaciones',  href: APP_ROUTES.NOTIFICATIONS,  icon: Bell     },
+      { label: 'Configuración',   href: APP_ROUTES.SETTINGS,       icon: Settings },
     ],
   },
 ]
 
+// ── Navegación PROFESOR ────────────────────────────────────────────────────
+
+const NAV_PROFESOR: NavGroup[] = [
+  {
+    items: [
+      { label: 'Dashboard',  href: APP_ROUTES.TEACHER,           icon: LayoutDashboard },
+      { label: 'Comunidad',  href: APP_ROUTES.COMMUNITY,         icon: Users           },
+    ],
+  },
+  {
+    title: 'Gestión',
+    items: [
+      { label: 'Mis Alumnos', href: APP_ROUTES.TEACHER_STUDENTS, icon: GraduationCap },
+      { label: 'Mis Cursos',  href: APP_ROUTES.TEACHER_COURSES,  icon: BookOpen      },
+      { label: 'Agenda',      href: APP_ROUTES.TEACHER_CALENDAR, icon: CalendarDays  },
+      { label: 'Estadísticas',href: APP_ROUTES.TEACHER_STATS,    icon: LineChart     },
+    ],
+  },
+  {
+    title: 'Cuenta',
+    items: [
+      { label: 'Perfil',         href: APP_ROUTES.PROFILE,       icon: UserSquare2 },
+      { label: 'Notificaciones', href: APP_ROUTES.NOTIFICATIONS, icon: Bell        },
+      { label: 'Configuración',  href: APP_ROUTES.SETTINGS,      icon: Settings    },
+    ],
+  },
+]
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
 function isActive(pathname: string, href: string) {
-  if (href === APP_ROUTES.DASHBOARD) return pathname === href
+  if (href === APP_ROUTES.DASHBOARD || href === APP_ROUTES.TEACHER) return pathname === href
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
+// ── SidebarNav ─────────────────────────────────────────────────────────────
+
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
+  const { mode } = usePlatformStore()
+  const nav = mode === 'profesor' ? NAV_PROFESOR : NAV_ALUMNO
 
   return (
     <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-2.5 py-2">
-      {NAV.map((group, gi) => (
+      {nav.map((group, gi) => (
         <div key={gi} className="flex flex-col gap-0.5">
           {group.title && (
             <p className="px-2.5 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
@@ -122,11 +142,11 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
+// ── GamificationFooter ─────────────────────────────────────────────────────
+
 function GamificationFooter() {
   const [game] = useState<GamificationState | null>(getGamificationState)
-
   if (!game) return null
-
   return (
     <div className="flex items-center gap-2 px-2.5 py-2 text-xs text-muted-foreground">
       <Flame className="size-3.5 text-orange-500" />
@@ -137,16 +157,18 @@ function GamificationFooter() {
   )
 }
 
-/** Sidebar fijo para escritorio. */
+// ── Sidebar ─────────────────────────────────────────────────────────────────
+
 export function Sidebar() {
   return (
     <aside className="sticky top-0 hidden h-svh w-56 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
-      <div className="flex h-14 items-center px-4">
-        <Link href={APP_ROUTES.DASHBOARD} className="transition-opacity hover:opacity-80">
-          <Logo className="h-8 w-auto" />
-        </Link>
+      {/* PlatformSwitcher reemplaza el logo */}
+      <div className="flex h-14 items-center px-3">
+        <PlatformSwitcher />
       </div>
+
       <SidebarNav />
+
       <div className="border-t border-border/60 px-2 py-1.5">
         <GamificationFooter />
       </div>

@@ -89,17 +89,20 @@ const transition = { duration: 0.3, ease: [0.22, 1, 0.36, 1] as const }
 
 export function OnboardingFlow({ userEmail }: { userEmail: string }) {
   const router = useRouter()
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(0) // 0 = selección de rol, 1-3 = pasos originales
   const [dir, setDir] = useState(1)
   const [done, setDone] = useState(false)
   const [data, setData] = useState<OnboardingData | null>(null)
-  const totalSteps = 3
+  const [intentRole, setIntentRole] = useState<'learn' | 'teach' | null>(null)
+  const totalSteps = 4 // rol + 3 pasos
 
   useEffect(() => {
     getOnboarding()
       .then((d) => {
         setData(d)
+        // Si ya pasó el paso 0 (rol), ir al paso correspondiente
         if (d.current_step > 1) setStep(d.current_step)
+        else if (d.current_step === 1) setStep(1) // ya eligió rol, empezar desde step 1
       })
       .catch(() => {})
   }, [])
@@ -141,8 +144,8 @@ export function OnboardingFlow({ userEmail }: { userEmail: string }) {
         {/* Progress */}
         <div className="mb-6">
           <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-            <span>Paso {step} de {totalSteps}</span>
-            <span>{Math.round((step / totalSteps) * 100)}%</span>
+            <span>Paso {step + 1} de {totalSteps}</span>
+            <span>{Math.round(((step + 1) / totalSteps) * 100)}%</span>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <motion.div
@@ -159,14 +162,14 @@ export function OnboardingFlow({ userEmail }: { userEmail: string }) {
                 key={i}
                 className={cn(
                   'flex size-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-all duration-300',
-                  i + 1 < step
+                  i < step
                     ? 'border-brand-500 bg-brand-500 text-white'
-                    : i + 1 === step
+                    : i === step
                       ? 'border-brand-500 bg-background text-brand-500'
                       : 'border-border bg-background text-muted-foreground'
                 )}
               >
-                {i + 1 < step ? <Check className="size-3.5" /> : i + 1}
+                {i < step ? <Check className="size-3.5" /> : i + 1}
               </div>
             ))}
           </div>
@@ -184,6 +187,15 @@ export function OnboardingFlow({ userEmail }: { userEmail: string }) {
               exit="exit"
               transition={transition}
             >
+              {step === 0 && (
+                <StepRole
+                  onSelect={(role) => {
+                    setIntentRole(role)
+                    setDir(1)
+                    setStep(1)
+                  }}
+                />
+              )}
               {step === 1 && (
                 <Step1
                   userEmail={userEmail}
@@ -203,6 +215,7 @@ export function OnboardingFlow({ userEmail }: { userEmail: string }) {
                   initial={data}
                   onComplete={handleComplete}
                   onBack={goBack}
+                  intentRole={intentRole}
                 />
               )}
             </motion.div>
@@ -508,10 +521,12 @@ function Step3({
   initial,
   onComplete,
   onBack,
+  intentRole,
 }: {
   initial: OnboardingData | null
   onComplete: () => Promise<void>
   onBack: () => void
+  intentRole?: 'learn' | 'teach' | null
 }) {
   const [subjects, setSubjects] = useState<string[]>(initial?.subject_tags ?? [])
   const [projects, setProjects] = useState<string[]>(initial?.project_interests ?? [])
@@ -696,6 +711,85 @@ function TagSection({
           <Plus className="size-3.5" />
         </Button>
       </div>
+    </div>
+  )
+}
+
+// ── Paso 0: Selección de rol ──────────────────────────────────────────────────
+
+function StepRole({ onSelect }: { onSelect: (role: 'learn' | 'teach') => void }) {
+  const [selected, setSelected] = useState<'learn' | 'teach' | null>(null)
+
+  const OPTIONS = [
+    {
+      id: 'learn' as const,
+      emoji: '📚',
+      label: 'Aprender',
+      desc: 'Quiero descubrir cursos, conectar con mentores y crecer académicamente.',
+      note: null,
+    },
+    {
+      id: 'teach' as const,
+      emoji: '🎓',
+      label: 'Enseñar',
+      desc: 'Quiero compartir mi conocimiento, dar mentorías y construir mi reputación.',
+      note: 'Tu cuenta se creará como Alumno. Cuando quieras enseñar, solicita una evaluación desde el selector de plataforma.',
+    },
+  ]
+
+  return (
+    <div className="flex flex-col gap-5 p-6 sm:p-8">
+      <div>
+        <h2 className="text-xl font-bold text-foreground">¿Qué quieres hacer en TEDUCA?</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Esto personaliza tu experiencia desde el primer día.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {OPTIONS.map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => setSelected(opt.id)}
+            className={cn(
+              'w-full rounded-xl border p-4 text-left transition-all',
+              selected === opt.id
+                ? 'border-brand-500 bg-brand-500/8 ring-1 ring-brand-500/30'
+                : 'border-border bg-card hover:border-brand-400/60 hover:bg-muted/40'
+            )}
+          >
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">{opt.emoji}</span>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-foreground">{opt.label}</p>
+                  {selected === opt.id && (
+                    <div className="flex size-5 items-center justify-center rounded-full bg-brand-500">
+                      <Check className="size-3 text-white" />
+                    </div>
+                  )}
+                </div>
+                <p className="mt-0.5 text-sm text-muted-foreground">{opt.desc}</p>
+                {opt.note && selected === opt.id && (
+                  <p className="mt-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
+                    ℹ️ {opt.note}
+                  </p>
+                )}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <Button
+        variant="brand"
+        disabled={!selected}
+        onClick={() => selected && onSelect(selected)}
+        className="gap-2"
+      >
+        Continuar <ArrowRight className="size-4" />
+      </Button>
     </div>
   )
 }

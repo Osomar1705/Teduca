@@ -24,6 +24,15 @@ export const APP_ROUTES = {
   REWARDS: '/orbits',
   REWARDS_HISTORY: '/orbits/history',
   RANKING: '/orbits',
+  // Profesor
+  TEACHER:          '/teacher',
+  TEACHER_STUDENTS: '/teacher/students',
+  TEACHER_COURSES:  '/teacher/courses',
+  TEACHER_CALENDAR: '/teacher/calendar',
+  TEACHER_STATS:    '/teacher/stats',
+  // Acceso restringido
+  BECOME_TEACHER:   '/become-teacher',
+  EVALUATION:       '/evaluation',
 } as const
 
 // API endpoints (backend FastAPI, versionado /api/v1)
@@ -73,9 +82,10 @@ export const API_ENDPOINTS = {
 
 // Roles de usuario
 export enum UserRole {
-  STUDENT = 'student',
-  TEACHER = 'teacher',
-  ADMIN = 'admin',
+  STUDENT          = 'student',
+  TEACHER_PENDING  = 'teacher_pending',
+  TEACHER          = 'teacher',
+  ADMIN            = 'admin',
 }
 
 // Estados de cursos
