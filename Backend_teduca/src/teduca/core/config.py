@@ -41,6 +41,17 @@ class Settings(BaseSettings):
     # Rate limiting
     rate_limit_default: str = "100/minute"
 
+    # Supabase Storage
+    supabase_url: str = ""
+    supabase_service_key: str = ""
+    supabase_storage_url: str = ""  # se auto-construye si está vacío
+
+    @property
+    def storage_url(self) -> str:
+        if self.supabase_storage_url:
+            return self.supabase_storage_url
+        return f"{self.supabase_url}/storage/v1" if self.supabase_url else ""
+
     @property
     def google_enabled(self) -> bool:
         """Google solo se ofrece si está activado Y hay client_id configurado."""

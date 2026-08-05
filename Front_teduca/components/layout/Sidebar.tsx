@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Home,
-  Telescope,
+  Users,
   Compass,
   BookOpen,
   MessageCircle,
@@ -42,7 +42,7 @@ const NAV: NavGroup[] = [
   {
     items: [
       { label: 'Inicio', href: APP_ROUTES.DASHBOARD, icon: Home },
-      { label: 'Para Ti', href: APP_ROUTES.FOR_YOU, icon: Telescope },
+      { label: 'Comunidad', href: APP_ROUTES.COMMUNITY, icon: Users },
     ],
   },
   {

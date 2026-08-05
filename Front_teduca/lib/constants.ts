@@ -17,6 +17,7 @@ export const APP_ROUTES = {
   PROFILE: '/profile',
   SETTINGS: '/settings',
   FOR_YOU: '/for-you',
+  COMMUNITY: '/community',
   NOTIFICATIONS: '/notifications',
   ACHIEVEMENTS: '/achievements',
   PARTICIPATE: '/participate',
