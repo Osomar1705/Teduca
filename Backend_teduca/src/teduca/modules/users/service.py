@@ -9,7 +9,8 @@ from teduca.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from teduca.core.security import hash_password
 from teduca.modules.users.models import User
 from teduca.modules.users.repository import RoleRepository, UserRepository
-from teduca.modules.users.schemas import TeacherProfileUpdate, UserUpdate
+from teduca.modules.users.schemas import PublicProfileRead, TeacherProfileUpdate, UserUpdate
+from teduca.modules.onboarding.models import UserOnboarding
 from teduca.modules.edtech.models import TeacherProfile
 
 # Roles válidos que un usuario puede auto-asignarse al registrarse.
@@ -145,6 +146,30 @@ class UserService:
         await self.session.flush()
         await self.session.refresh(user)
         return user
+
+    # ── Perfil Público ──────────────────────────────────────────────────────
+
+    async def get_public_profile(self, username: str) -> PublicProfileRead:
+        result = await self.session.execute(
+            select(UserOnboarding, User)
+            .join(User, User.id == UserOnboarding.user_id)
+            .where(UserOnboarding.username == username.lower())
+            .where(UserOnboarding.completed == True)  # noqa: E712
+        )
+        row = result.first()
+        if row is None:
+            raise NotFoundError("Perfil no encontrado.")
+        onboarding, user = row
+        return PublicProfileRead(
+            username=onboarding.username,
+            full_name=onboarding.full_name or user.name,
+            avatar=user.avatar,
+            institution=onboarding.institution,
+            career=onboarding.career,
+            academic_year=onboarding.academic_year,
+            subject_tags=onboarding.subject_tags or [],
+            goals=onboarding.goals or [],
+        )
 
     # ── TeacherProfile ─────────────────────────────────────────────────────
 

@@ -5,10 +5,16 @@ import uuid
 from fastapi import APIRouter, Depends, status
 
 from teduca.core.dependencies import CurrentUser, DbSession, require_role
-from teduca.modules.users.schemas import TeacherProfileRead, TeacherProfileUpdate, UserRead, UserUpdate
+from teduca.modules.users.schemas import PublicProfileRead, TeacherProfileRead, TeacherProfileUpdate, UserRead, UserUpdate
 from teduca.modules.users.service import UserService
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.get("/profile/{username}", response_model=PublicProfileRead, summary="Perfil público por username")
+async def get_public_profile(username: str, session: DbSession) -> PublicProfileRead:
+    """Accesible sin autenticación. Devuelve el perfil público de un usuario por su username."""
+    return await UserService(session).get_public_profile(username)
 
 
 @router.get("/me", response_model=UserRead)

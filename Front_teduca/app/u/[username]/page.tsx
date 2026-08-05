@@ -1,45 +1,50 @@
 'use client'
 
-import { use } from 'react'
+import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
-import {
-  GitFork, Link2, Globe, Building2, GraduationCap,
-  MapPin, Users, FlaskConical, Briefcase, ArrowLeft,
-} from 'lucide-react'
+import { Building2, GraduationCap, Users } from 'lucide-react'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { FadeIn } from '@/components/common/Motion'
+import { API_BASE_URL } from '@/lib/api-client'
 
-// Perfil público mock — en producción se consulta la API por username
-const MOCK_PUBLIC_PROFILES: Record<string, {
-  name: string; username: string; avatar?: string; coverUrl?: string;
-  bio?: string; institution?: string; career?: string; specialty?: string;
-  location?: string; skills: string[]; interests: string[];
-  github?: string; linkedin?: string; portfolio?: string;
-  openToMentoring: boolean; openToProjects: boolean; openToWork: boolean;
-}> = {
-  osmar: {
-    name: 'Osmar Vilchez',
-    username: 'osmar',
-    bio: 'Desarrollando el futuro de la educación en Latinoamérica.',
-    institution: 'UTEC',
-    career: 'Ingeniería de Software',
-    specialty: 'Fullstack & EdTech',
-    location: 'Lima, Perú',
-    skills: ['TypeScript', 'Python', 'FastAPI', 'Next.js', 'PostgreSQL'],
-    interests: ['EdTech', 'Startups', 'IA', 'Diseño de producto'],
-    github: 'osmar',
-    linkedin: 'osmar-vilchez',
-    openToMentoring: true,
-    openToProjects: true,
-    openToWork: false,
-  },
+interface PublicProfile {
+  username: string
+  full_name: string
+  avatar: string | null
+  institution: string | null
+  career: string | null
+  academic_year: string | null
+  subject_tags: string[]
+  goals: string[]
+}
+
+async function fetchPublicProfile(username: string): Promise<PublicProfile | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/users/profile/${username}`)
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
 }
 
 export default function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params)
-  const profile = MOCK_PUBLIC_PROFILES[username.toLowerCase()]
+  const [profile, setProfile] = useState<PublicProfile | null | undefined>(undefined)
+
+  useEffect(() => {
+    fetchPublicProfile(username).then(setProfile)
+  }, [username])
+
+  if (profile === undefined) {
+    return (
+      <div className="flex min-h-svh items-center justify-center bg-background">
+        <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    )
+  }
 
   if (!profile) {
     return (
@@ -60,7 +65,6 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
 
   return (
     <div className="min-h-svh bg-background">
-      {/* Topbar minimal */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -76,31 +80,23 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
         <FadeIn>
           {/* Cover */}
           <div className="relative mb-4">
-            <div className="h-40 w-full overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/20 via-primary/10 to-transparent">
-              {profile.coverUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.coverUrl} alt="Portada" className="h-full w-full object-cover" />
-              )}
-            </div>
+            <div className="h-40 w-full overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/20 via-primary/10 to-transparent" />
             <div className="absolute -bottom-10 left-6">
-              <Avatar src={profile.avatar} name={profile.name} size="xl" className="ring-4 ring-background" />
+              <Avatar src={profile.avatar ?? undefined} name={profile.full_name} size="xl" className="ring-4 ring-background" />
             </div>
           </div>
 
-          {/* Info principal */}
           <div className="mt-14 space-y-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">{profile.name}</h1>
+                <h1 className="text-2xl font-bold text-foreground">{profile.full_name}</h1>
                 <p className="text-sm text-muted-foreground">@{profile.username}</p>
-                {profile.bio && (
-                  <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">{profile.bio}</p>
-                )}
               </div>
-              <Button className="shrink-0">Conectar</Button>
+              <Button asChild variant="brand" className="shrink-0">
+                <Link href="/register">Conectar</Link>
+              </Button>
             </div>
 
-            {/* Meta */}
             <div className="flex flex-wrap gap-x-5 gap-y-2">
               {profile.institution && (
                 <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -109,84 +105,37 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
               )}
               {profile.career && (
                 <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <GraduationCap className="size-3.5" />{profile.career}{profile.specialty ? ` · ${profile.specialty}` : ''}
-                </span>
-              )}
-              {profile.location && (
-                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <MapPin className="size-3.5" />{profile.location}
-                </span>
-              )}
-            </div>
-
-            {/* Disponibilidad */}
-            <div className="flex flex-wrap gap-2">
-              {profile.openToMentoring && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                  <Users className="size-3" /> Disponible para mentoría
-                </span>
-              )}
-              {profile.openToProjects && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-400">
-                  <FlaskConical className="size-3" /> Abierto a proyectos
-                </span>
-              )}
-              {profile.openToWork && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-600 dark:text-amber-400">
-                  <Briefcase className="size-3" /> Buscando trabajo
+                  <GraduationCap className="size-3.5" />{profile.career}
+                  {profile.academic_year ? ` · ${profile.academic_year}` : ''}
                 </span>
               )}
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2">
-              {profile.skills.length > 0 && (
+              {profile.subject_tags.length > 0 && (
                 <div className="rounded-xl border border-border bg-card p-4">
-                  <h2 className="mb-3 text-sm font-semibold text-foreground">Habilidades</h2>
+                  <h2 className="mb-3 text-sm font-semibold text-foreground">Áreas de estudio</h2>
                   <div className="flex flex-wrap gap-1.5">
-                    {profile.skills.map((s) => (
+                    {profile.subject_tags.map((s) => (
                       <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
                     ))}
                   </div>
                 </div>
               )}
-
-              {profile.interests.length > 0 && (
+              {profile.goals.length > 0 && (
                 <div className="rounded-xl border border-border bg-card p-4">
-                  <h2 className="mb-3 text-sm font-semibold text-foreground">Intereses</h2>
+                  <h2 className="mb-3 text-sm font-semibold text-foreground">Objetivos</h2>
                   <div className="flex flex-wrap gap-1.5">
-                    {profile.interests.map((i) => (
-                      <Badge key={i} variant="outline" className="text-xs">{i}</Badge>
+                    {profile.goals.map((g) => (
+                      <Badge key={g} variant="outline" className="text-xs">{g}</Badge>
                     ))}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Redes */}
-            <div className="flex items-center gap-4 border-t border-border pt-5">
-              {profile.github && (
-                <a href={`https://github.com/${profile.github}`} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  <GitFork className="size-4" /> {profile.github}
-                </a>
-              )}
-              {profile.linkedin && (
-                <a href={`https://linkedin.com/in/${profile.linkedin}`} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  <Link2 className="size-4" /> LinkedIn
-                </a>
-              )}
-              {profile.portfolio && (
-                <a href={profile.portfolio.startsWith('http') ? profile.portfolio : `https://${profile.portfolio}`} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  <Globe className="size-4" /> Portafolio
-                </a>
-              )}
-            </div>
-
-            {/* CTA para no autenticados */}
             <div className="rounded-xl border border-border bg-card p-5 text-center">
-              <p className="mb-1 text-sm font-medium text-foreground">¿Quieres conectar con {profile.name}?</p>
+              <p className="mb-1 text-sm font-medium text-foreground">¿Querés conectar con {profile.full_name}?</p>
               <p className="mb-4 text-xs text-muted-foreground">Únete a TEDUCA para conectar, colaborar y crecer juntos.</p>
               <div className="flex justify-center gap-3">
                 <Button asChild variant="brand">

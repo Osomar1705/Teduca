@@ -70,6 +70,18 @@ class TeacherProfileRead(BaseModel):
     updated_at: datetime
 
 
+class PublicProfileRead(BaseModel):
+    """Perfil público de un usuario (accesible sin autenticación)."""
+    username: str
+    full_name: str
+    avatar: str | None = None
+    institution: str | None = None
+    career: str | None = None
+    academic_year: str | None = None
+    subject_tags: list[str] = []
+    goals: list[str] = []
+
+
 class TeacherProfileUpdate(BaseModel):
     bio: str | None = None
     experience_years: int | None = None
