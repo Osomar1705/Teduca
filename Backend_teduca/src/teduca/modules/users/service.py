@@ -89,3 +89,57 @@ class UserService:
         await self.session.flush()
         await self.session.refresh(user)
         return user
+
+    # ── Gestión de roles de Profesor ───────────────────────────────────────
+
+    async def request_teacher_role(self, user: User) -> User:
+        """Marca al usuario como `teacher_pending` para evaluación."""
+        current = set(user.role_names)
+        if "teacher" in current:
+            return user  # ya es profesor, nada que hacer
+        if "teacher_pending" in current:
+            return user  # ya tiene solicitud pendiente
+
+        # Quitar rol student, poner teacher_pending
+        student_role = await self.roles.get_or_create("student")
+        pending_role = await self.roles.get_or_create("teacher_pending")
+        if student_role in user.roles:
+            user.roles.remove(student_role)
+        if pending_role not in user.roles:
+            user.roles.append(pending_role)
+
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
+
+    async def approve_teacher_role(self, user_id: uuid.UUID) -> User:
+        """Promueve `teacher_pending` → `teacher` (solo admins)."""
+        user = await self.get_by_id(user_id)
+        pending_role = await self.roles.get_or_create("teacher_pending")
+        teacher_role = await self.roles.get_or_create("teacher")
+
+        if pending_role in user.roles:
+            user.roles.remove(pending_role)
+        if teacher_role not in user.roles:
+            user.roles.append(teacher_role)
+
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
+
+    async def revoke_teacher_role(self, user_id: uuid.UUID) -> User:
+        """Degrada `teacher` / `teacher_pending` → `student`."""
+        user = await self.get_by_id(user_id)
+        student_role = await self.roles.get_or_create("student")
+
+        for role_name in ("teacher", "teacher_pending"):
+            role_obj = await self.roles.get_or_create(role_name)
+            if role_obj in user.roles:
+                user.roles.remove(role_obj)
+
+        if student_role not in user.roles:
+            user.roles.append(student_role)
+
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user

@@ -9,15 +9,18 @@ import { Sidebar, SidebarNav } from '@/components/layout/Sidebar'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
 import { Logo } from '@/components/common/Logo'
 import { Button } from '@/components/ui/button'
-import { APP_ROUTES } from '@/lib/constants'
+import { APP_ROUTES, UserRole } from '@/lib/constants'
 import { useUIStore } from '@/store/uiStore'
+import { usePlatformStore } from '@/store/platformStore'
 import { getOnboardingStatus } from '@/lib/onboarding/service'
 import { getNotifications } from '@/lib/notifications/service'
 import { recordDailyActivity } from '@/lib/gamification/service'
 import { maybeAwardDailyLogin } from '@/lib/rewards/service'
+import { getSession } from '@/lib/auth-client'
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { isMobileMenuOpen, setMobileMenuOpen, closeMobileMenu } = useUIStore()
+  const { setUserRole } = usePlatformStore()
   const router = useRouter()
   const [unread, setUnread] = useState(0)
 
@@ -32,7 +35,18 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     getNotifications()
       .then((n) => setUnread(n.filter((x) => !x.isRead).length))
       .catch(() => {})
-  }, [router])
+    // Sincronizar rol real desde la sesión del backend
+    getSession()
+      .then((session) => {
+        if (!session?.user) return
+        const roles: string[] = (session.user as { roles?: { name: string }[] }).roles?.map((r) => r.name) ?? []
+        if (roles.includes('admin'))           setUserRole(UserRole.ADMIN)
+        else if (roles.includes('teacher'))    setUserRole(UserRole.TEACHER)
+        else if (roles.includes('teacher_pending')) setUserRole(UserRole.TEACHER_PENDING)
+        else                                   setUserRole(UserRole.STUDENT)
+      })
+      .catch(() => {})
+  }, [router, setUserRole])
 
   return (
     <div className="flex min-h-svh bg-background">

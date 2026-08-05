@@ -9,9 +9,10 @@ from teduca.modules.gamification.models import Reward
 from teduca.modules.users.models import Role
 
 DEFAULT_ROLES = [
-    ("student", "Estudiante"),
-    ("teacher", "Profesor"),
-    ("admin", "Administrador"),
+    ("student",         "Estudiante"),
+    ("teacher_pending", "Profesor pendiente de aprobación"),
+    ("teacher",         "Profesor aprobado"),
+    ("admin",           "Administrador"),
 ]
 
 DEFAULT_REWARDS = [

@@ -10,6 +10,7 @@ import {
   LayoutDashboard, GraduationCap, CalendarDays, LineChart, UserSquare2,
   type LucideIcon,
 } from 'lucide-react'
+
 import { APP_ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { getGamificationState } from '@/lib/gamification/service'
@@ -80,7 +81,7 @@ const NAV_PROFESOR: NavGroup[] = [
   {
     title: 'Cuenta',
     items: [
-      { label: 'Perfil',         href: APP_ROUTES.PROFILE,       icon: UserSquare2 },
+      { label: 'Mi perfil',      href: '/teacher/profile',        icon: UserSquare2 },
       { label: 'Notificaciones', href: APP_ROUTES.NOTIFICATIONS, icon: Bell        },
       { label: 'Configuración',  href: APP_ROUTES.SETTINGS,      icon: Settings    },
     ],

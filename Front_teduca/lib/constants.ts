@@ -67,7 +67,10 @@ export const API_ENDPOINTS = {
     MINE: '/api/v1/enrollments/me',
   },
   USER: {
-    PROFILE: '/api/v1/users/me',
+    PROFILE:           '/api/v1/users/me',
+    REQUEST_TEACHER:   '/api/v1/users/me/request-teacher',
+    APPROVE_TEACHER:   (id: string) => `/api/v1/users/${id}/approve-teacher`,
+    REVOKE_TEACHER:    (id: string) => `/api/v1/users/${id}/revoke-teacher`,
   },
   ONBOARDING: {
     STATUS: '/api/v1/onboarding/status',
