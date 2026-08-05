@@ -29,6 +29,10 @@ const PROTECTED_PREFIXES = [
   '/for-you',
   '/orbits',
   '/participate',
+  '/community',
+  '/teacher',
+  '/become-teacher',
+  '/evaluation',
 ]
 
 /** Rutas solo accesibles sin sesión */
