@@ -1,10 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import { useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Mail, MessageCircle, CheckCircle2, Clock, ShieldCheck } from 'lucide-react'
-import { APP_ROUTES } from '@/lib/constants'
+import { APP_ROUTES, API_ENDPOINTS } from '@/lib/constants'
 import { FadeIn } from '@/components/common/Motion'
+import { apiClient } from '@/lib/api-client'
 
 const CONTACT_EMAIL   = 'teduca25@gmail.com'
 const CONTACT_WHATSAPP = '+51934317464'
@@ -19,6 +21,10 @@ const WHAT_WE_VALUE = [
 ]
 
 export default function EvaluationPage() {
+  const requestTeacherRole = useCallback(() => {
+    apiClient.post(API_ENDPOINTS.USER.REQUEST_TEACHER).catch(() => {})
+  }, [])
+
   return (
     <div className="mx-auto max-w-xl">
       <FadeIn>
@@ -93,6 +99,7 @@ export default function EvaluationPage() {
             href={`https://wa.me/${CONTACT_WHATSAPP}?text=${WHATSAPP_MSG}`}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={requestTeacherRole}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 transition-colors hover:bg-emerald-500/10"
@@ -110,6 +117,7 @@ export default function EvaluationPage() {
           {/* Email */}
           <motion.a
             href={`mailto:${CONTACT_EMAIL}?subject=Solicitud de evaluación TEDUCA Profesor&body=Hola equipo TEDUCA,%0A%0AMe gustaría aplicar para ser Profesor en TEDUCA.%0A%0AMi área de especialidad es: [escribe aquí]%0A%0AQuedo atento a sus instrucciones.`}
+            onClick={requestTeacherRole}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/30"

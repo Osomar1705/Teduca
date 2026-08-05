@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { cn } from '@/lib/utils'
+import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
 
 // ── Mock data ──────────────────────────────────────────────────────────────
 
@@ -82,6 +83,8 @@ function StatusBadge({ status }: { status: string }) {
 // ── Página ─────────────────────────────────────────────────────────────────
 
 export default function TeacherDashboard() {
+  const { isAllowed } = useTeacherGuard()
+  if (!isAllowed) return null
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <FadeIn>

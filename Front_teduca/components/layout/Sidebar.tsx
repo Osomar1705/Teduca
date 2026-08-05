@@ -81,7 +81,7 @@ const NAV_PROFESOR: NavGroup[] = [
   {
     title: 'Cuenta',
     items: [
-      { label: 'Mi perfil',      href: '/teacher/profile',        icon: UserSquare2 },
+      { label: 'Mi perfil',      href: APP_ROUTES.TEACHER_PROFILE, icon: UserSquare2 },
       { label: 'Notificaciones', href: APP_ROUTES.NOTIFICATIONS, icon: Bell        },
       { label: 'Configuración',  href: APP_ROUTES.SETTINGS,      icon: Settings    },
     ],

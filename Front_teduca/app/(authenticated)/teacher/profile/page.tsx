@@ -1,5 +1,7 @@
 'use client'
 
+import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
+
 import { useState } from 'react'
 import {
   User, Building2, GraduationCap, Globe, Link2, GitFork,

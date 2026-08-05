@@ -151,7 +151,7 @@ export function OnboardingFlow({ userEmail }: { userEmail: string }) {
             <motion.div
               className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400"
               initial={false}
-              animate={{ width: `${(step / totalSteps) * 100}%` }}
+              animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             />
           </div>

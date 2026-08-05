@@ -1,5 +1,7 @@
 'use client'
 
+import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
+
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {

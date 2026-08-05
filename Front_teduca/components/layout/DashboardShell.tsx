@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Menu, X, Bell, Search, Users } from 'lucide-react'
@@ -20,33 +20,42 @@ import { getSession } from '@/lib/auth-client'
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { isMobileMenuOpen, setMobileMenuOpen, closeMobileMenu } = useUIStore()
-  const { setUserRole } = usePlatformStore()
+  // Accedemos al store directamente para el setter (no necesitamos suscripción reactiva aquí)
+  const setUserRole = usePlatformStore.getState().setUserRole
   const router = useRouter()
   const [unread, setUnread] = useState(0)
+  // Flag para ejecutar el efecto solo una vez por montaje
+  const didInit = useRef(false)
 
   useEffect(() => {
+    if (didInit.current) return
+    didInit.current = true
+
     recordDailyActivity()
     maybeAwardDailyLogin()
+
     getOnboardingStatus()
-      .then((s) => {
-        if (!s.completed) router.replace(APP_ROUTES.ONBOARDING)
-      })
+      .then((s) => { if (!s.completed) router.replace(APP_ROUTES.ONBOARDING) })
       .catch(() => {})
+
     getNotifications()
       .then((n) => setUnread(n.filter((x) => !x.isRead).length))
       .catch(() => {})
-    // Sincronizar rol real desde la sesión del backend
+
+    // Sincronizar rol real del backend → platformStore
     getSession()
       .then((session) => {
         if (!session?.user) return
-        const roles: string[] = (session.user as { roles?: { name: string }[] }).roles?.map((r) => r.name) ?? []
-        if (roles.includes('admin'))           setUserRole(UserRole.ADMIN)
-        else if (roles.includes('teacher'))    setUserRole(UserRole.TEACHER)
+        const roles: string[] = (session.user as { roles?: { name: string }[] })
+          .roles?.map((r) => r.name) ?? []
+        if (roles.includes('admin'))                setUserRole(UserRole.ADMIN)
+        else if (roles.includes('teacher'))         setUserRole(UserRole.TEACHER)
         else if (roles.includes('teacher_pending')) setUserRole(UserRole.TEACHER_PENDING)
-        else                                   setUserRole(UserRole.STUDENT)
+        else                                        setUserRole(UserRole.STUDENT)
       })
       .catch(() => {})
-  }, [router, setUserRole])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="flex min-h-svh bg-background">

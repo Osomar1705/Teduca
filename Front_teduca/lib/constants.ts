@@ -30,6 +30,7 @@ export const APP_ROUTES = {
   TEACHER_COURSES:  '/teacher/courses',
   TEACHER_CALENDAR: '/teacher/calendar',
   TEACHER_STATS:    '/teacher/stats',
+  TEACHER_PROFILE:  '/teacher/profile',
   // Acceso restringido
   BECOME_TEACHER:   '/become-teacher',
   EVALUATION:       '/evaluation',

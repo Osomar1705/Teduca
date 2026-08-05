@@ -1,5 +1,7 @@
 'use client'
 
+import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
+
 import { motion } from 'framer-motion'
 import { TrendingUp, Users, Clock, Star, Eye, BookOpen, Award } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
@@ -56,6 +58,8 @@ function BarChart({ data, key1, label, color }: {
 }
 
 export default function TeacherStatsPage() {
+  const { isAllowed } = useTeacherGuard()
+  if (!isAllowed) return null
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <FadeIn>

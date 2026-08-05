@@ -1,5 +1,7 @@
 'use client'
 
+import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
+
 import { useState } from 'react'
 import { Search, Filter, MoreHorizontal, Mail, MessageCircle, Star, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
