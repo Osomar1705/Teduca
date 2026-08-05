@@ -41,8 +41,9 @@ const STATUS_LABEL: Record<CourseStatus, string> = {
 }
 
 export default function TeacherCoursesPage() {
+  const { isAllowed } = useTeacherGuard()
   const [showNew, setShowNew] = useState(false)
-
+  if (!isAllowed) return null
   return (
     <div className="mx-auto max-w-5xl space-y-5">
       <FadeIn>

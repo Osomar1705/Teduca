@@ -32,6 +32,7 @@ const MODALITY_OPTIONS: { id: Modality; label: string; desc: string }[] = [
 ]
 
 export default function TeacherProfilePage() {
+  const { isAllowed } = useTeacherGuard()
   // Datos del perfil (mock — en producción se cargan desde /api/v1/users/me)
   const [name,         setName]         = useState('Osmar Vilchez')
   const [bio,          setBio]          = useState('Desarrollador Fullstack con 4 años de experiencia en React, Next.js y FastAPI. Apasionado por la educación y el desarrollo de software.')
@@ -65,6 +66,7 @@ export default function TeacherProfilePage() {
     setTimeout(() => setSaved(false), 3000)
   }
 
+  if (!isAllowed) return null
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <FadeIn>

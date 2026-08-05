@@ -47,6 +47,7 @@ function ProgressBar({ value }: { value: number }) {
 }
 
 export default function StudentsPage() {
+  const { isAllowed } = useTeacherGuard()
   const [search, setSearch]   = useState('')
   const [filter, setFilter]   = useState<Filter>('todos')
 
@@ -57,6 +58,7 @@ export default function StudentsPage() {
     return matchFilter && matchSearch
   })
 
+  if (!isAllowed) return null
   return (
     <div className="mx-auto max-w-5xl space-y-5">
       <FadeIn>
