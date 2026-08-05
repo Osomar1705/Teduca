@@ -1,19 +1,19 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Plus, Heart, MessageCircle, Bookmark, Share2,
   MoreHorizontal, MapPin, ExternalLink, Calendar, Users,
   Zap, BookOpen, Briefcase, Globe, Award, Lightbulb, Rocket,
-  X, Image as ImageIcon, Link as LinkIcon, FileText, Send,
-  GitFork, Link2, Trash2,
+  X, Link as LinkIcon, Send, GitFork, Link2, Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
+import { ImageUploader, type PostImage } from '@/components/community/ImageUploader'
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -171,54 +171,41 @@ const TRENDS = ['IAGenerativa','GoogleSolutionChallenge','Fullbright2025','React
 // ── Modal Crear Publicación ────────────────────────────────────────────────
 
 function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublish: (p: Post) => void }) {
-  const [content, setContent]             = useState('')
-  const [category, setCategory]           = useState<Category>('networking')
-  const [tagsInput, setTagsInput]         = useState('')
-  const [link, setLink]                   = useState('')
-  const [showLink, setShowLink]           = useState(false)
-  const [images, setImages]               = useState<string[]>([])
-  const [title, setTitle]                 = useState('')
-  const fileRef                           = useRef<HTMLInputElement>(null)
+  const [content,   setContent]   = useState('')
+  const [category,  setCategory]  = useState<Category>('networking')
+  const [tagsInput, setTagsInput] = useState('')
+  const [link,      setLink]      = useState('')
+  const [showLink,  setShowLink]  = useState(false)
+  const [title,     setTitle]     = useState('')
+  const [postImages, setPostImages] = useState<PostImage[]>([])
 
-  function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? [])
-    files.forEach((file) => {
-      if (!file.type.startsWith('image/')) return
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        const result = ev.target?.result as string
-        setImages((prev) => [...prev, result])
-      }
-      reader.readAsDataURL(file)
-    })
-    // reset input so the same file can be re-selected
-    e.target.value = ''
-  }
-
-  function removeImage(idx: number) {
-    setImages((prev) => prev.filter((_, i) => i !== idx))
-  }
+  const isUploading = postImages.some((img) => img.status === 'uploading')
+  const hasError    = postImages.some((img) => img.status === 'error' && img.previewUrl !== '')
+  const remaining   = 600 - content.length
+  const canPublish  = content.trim().length > 0 && !isUploading
 
   function handlePublish() {
-    if (!content.trim()) return
+    if (!canPublish) return
     const tags = tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
+    // Imagen principal: URL de Supabase si está subida, preview local si no
+    const primaryImage = postImages.find((img) => img.status === 'done' || img.previewUrl)
     const newPost: Post = {
-      id: Date.now().toString(),
-      author: { name: 'Tú', username: 'yo', role: 'Estudiante', verified: false },
+      id:       Date.now().toString(),
+      author:   { name: 'Tú', username: 'yo', role: 'Estudiante', verified: false },
       category,
-      title: title.trim() || undefined,
+      title:    title.trim() || undefined,
       content,
       tags,
-      link: link.trim() || undefined,
-      image: images[0],
-      likes: 0, comments: 0, saves: 0,
-      timeAgo: 'ahora',
+      link:     link.trim() || undefined,
+      image:    primaryImage?.url ?? primaryImage?.previewUrl,
+      likes:    0,
+      comments: 0,
+      saves:    0,
+      timeAgo:  'ahora',
     }
     onPublish(newPost)
     onClose()
   }
-
-  const remaining = 600 - content.length
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
@@ -229,24 +216,29 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
         className="absolute inset-0 bg-foreground/25 backdrop-blur-sm"
       />
 
-      {/* Modal */}
+      {/* Modal — sin overflow-hidden para no interferir con el file dialog */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 24 }}
         transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-        className="relative z-10 w-full max-w-xl rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl overflow-hidden"
+        className="relative z-10 flex w-full max-w-xl flex-col rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
+        <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-3.5">
           <h2 className="text-sm font-semibold text-foreground">Nueva publicación</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
             <X className="size-4" />
           </button>
         </div>
 
-        <div className="max-h-[80vh] overflow-y-auto">
-          <div className="p-5 space-y-4">
+        {/* Body scrollable */}
+        <div className="max-h-[75vh] overflow-y-auto">
+          <div className="space-y-4 p-5">
 
             {/* Categoría */}
             <div>
@@ -255,6 +247,7 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
                 {CATEGORIES.filter((c) => c.key !== 'todo').map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
+                    type="button"
                     onClick={() => setCategory(key)}
                     className={cn(
                       'flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
@@ -269,7 +262,7 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
               </div>
             </div>
 
-            {/* Título opcional */}
+            {/* Título */}
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -294,31 +287,8 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
               </span>
             </div>
 
-            {/* Preview de imágenes */}
-            {images.length > 0 && (
-              <div className={cn('grid gap-2', images.length === 1 ? 'grid-cols-1' : 'grid-cols-2')}>
-                {images.map((src, i) => (
-                  <div key={i} className="group relative aspect-video overflow-hidden rounded-lg border border-border bg-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt="" className="h-full w-full object-cover" />
-                    <button
-                      onClick={() => removeImage(i)}
-                      className="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-foreground/60 text-background opacity-0 transition-opacity group-hover:opacity-100 hover:bg-foreground"
-                    >
-                      <Trash2 className="size-3" />
-                    </button>
-                  </div>
-                ))}
-                {images.length < 4 && (
-                  <button
-                    onClick={() => fileRef.current?.click()}
-                    className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-                  >
-                    <Plus className="size-5" />
-                  </button>
-                )}
-              </div>
-            )}
+            {/* ── Imágenes ── */}
+            <ImageUploader onChange={setPostImages} maxImages={4} maxSizeMb={10} />
 
             {/* Enlace */}
             {showLink && (
@@ -342,31 +312,11 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
         </div>
 
         {/* Footer */}
-        <div className="border-t border-border/60 px-5 py-3.5 flex items-center justify-between gap-3">
-          {/* Acciones de adjunto */}
-          <div className="flex items-center gap-0.5">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={handleFiles}
-            />
+        <div className="shrink-0 border-t border-border/60 px-5 py-3.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-1">
+            {/* Botón Enlace */}
             <button
-              onClick={() => fileRef.current?.click()}
-              title="Agregar imagen"
-              className={cn(
-                'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
-                images.length > 0
-                  ? 'text-primary bg-primary/8'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              )}
-            >
-              <ImageIcon className="size-3.5" />
-              {images.length > 0 ? `${images.length} foto${images.length > 1 ? 's' : ''}` : 'Imagen'}
-            </button>
-            <button
+              type="button"
               onClick={() => setShowLink((p) => !p)}
               className={cn(
                 'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
@@ -375,12 +325,30 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
             >
               <LinkIcon className="size-3.5" /> Enlace
             </button>
+
+            {/* Indicador de subida */}
+            {isUploading && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Loader2 className="size-3 animate-spin" /> Subiendo…
+              </span>
+            )}
+            {hasError && !isUploading && (
+              <span className="text-xs text-destructive">Algunas imágenes fallaron</span>
+            )}
           </div>
 
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={onClose}>Cancelar</Button>
-            <Button size="sm" disabled={!content.trim()} onClick={handlePublish} className="gap-1.5">
-              <Send className="size-3.5" /> Publicar
+            <Button
+              size="sm"
+              disabled={!canPublish}
+              onClick={handlePublish}
+              className="gap-1.5"
+            >
+              {isUploading
+                ? <><Loader2 className="size-3.5 animate-spin" /> Subiendo…</>
+                : <><Send className="size-3.5" /> Publicar</>
+              }
             </Button>
           </div>
         </div>
