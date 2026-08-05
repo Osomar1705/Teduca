@@ -88,7 +88,6 @@ async def upload_course_file(
     "/upload-url",
     response_model=UploadUrlResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[TeacherOrAdminDep],
 )
 async def request_upload_url(
     request: UploadUrlRequest,
