@@ -103,7 +103,12 @@ class SupabaseStorageClient:
             r = await client.post(url, headers=self._headers, timeout=15)
         if r.status_code != 200:
             raise SupabaseStorageError(f"Upload sign URL falló [{r.status_code}]: {r.text}")
-        return r.json()
+        data = r.json()
+        # Supabase devuelve url relativa ("/object/upload/sign/...") → la completamos
+        relative = data.get("url", "")
+        if relative and not relative.startswith("http"):
+            data["url"] = f"{settings.supabase_url}/storage/v1{relative}"
+        return data
 
     async def move(self, bucket: str, from_path: str, to_path: str) -> None:
         """Mueve/renombra un archivo dentro del mismo bucket."""
