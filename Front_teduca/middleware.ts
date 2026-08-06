@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-/**
- * Proxy/Middleware de Next.js 16 — protege el área autenticada y añade
- * security headers en cada respuesta.
- *
- * La cookie `teduca_auth` la escribe el cliente (auth-tokens.ts) al guardar
- * los JWT en localStorage. No contiene el token real; solo sirve como señal
- * edge-readable. La validación real del token ocurre en FastAPI en cada
- * request al backend.
- */
-
 const AUTH_COOKIE = 'teduca_auth'
 
-/** Rutas que requieren sesión activa */
 const PROTECTED_PREFIXES = [
   '/dashboard',
   '/discover',
@@ -35,14 +24,12 @@ const PROTECTED_PREFIXES = [
   '/evaluation',
 ]
 
-/** Rutas solo accesibles sin sesión */
 const AUTH_ONLY_PREFIXES = ['/login', '/register']
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const hasSession = request.cookies.has(AUTH_COOKIE)
 
-  // Redirige rutas protegidas si no hay sesión
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))
   if (isProtected && !hasSession) {
     const url = request.nextUrl.clone()
@@ -51,13 +38,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirige /login y /register si ya hay sesión activa
   const isAuthOnly = AUTH_ONLY_PREFIXES.some((p) => pathname.startsWith(p))
   if (isAuthOnly && hasSession) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Security headers en todas las respuestas
   const response = NextResponse.next()
 
   response.headers.set('X-Frame-Options', 'DENY')
