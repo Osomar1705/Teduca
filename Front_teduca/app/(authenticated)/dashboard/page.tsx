@@ -101,7 +101,7 @@ export default function DashboardPage() {
           <FadeIn>
             <div className="mb-6 flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Hola de nuevo,</p>
+                <p className="text-sm text-muted-foreground">Hola de nuevo</p>
                 <h1 className="text-2xl font-bold tracking-tight text-foreground">
                   {name || 'Estudiante'}
                 </h1>
