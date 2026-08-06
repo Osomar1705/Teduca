@@ -8,6 +8,7 @@ import {
   Home, Users, Compass, BookOpen, MessageCircle, CalendarCheck,
   Heart, BarChart3, Trophy, Gift, User, Bell, Settings, Flame,
   LayoutDashboard, GraduationCap, CalendarDays, LineChart, UserSquare2,
+  Brain,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -35,9 +36,10 @@ const NAV_ALUMNO: NavGroup[] = [
   {
     title: 'Aprender',
     items: [
-      { label: 'Descubrir', href: APP_ROUTES.DISCOVER,  icon: Compass       },
-      { label: 'Cursos',    href: APP_ROUTES.COURSES,   icon: BookOpen      },
-      { label: 'Mensajes',  href: APP_ROUTES.MESSAGES,  icon: MessageCircle },
+      { label: 'Descubrir',      href: APP_ROUTES.DISCOVER, icon: Compass       },
+      { label: 'Cursos',         href: APP_ROUTES.COURSES,  icon: BookOpen      },
+      { label: 'Mentor TEDUCA',  href: APP_ROUTES.MENTOR,   icon: Brain         },
+      { label: 'Mensajes',       href: APP_ROUTES.MESSAGES, icon: MessageCircle },
     ],
   },
   {

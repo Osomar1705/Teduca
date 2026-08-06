@@ -38,6 +38,15 @@ export default function ForYouPage() {
           subjects: onboarding?.subject_tags ?? [],
           streakDays: state.streak.current,
           recentActivity: [],
+          xp: state.xp,
+          level: state.level.title,
+          weeklyXP: state.weeklyXP,
+          weeklyGoal: state.weeklyGoal,
+          orbits: 0,
+          reservationsCount: 0,
+          coursesCount: allCourses.length,
+          projectInterests: onboarding?.project_interests ?? [],
+          learningStyles: onboarding?.learning_styles ?? [],
         })
         setGoals(onboarding?.goals ?? [])
         setCourses(allCourses.slice(0, 3))

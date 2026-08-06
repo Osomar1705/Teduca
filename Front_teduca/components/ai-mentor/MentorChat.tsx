@@ -1,40 +1,59 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Send } from 'lucide-react'
+import { Brain, Send, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { sendMentorMessage } from '@/lib/ai-mentor/service'
+import { sendMessage } from '@/lib/ai-mentor/service'
+import { loadMemory, saveMemory } from '@/lib/ai-mentor/memory'
 import type { MentorContext, MentorMessage } from '@/lib/ai-mentor/types'
 
 const SUGGESTIONS = [
   '¿Cómo organizo mi semana?',
   'Recomiéndame un curso',
-  'Explícame un concepto',
   '¿Cómo mejoro mi racha?',
+  'Explícame un concepto',
 ]
 
 function uid() {
   return Math.random().toString(36).slice(2)
 }
 
-export function MentorChat({ context }: { context: MentorContext }) {
+interface Props {
+  context: MentorContext
+  onClose?: () => void
+}
+
+export function MentorChat({ context, onClose }: Props) {
   const firstName = context.userName.split(' ')[0] || 'estudiante'
-  const [messages, setMessages] = useState<MentorMessage[]>(() => [
-    {
-      id: 'welcome',
-      role: 'mentor',
-      content: `¡Hola ${firstName}! Soy tu mentor académico. Estoy acá para ayudarte a organizar tu estudio, resolver dudas y mantenerte motivado. ¿En qué querés que trabajemos hoy?`,
-      createdAt: new Date().toISOString(),
-    },
-  ])
+
+  const [messages, setMessages] = useState<MentorMessage[]>(() => {
+    const memory = loadMemory()
+    if (memory.chatHistory.length > 0) return memory.chatHistory
+    return [
+      {
+        id: 'welcome',
+        role: 'mentor',
+        content: `¡Hola ${firstName}! Soy tu mentor académico. Estoy acá para ayudarte a organizar tu estudio, resolver dudas y mantenerte motivado. ¿En qué querés que trabajemos hoy?`,
+        createdAt: new Date().toISOString(),
+      },
+    ]
+  })
+
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, loading])
+
+  // Persist chat history
+  useEffect(() => {
+    const memory = loadMemory()
+    saveMemory({ ...memory, chatHistory: messages, lastSeen: new Date().toISOString() })
+  }, [messages])
 
   async function send(text: string) {
     const trimmed = text.trim()
@@ -52,7 +71,7 @@ export function MentorChat({ context }: { context: MentorContext }) {
     setLoading(true)
 
     try {
-      const reply = await sendMentorMessage(trimmed, context, history)
+      const reply = await sendMessage(history, trimmed, context)
       setMessages((prev) => [
         ...prev,
         { id: uid(), role: 'mentor', content: reply, createdAt: new Date().toISOString() },
@@ -63,19 +82,42 @@ export function MentorChat({ context }: { context: MentorContext }) {
   }
 
   return (
-    <div className="flex h-[calc(100svh-13rem)] min-h-[28rem] flex-col overflow-hidden rounded-2xl border border-border bg-card">
-      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
+          <Brain className="size-4 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground">Mentor TEDUCA</p>
+          <p className="text-xs text-muted-foreground">Tu asistente académico personal</p>
+        </div>
+        {onClose && (
+          <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
+            <X className="size-4" />
+            <span className="sr-only">Cerrar</span>
+          </Button>
+        )}
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.map((m) => (
           <div
             key={m.id}
-            className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}
+            className={cn('flex gap-2', m.role === 'user' ? 'justify-end' : 'justify-start')}
           >
+            {m.role === 'mentor' && (
+              <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 mt-1">
+                <Brain className="size-3.5 text-primary" />
+              </div>
+            )}
             <div
               className={cn(
                 'max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
                 m.role === 'user'
                   ? 'rounded-br-md bg-primary text-primary-foreground'
-                  : 'rounded-bl-md bg-primary/10 text-foreground'
+                  : 'rounded-bl-md bg-muted/60 text-foreground'
               )}
             >
               {m.content}
@@ -84,12 +126,15 @@ export function MentorChat({ context }: { context: MentorContext }) {
         ))}
 
         {loading && (
-          <div className="flex justify-start">
-            <div className="flex gap-1 rounded-2xl rounded-bl-md bg-primary/10 px-4 py-3">
+          <div className="flex justify-start gap-2">
+            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 mt-1">
+              <Brain className="size-3.5 text-primary" />
+            </div>
+            <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-muted/60 px-4 py-3">
               {[0, 1, 2].map((i) => (
                 <span
                   key={i}
-                  className="size-2 animate-bounce rounded-full bg-primary/50"
+                  className="size-1.5 animate-bounce rounded-full bg-muted-foreground/50"
                   style={{ animationDelay: `${i * 0.15}s` }}
                 />
               ))}
@@ -97,14 +142,15 @@ export function MentorChat({ context }: { context: MentorContext }) {
           </div>
         )}
 
+        {/* Quick suggestions (only on first message) */}
         {messages.length === 1 && !loading && (
-          <div className="flex flex-wrap gap-2 pt-2">
+          <div className="flex flex-wrap gap-2 pt-1">
             {SUGGESTIONS.map((s) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => send(s)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 {s}
               </button>
@@ -113,6 +159,7 @@ export function MentorChat({ context }: { context: MentorContext }) {
         )}
       </div>
 
+      {/* Input */}
       <form
         onSubmit={(e) => {
           e.preventDefault()

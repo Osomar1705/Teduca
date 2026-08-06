@@ -1,10 +1,51 @@
-import type { MentorContext, MentorMessage } from './types'
-
 /**
- * Mentor académico. Preparado para conectarse a `/api/v1/ai/mentor/chat`.
- * Mientras tanto genera respuestas locales basadas en el contexto del usuario y
- * en palabras clave del mensaje, para que la experiencia se sienta funcional.
+ * Servicio principal del Mentor TEDUCA.
+ * Orquesta: contexto del usuario, generación de contenido y respuestas de chat.
+ * Preparado para conectarse a `/api/v1/ai/mentor/` en el futuro.
  */
+
+import type { MentorContext, MentorData, MentorMessage } from './types'
+import { buildMentorContext } from './context'
+import {
+  generateGreeting,
+  generateDailyRecommendation,
+  generateWeeklyGoal,
+  generatePatternAnalysis,
+} from './prompts'
+import { getCurrentUser, getCourses, getReservations } from '@/lib/edtech/service'
+import { getGamificationState } from '@/lib/gamification/service'
+import { getOnboarding } from '@/lib/onboarding/service'
+
+// ─── getMentorData ──────────────────────────────────────────────────────────
+
+export async function getMentorData(): Promise<MentorData> {
+  const [user, courses, reservations] = await Promise.all([
+    getCurrentUser(),
+    getCourses(),
+    getReservations(),
+  ])
+
+  const gamification = getGamificationState()
+
+  let onboarding = null
+  try {
+    onboarding = await getOnboarding()
+  } catch {
+    // onboarding may not be completed yet
+  }
+
+  const context = buildMentorContext(user, gamification, courses, reservations, onboarding)
+
+  return {
+    context,
+    greeting: generateGreeting(context),
+    recommendation: generateDailyRecommendation(context),
+    weeklyGoal: generateWeeklyGoal(context),
+    patterns: generatePatternAnalysis(context),
+  }
+}
+
+// ─── sendMessage (chat) ─────────────────────────────────────────────────────
 
 function firstName(name: string): string {
   return name.split(' ')[0] || 'estudiante'
@@ -58,17 +99,31 @@ function buildReply(message: string, ctx: MentorContext): string {
     return `¡Hola ${name}! Estoy acá para ayudarte a organizar tu estudio, resolver dudas y mantenerte motivado. ¿Por dónde querés empezar hoy?`
   }
 
+  if (matches(message, ['xp', 'nivel', 'puntos', 'progreso'])) {
+    return `Tenés ${ctx.xp} XP y sos nivel "${ctx.level}". Esta semana ganaste ${ctx.weeklyXP} XP de los ${ctx.weeklyGoal} posibles. ¡Seguí así!`
+  }
+
   return pick([
     `Buena pregunta, ${name}. Contame un poco más de contexto y armamos un plan concreto${goal ? ` para acercarte a "${goal}"` : ''}.`,
     `Puedo ayudarte con eso. ¿Querés que lo dividamos en pasos accionables para esta semana?`,
   ])
 }
 
+export async function sendMessage(
+  history: MentorMessage[],
+  message: string,
+  context: MentorContext,
+): Promise<string> {
+  // Simulated delay (replace with fetch('/api/ai-mentor') in the future)
+  await new Promise((r) => setTimeout(r, 800 + Math.random() * 400))
+  return buildReply(message, context)
+}
+
+// Keep backward-compatible export for MentorChat
 export async function sendMentorMessage(
   message: string,
   context: MentorContext,
-  _history: MentorMessage[]
+  history: MentorMessage[],
 ): Promise<string> {
-  await new Promise((r) => setTimeout(r, 500 + Math.random() * 500))
-  return buildReply(message, context)
+  return sendMessage(history, message, context)
 }
