@@ -64,7 +64,7 @@ export async function middleware(request: NextRequest) {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self' data:",
-      "connect-src 'self' " + (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'),
+      "connect-src 'self' " + (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000') + " https://qlqqpeisizzmugpubzmk.supabase.co",
       "frame-src https://accounts.google.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
