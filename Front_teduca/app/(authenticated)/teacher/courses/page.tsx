@@ -5,7 +5,7 @@ import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Plus, BookOpen, Users, Star, Upload, Edit2, Trash2,
+  Plus, BookOpen, Users, Star, Upload, Edit2,
   MoreHorizontal, Video, FileText, ClipboardList, Eye, EyeOff,
 } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
@@ -54,7 +54,7 @@ export default function TeacherCoursesPage() {
           </div>
           <button
             onClick={() => setShowNew(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+            className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90"
           >
             <Plus className="size-3.5" /> Crear curso
           </button>
@@ -75,7 +75,7 @@ export default function TeacherCoursesPage() {
                   <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-medium', STATUS_STYLE[c.status])}>
                     {STATUS_LABEL[c.status]}
                   </span>
-                  <button className="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-foreground">
+                  <button className="rounded-xl p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-foreground">
                     <MoreHorizontal className="size-3.5" />
                   </button>
                 </div>
@@ -91,7 +91,7 @@ export default function TeacherCoursesPage() {
                 </div>
 
                 {/* Materiales */}
-                <div className="mb-4 flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <div className="mb-4 flex items-center gap-3 rounded-xl bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Video className="size-3" />{c.materials.videos}</span>
                   <span className="flex items-center gap-1"><FileText className="size-3" />{c.materials.pdfs}</span>
                   <span className="flex items-center gap-1"><ClipboardList className="size-3" />{c.materials.tasks}</span>
@@ -99,13 +99,13 @@ export default function TeacherCoursesPage() {
 
                 {/* Acciones */}
                 <div className="mt-auto flex gap-1.5">
-                  <button className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                  <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                     <Edit2 className="size-3" /> Editar
                   </button>
-                  <button className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                  <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                     <Upload className="size-3" /> Material
                   </button>
-                  <button className="flex items-center justify-center rounded-lg border border-border p-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                  <button className="flex items-center justify-center rounded-xl border border-border p-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                     {c.status === 'published' ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                   </button>
                 </div>
@@ -144,11 +144,11 @@ export default function TeacherCoursesPage() {
             >
               <h2 className="mb-4 text-lg font-bold text-foreground">Nuevo curso</h2>
               <div className="space-y-3">
-                <input placeholder="Título del curso" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring" />
-                <textarea placeholder="Descripción breve..." rows={3} className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring" />
+                <input placeholder="Título del curso" className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring" />
+                <textarea placeholder="Descripción breve..." rows={3} className="w-full resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:border-ring" />
                 <div className="flex gap-2 pt-2">
-                  <button onClick={() => setShowNew(false)} className="flex-1 rounded-lg border border-border py-2 text-sm text-muted-foreground hover:bg-muted transition-colors">Cancelar</button>
-                  <button className="flex-1 rounded-lg bg-primary py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">Crear</button>
+                  <button onClick={() => setShowNew(false)} className="flex-1 rounded-xl border border-border py-2 text-sm text-muted-foreground transition-colors hover:bg-muted">Cancelar</button>
+                  <button className="flex-1 rounded-xl bg-primary py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">Crear</button>
                 </div>
               </div>
             </motion.div>

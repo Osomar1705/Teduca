@@ -19,9 +19,9 @@ export function CourseCard({ course }: { course: Course }) {
     <HoverLift>
       <Link
         href={`/discover/${course.teacherId}`}
-        className="group flex h-full gap-3 rounded-xl border border-border bg-card p-3 transition-all duration-200 hover:border-primary/30 hover:shadow-sm"
+        className="group flex h-full gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-xs transition-all duration-200 hover:border-primary/30 hover:shadow-md"
       >
-        <div className="size-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+        <div className="size-16 flex-shrink-0 overflow-hidden rounded-xl bg-muted">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={course.image}
@@ -30,7 +30,7 @@ export function CourseCard({ course }: { course: Course }) {
           />
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
-          <h3 className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
+          <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
             {course.title}
           </h3>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">{course.teacherName}</p>

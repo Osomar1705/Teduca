@@ -8,10 +8,10 @@ const MEDALS: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' }
 
 export function RankingTable({ entries }: { entries: RankingEntry[] }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border bg-muted/40 text-left text-xs text-muted-foreground">
+          <tr className="border-b border-border bg-muted/50 text-left text-xs text-muted-foreground">
             <th className="px-4 py-3 font-medium">#</th>
             <th className="px-4 py-3 font-medium">Estudiante</th>
             <th className="hidden px-4 py-3 font-medium sm:table-cell">Score</th>

@@ -120,7 +120,7 @@ export default function DashboardPage() {
               <Link
                 key={s.label}
                 href={s.href}
-                className="rounded-lg bg-muted/40 px-4 py-3 transition-colors hover:bg-muted/70"
+                className="rounded-xl border border-transparent bg-muted/40 px-4 py-3 transition-all hover:border-border/60 hover:bg-muted/70 hover:shadow-xs"
               >
                 <p className="text-2xl font-bold text-foreground">{s.value}</p>
                 <p className="text-xs text-muted-foreground">{s.label}</p>

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, ChevronDown, GraduationCap, Lock } from 'lucide-react'
+import { Check, ChevronDown, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePlatformStore, type PlatformMode } from '@/store/platformStore'
 import { APP_ROUTES } from '@/lib/constants'
@@ -77,17 +77,17 @@ export function PlatformSwitcher() {
       <button
         onClick={() => setOpen((p) => !p)}
         className={cn(
-          'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted/70',
-          open && 'bg-muted/70'
+          'flex w-full items-center gap-2.5 rounded-xl border border-transparent px-2.5 py-2 text-left transition-all duration-200 hover:border-border/60 hover:bg-muted/70',
+          open && 'border-border/60 bg-muted/70 shadow-xs'
         )}
       >
         {/* Logo */}
-        <div className="relative size-7 shrink-0 overflow-hidden rounded-md border border-border/60 bg-muted">
+        <div className="relative size-8 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted shadow-xs">
           <Image src={current.logo} alt={current.label} fill className="object-cover" />
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-semibold leading-none text-foreground">{current.label}</p>
+          <p className="truncate text-xs font-semibold leading-tight text-foreground">{current.label}</p>
         </div>
 
         <ChevronDown className={cn(
@@ -104,17 +104,17 @@ export function PlatformSwitcher() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute left-0 top-full z-50 mt-1.5 w-72 overflow-hidden rounded-xl border border-border bg-card shadow-xl shadow-black/10"
+            className="absolute left-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-border bg-card shadow-xl shadow-black/10"
           >
             {/* Header del dropdown */}
-            <div className="border-b border-border/60 px-3.5 py-2.5">
+            <div className="border-b border-border/60 px-4 py-3">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Cambiar plataforma
               </p>
             </div>
 
             {/* Opciones */}
-            <div className="p-1.5 space-y-0.5">
+            <div className="space-y-1 p-2">
               {PLATFORMS.map((p) => {
                 const isActive     = p.mode === mode
                 const isTeacher    = p.mode === 'profesor'
@@ -127,7 +127,7 @@ export function PlatformSwitcher() {
                     whileHover={{ x: 2 }}
                     transition={{ duration: 0.1 }}
                     className={cn(
-                      'relative flex w-full items-start gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-left transition-colors',
+                      'relative flex w-full items-start gap-3 overflow-hidden rounded-xl px-3.5 py-3 text-left transition-colors',
                       isActive
                         ? 'bg-primary/8 ring-1 ring-primary/20'
                         : 'hover:bg-muted/70'
@@ -140,7 +140,7 @@ export function PlatformSwitcher() {
                     )} />
 
                     {/* Logo */}
-                    <div className="relative z-10 size-9 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted shadow-sm">
+                    <div className="relative z-10 size-10 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted shadow-sm">
                       <Image src={p.logo} alt={p.label} fill className="object-cover" />
                     </div>
 
@@ -176,7 +176,7 @@ export function PlatformSwitcher() {
             </div>
 
             {/* Footer */}
-            <div className="border-t border-border/60 px-3.5 py-2">
+            <div className="border-t border-border/60 px-4 py-3">
               <p className="text-[10px] text-muted-foreground">
                 {canAccessTeacher()
                   ? 'Puedes cambiar entre plataformas libremente.'

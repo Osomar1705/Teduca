@@ -95,16 +95,18 @@ export default function RewardsHistoryPage() {
         </div>
       )}
 
-      <div className="mb-6 flex gap-2 overflow-x-auto">
+      <div className="mb-6 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
         {FILTERS.map((f) => (
           <button
             key={f.key}
+            type="button"
             onClick={() => setFilter(f.key)}
+            aria-pressed={filter === f.key}
             className={cn(
-              'whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+              'whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all',
               filter === f.key
-                ? 'border-transparent bg-primary text-primary-foreground'
-                : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground',
+                ? 'border-transparent bg-primary text-primary-foreground shadow-xs'
+                : 'border-border text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground',
             )}
           >
             {f.label}

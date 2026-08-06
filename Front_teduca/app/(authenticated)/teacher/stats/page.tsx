@@ -3,7 +3,7 @@
 import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
 
 import { motion } from 'framer-motion'
-import { TrendingUp, Users, Clock, Star, Eye, BookOpen, Award } from 'lucide-react'
+import { TrendingUp, Users, Clock, Star, Eye, BookOpen } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { cn } from '@/lib/utils'
 
@@ -79,7 +79,7 @@ export default function TeacherStatsPage() {
         ].map((k) => (
           <StaggerItem key={k.label}>
             <div className="rounded-xl border border-border bg-card p-4">
-              <div className={cn('mb-3 flex size-8 items-center justify-center rounded-lg', k.bg)}>
+              <div className={cn('mb-3 flex size-8 items-center justify-center rounded-xl', k.bg)}>
                 <k.icon className={cn('size-4', k.color)} />
               </div>
               <p className="text-2xl font-bold text-foreground">{k.value}</p>
@@ -188,7 +188,7 @@ export default function TeacherStatsPage() {
             { label: '500 horas enseñadas',     icon: Clock,    date: null,       achieved: false },
           ].map((a) => (
             <div key={a.label} className={cn(
-              'flex items-center gap-3 rounded-lg border p-3',
+              'flex items-center gap-3 rounded-xl border p-3',
               a.achieved ? 'border-amber-500/20 bg-amber-500/5' : 'border-border bg-muted/20'
             )}>
               <div className={cn(

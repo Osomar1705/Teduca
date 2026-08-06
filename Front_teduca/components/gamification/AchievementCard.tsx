@@ -34,13 +34,13 @@ export function AchievementCard({ achievement }: { achievement: Achievement }) {
   return (
     <div
       className={cn(
-        'flex items-start gap-3 rounded-xl border p-4 transition-colors',
+        'flex items-start gap-3 rounded-2xl border p-4 shadow-xs transition-all duration-200 hover:-translate-y-px hover:shadow-sm',
         unlocked ? 'border-primary/20 bg-primary/5' : 'border-border bg-card'
       )}
     >
       <div
         className={cn(
-          'flex size-10 flex-shrink-0 items-center justify-center rounded-xl',
+          'flex size-10 flex-shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset',
           unlocked ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground/60'
         )}
       >

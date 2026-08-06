@@ -3,7 +3,7 @@
 import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
 
 import { useState } from 'react'
-import { Search, Filter, MoreHorizontal, Mail, MessageCircle, Star, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { Search, MoreHorizontal, Mail, MessageCircle, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { cn } from '@/lib/utils'
 
@@ -67,7 +67,7 @@ export default function StudentsPage() {
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Mis Alumnos</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">{STUDENTS.length} alumnos en total</p>
           </div>
-          <button className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+          <button className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90">
             <Mail className="size-3.5" /> Mensaje grupal
           </button>
         </div>
@@ -82,7 +82,7 @@ export default function StudentsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar alumno o curso..."
-              className="h-9 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+              className="h-9 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
             />
           </div>
           <div className="flex gap-1.5">
@@ -144,10 +144,10 @@ export default function StudentsPage() {
                 </span>
                 {/* Acciones */}
                 <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  <button className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                  <button className="rounded-xl p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                     <MessageCircle className="size-3.5" />
                   </button>
-                  <button className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                  <button className="rounded-xl p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                     <MoreHorizontal className="size-3.5" />
                   </button>
                 </div>

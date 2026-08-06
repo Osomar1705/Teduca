@@ -6,7 +6,7 @@ import {
   Flame, GraduationCap, Building2, CalendarDays, UserCog,
   GitFork, Link2, Globe, Link as LinkIcon, Check, Copy,
   Upload, Camera, Briefcase, FlaskConical, Users,
-  MapPin, Edit3, ExternalLink,
+  MapPin, ExternalLink,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Avatar } from '@/components/ui/avatar'
@@ -88,8 +88,9 @@ function AvatarUploader({
         <div className="relative shrink-0">
           <Avatar src={urlInput || current} name={name} size="lg" />
           <button
+            type="button"
             onClick={() => fileRef.current?.click()}
-            className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full border-2 border-card bg-primary text-primary-foreground shadow-sm"
+            className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full border-2 border-card bg-primary text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
           >
             <Camera className="size-3" />
           </button>
@@ -100,9 +101,11 @@ function AvatarUploader({
             {(['url', 'upload'] as const).map((m) => (
               <button
                 key={m}
+                type="button"
                 onClick={() => setMode(m)}
+                aria-pressed={mode === m}
                 className={cn(
-                  'flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                  'flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-medium transition-all',
                   mode === m ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
                 )}
               >
@@ -118,8 +121,9 @@ function AvatarUploader({
             />
           ) : (
             <button
+              type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-input text-sm text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-input text-sm text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
             >
               <Upload className="size-4" /> Seleccionar imagen
             </button>
@@ -149,15 +153,16 @@ function CoverUploader({ current, onChange }: { current?: string; onChange: (url
   }
 
   return (
-    <div className="relative h-36 w-full overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary/20 to-primary/5">
+      <div className="relative h-36 w-full overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary/20 to-primary/5">
       {urlInput && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={urlInput} alt="Portada" className="h-full w-full object-cover" />
       )}
       <div className="absolute inset-0 flex items-center justify-center gap-2">
         <button
+          type="button"
           onClick={() => fileRef.current?.click()}
-          className="flex items-center gap-1.5 rounded-lg bg-background/80 px-3 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-colors hover:bg-background"
+          className="flex items-center gap-1.5 rounded-xl bg-background/80 px-3 py-1.5 text-xs font-medium text-foreground backdrop-blur-sm transition-colors hover:bg-background"
         >
           <Camera className="size-3.5" /> Cambiar portada
         </button>
@@ -353,7 +358,7 @@ function ProfileView({ profile, game }: { profile: ExtendedProfile; game: Gamifi
 
             {/* URL pública */}
             {publicUrl && (
-              <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+              <div className="rounded-xl border border-border bg-muted/40 px-3 py-2.5">
                 <p className="mb-1 text-xs font-medium text-muted-foreground">URL pública</p>
                 <div className="flex items-center gap-2">
                   <p className="flex-1 truncate text-xs font-medium text-foreground">{publicUrl}</p>
@@ -497,7 +502,7 @@ function ExtendedProfileEdit({
               onChange={(e) => set('bio', e.target.value)}
               rows={3}
               placeholder="Cuéntale a la comunidad quién eres..."
-              className="w-full resize-none rounded-lg border border-input bg-background px-3.5 py-2.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/25"
+              className="w-full resize-none rounded-xl border border-input bg-background px-3.5 py-2.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/25"
             />
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -570,13 +575,15 @@ function ExtendedProfileEdit({
               return (
                 <button
                   key={key}
+                  type="button"
                   onClick={() => set(key, !active as ExtendedProfile[typeof key])}
+                  aria-pressed={active}
                   className={cn(
-                    'flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-colors',
+                    'flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all',
                     active ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
                   )}
                 >
-                  <div className={cn('flex size-8 items-center justify-center rounded-lg', active ? 'bg-primary/10' : 'bg-muted')}>
+                  <div className={cn('flex size-8 items-center justify-center rounded-xl', active ? 'bg-primary/10' : 'bg-muted')}>
                     <Icon className={cn('size-4', active ? 'text-primary' : 'text-muted-foreground')} />
                   </div>
                   <div>
@@ -613,7 +620,10 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function load() {
-      const user = await getCurrentUser()
+      const user = await getCurrentUser().catch(() => ({
+        name: 'Estudiante',
+        avatar: undefined,
+      }))
       const onboarding = await getOnboarding().catch(() => null as OnboardingData | null)
       getReservations().catch(() => {})
       setProfile({
@@ -634,7 +644,21 @@ export default function ProfilePage() {
       })
       setLoading(false)
     }
-    load()
+    load().catch(() => {
+      setProfile({
+        name: 'Estudiante',
+        avatar: undefined,
+        skills: [],
+        subjects: [],
+        projects: [],
+        interests: [],
+        goals: [],
+        openToMentoring: false,
+        openToProjects: false,
+        openToWork: false,
+      })
+      setLoading(false)
+    })
   }, [])
 
   const TABS: { key: Tab; label: string }[] = [

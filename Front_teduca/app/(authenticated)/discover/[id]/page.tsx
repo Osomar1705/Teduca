@@ -186,7 +186,7 @@ export default function TeacherProfilePage({
             <div className="flex flex-col gap-3">
               {teacher.availability.map((a) => (
                 <div key={a.day} className="flex items-center gap-3">
-                  <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-primary">
+                  <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-sm font-semibold text-primary">
                     {a.day}
                   </span>
                   <div className="flex flex-wrap gap-1.5">
@@ -274,7 +274,7 @@ export default function TeacherProfilePage({
                         href={s.url?.startsWith('https://') ? s.url : '#'}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex size-9 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        className="inline-flex size-9 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
                         <Icon className="size-4" />
                       </a>
@@ -301,7 +301,7 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+      <div className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
         <Icon className="size-4" />
       </div>
       <div className="min-w-0">

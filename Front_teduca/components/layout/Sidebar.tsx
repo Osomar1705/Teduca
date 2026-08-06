@@ -103,11 +103,11 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const nav = mode === 'profesor' ? NAV_PROFESOR : NAV_ALUMNO
 
   return (
-    <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-2.5 py-2">
+    <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-3">
       {nav.map((group, gi) => (
-        <div key={gi} className="flex flex-col gap-0.5">
+        <div key={gi} className="flex flex-col gap-1">
           {group.title && (
-            <p className="px-2.5 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+            <p className="px-2.5 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/60">
               {group.title}
             </p>
           )}
@@ -119,7 +119,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 href={href}
                 onClick={onNavigate}
                 className={cn(
-                  'group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors',
+                  'group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-all duration-200',
                   active
                     ? 'font-medium text-primary'
                     : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
@@ -128,11 +128,11 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 {active && (
                   <motion.span
                     layoutId="sidebar-active"
-                    className="absolute inset-0 rounded-md bg-primary/8"
+                    className="absolute inset-0 rounded-xl bg-primary/8 ring-1 ring-primary/10"
                     transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                   />
                 )}
-                <Icon className="relative size-[15px] shrink-0" />
+                <Icon className="relative size-4 shrink-0" />
                 <span className="relative truncate">{label}</span>
               </Link>
             )
@@ -149,9 +149,9 @@ function GamificationFooter() {
   const [game] = useState<GamificationState | null>(getGamificationState)
   if (!game) return null
   return (
-    <div className="flex items-center gap-2 px-2.5 py-2 text-xs text-muted-foreground">
+    <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
       <Flame className="size-3.5 text-orange-500" />
-      <span>{game.streak.current} días</span>
+      <span className="font-medium text-foreground">{game.streak.current} días</span>
       <span className="mx-1 text-border">·</span>
       <span className="truncate">{game.level.title}</span>
     </div>
@@ -162,15 +162,15 @@ function GamificationFooter() {
 
 export function Sidebar() {
   return (
-    <aside className="sticky top-0 hidden h-svh w-56 shrink-0 flex-col border-r border-border bg-sidebar md:flex">
+    <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col border-r border-border/60 bg-sidebar md:flex">
       {/* PlatformSwitcher reemplaza el logo */}
-      <div className="flex h-14 items-center px-3">
+      <div className="flex h-16 items-center px-3.5">
         <PlatformSwitcher />
       </div>
 
       <SidebarNav />
 
-      <div className="border-t border-border/60 px-2 py-1.5">
+      <div className="border-t border-border/60 px-3 py-3">
         <GamificationFooter />
       </div>
     </aside>

@@ -81,7 +81,7 @@ export default function ForYouPage() {
               <Telescope className="size-4 text-muted-foreground" />
               <h1 className="text-base font-semibold text-foreground">Tu Mentor</h1>
             </div>
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <span className="rounded-xl bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
               Beta
             </span>
           </div>
@@ -101,7 +101,7 @@ export default function ForYouPage() {
           <div className="divide-y divide-border rounded-xl border border-border">
             {courses.map((c) => (
               <div key={c.id} className="flex items-center gap-3 px-4 py-3">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-bold text-muted-foreground">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-muted text-xs font-bold text-muted-foreground">
                   {c.category.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">

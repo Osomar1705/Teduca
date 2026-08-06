@@ -77,7 +77,7 @@ export default function CoursesPage() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Buscar cursos..."
-        className="h-9 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20"
+        className="h-9 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20"
       />
     </div>
   )
@@ -140,10 +140,10 @@ export default function CoursesPage() {
               key={c}
               onClick={() => setCategory(c)}
               className={cn(
-                'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                'rounded-full border px-3 py-1 text-xs font-medium transition-all',
                 category === c
-                  ? 'border-transparent bg-primary text-primary-foreground'
-                  : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
+                  ? 'border-transparent bg-primary text-primary-foreground shadow-xs'
+                  : 'border-border text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground'
               )}
             >
               {c}

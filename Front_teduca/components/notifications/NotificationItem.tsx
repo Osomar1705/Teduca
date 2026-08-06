@@ -39,11 +39,11 @@ export function NotificationItem({
   const inner = (
     <div
       className={cn(
-        'flex items-start gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-muted',
+        'flex items-start gap-3 rounded-2xl border border-transparent px-4 py-3 transition-all duration-200 hover:border-border/60 hover:bg-muted/60',
         !notification.isRead && 'bg-primary/[0.03]'
       )}
     >
-      <div className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <div className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/10">
         <Icon className="size-4.5" />
       </div>
       <div className="min-w-0 flex-1">

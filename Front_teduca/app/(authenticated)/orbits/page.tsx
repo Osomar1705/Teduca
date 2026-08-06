@@ -55,7 +55,7 @@ export default function RewardsPage() {
         description="Tus Orbits representan tu impacto y participación en TEDUCA. Ganá más siendo activo."
       />
 
-      <div className="mb-6 flex gap-0 border-b border-border">
+      <div className="mb-6 inline-flex w-full gap-1 rounded-2xl border border-border bg-muted/30 p-1">
         {TABS.map((t) => {
           const active = tab === t.key
           return (
@@ -63,10 +63,10 @@ export default function RewardsPage() {
               key={t.key}
               onClick={() => setTab(t.key)}
               className={cn(
-                '-mb-px inline-flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
+                'inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-medium transition-all',
                 active
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground',
+                  ? 'bg-background text-primary shadow-xs'
+                  : 'text-muted-foreground hover:bg-background/70 hover:text-foreground',
               )}
             >
               <t.icon className="size-4" />
@@ -178,13 +178,13 @@ function BalanceTab() {
               <div
                 key={rule.event}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg border p-3 transition-colors',
+                  'flex items-center gap-3 rounded-xl border p-3 transition-all',
                   rule.isActive
-                    ? 'border-border hover:border-primary/30'
+                    ? 'border-border hover:border-primary/30 hover:bg-muted/20'
                     : 'border-border/50 opacity-60',
                 )}
               >
-                <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+                <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-xl bg-muted">
                   <Icon className="size-4 text-muted-foreground" />
                 </div>
                 <div className="min-w-0 flex-1">

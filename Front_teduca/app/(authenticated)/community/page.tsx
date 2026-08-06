@@ -234,15 +234,19 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 24 }}
         transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-        className="relative z-10 flex w-full max-w-xl flex-col rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-post-title"
+        className="relative z-10 flex w-full max-w-xl flex-col rounded-t-2xl border border-border bg-card shadow-2xl sm:rounded-2xl"
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-3.5">
-          <h2 className="text-sm font-semibold text-foreground">Nueva publicación</h2>
+          <h2 id="new-post-title" className="text-sm font-semibold text-foreground">Nueva publicación</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            aria-label="Cerrar publicación"
+            className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <X className="size-4" />
           </button>
@@ -289,7 +293,7 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="¿Qué quieres compartir con la comunidad?"
                 rows={4}
-                className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20"
+                className="w-full resize-none rounded-2xl border border-input bg-background/95 px-4 py-3 text-sm leading-relaxed shadow-xs outline-none transition-colors placeholder:text-muted-foreground/80 focus:border-ring focus:ring-3 focus:ring-ring/20"
               />
               <span className={cn(
                 'absolute bottom-2.5 right-3 text-[10px]',
@@ -324,15 +328,16 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 border-t border-border/60 px-5 py-3.5 flex items-center justify-between gap-3">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/[0.02] px-5 py-3.5">
           <div className="flex items-center gap-1">
             {/* Botón Enlace */}
-            <button
-              type="button"
-              onClick={() => setShowLink((p) => !p)}
-              className={cn(
-                'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
-                showLink ? 'text-primary bg-primary/8' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              <button
+                type="button"
+                onClick={() => setShowLink((p) => !p)}
+                aria-pressed={showLink}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors',
+                  showLink ? 'text-primary bg-primary/8' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
               <LinkIcon className="size-3.5" /> Enlace
@@ -413,7 +418,7 @@ function PostCard({ post }: { post: Post }) {
   }
 
   return (
-    <article className="group overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-border/80 hover:shadow-sm">
+    <article className="group overflow-hidden rounded-2xl border border-border bg-card shadow-xs transition-all duration-200 hover:border-border/80 hover:shadow-md">
       {/* Imagen al tope si la hay */}
       {post.image && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -437,7 +442,7 @@ function PostCard({ post }: { post: Post }) {
           </div>
           <div className="flex items-center gap-2">
             <CategoryBadge category={post.category} />
-            <button className="rounded-md p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100">
+            <button className="rounded-xl p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100">
               <MoreHorizontal className="size-4" />
             </button>
           </div>
@@ -458,7 +463,7 @@ function PostCard({ post }: { post: Post }) {
 
         {/* Meta */}
         {(post.deadline || post.location || post.link) && (
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 rounded-lg bg-muted/50 px-3 py-2">
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 rounded-xl bg-muted/50 px-3 py-2">
             {post.deadline && (
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Calendar className="size-3" />{post.deadline}
@@ -494,25 +499,25 @@ function PostCard({ post }: { post: Post }) {
           <button
             onClick={handleLike}
             className={cn(
-              'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
+              'flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors',
               liked ? 'text-rose-500 hover:bg-rose-500/8' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             )}
           >
             <Heart className={cn('size-3.5', liked && 'fill-current')} />{likes}
           </button>
-          <button className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+          <button className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
             <MessageCircle className="size-3.5" />{post.comments}
           </button>
           <button
             onClick={handleSave}
             className={cn(
-              'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
+              'flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors',
               saved ? 'text-primary hover:bg-primary/8' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             )}
           >
             <Bookmark className={cn('size-3.5', saved && 'fill-current')} />{saves}
           </button>
-          <button className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+          <button className="ml-auto flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
             <Share2 className="size-3.5" />Compartir
           </button>
         </div>
@@ -527,7 +532,7 @@ function PersonCard({ person }: { person: Person }) {
   const [connected, setConnected] = useState(false)
 
   return (
-    <div className="flex flex-col rounded-xl border border-border bg-card p-4 transition-all hover:border-border/80 hover:shadow-sm">
+    <div className="flex flex-col rounded-2xl border border-border bg-card p-4 shadow-xs transition-all duration-200 hover:border-border/80 hover:shadow-md">
       <div className="mb-3 flex items-start justify-between gap-2">
         <Avatar name={person.name} size="md" />
         <Button
@@ -549,7 +554,7 @@ function PersonCard({ person }: { person: Person }) {
       </div>
 
       {person.goal && (
-        <p className="mt-2 text-xs italic text-muted-foreground line-clamp-2">"{person.goal}"</p>
+        <p className="mt-2 line-clamp-2 text-xs italic text-muted-foreground">&ldquo;{person.goal}&rdquo;</p>
       )}
 
       <div className="mt-2.5 flex flex-wrap gap-1">
@@ -593,12 +598,12 @@ function RightPanel({ onPublish }: { onPublish: () => void }) {
       <div className="sticky top-20 flex flex-col gap-4">
 
         {/* Próximos eventos */}
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-xs">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Próximos eventos</p>
           <div className="space-y-3">
             {UPCOMING_EVENTS.map((ev) => (
               <div key={ev.id} className="flex items-center gap-3">
-                <div className="flex size-9 shrink-0 flex-col items-center justify-center rounded-lg bg-primary/8 text-center leading-none">
+                <div className="flex size-9 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/8 text-center leading-none">
                   <span className="text-[13px] font-bold text-primary">{ev.date}</span>
                   <span className="text-[9px] font-medium uppercase text-primary/60">{ev.month}</span>
                 </div>
@@ -612,7 +617,7 @@ function RightPanel({ onPublish }: { onPublish: () => void }) {
         </div>
 
         {/* Tendencias */}
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-xs">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tendencias</p>
           <div className="space-y-2.5">
             {TRENDS.map((tag, i) => (
@@ -627,7 +632,7 @@ function RightPanel({ onPublish }: { onPublish: () => void }) {
         {/* CTA */}
         <button
           onClick={onPublish}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-3 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
         >
           <Plus className="size-3.5" /> Compartir algo
         </button>
@@ -714,7 +719,7 @@ export default function CommunityPage() {
       <FadeIn>
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Comunidad</h1>
+            <h1 className="text-[1.9rem] font-bold tracking-tight text-foreground">Comunidad</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
               Oportunidades, eventos y personas del ecosistema educativo.
             </p>
@@ -727,19 +732,21 @@ export default function CommunityPage() {
 
       {/* Tabs */}
       <FadeIn>
-        <div className="mb-5 flex gap-0 border-b border-border">
+        <div className="mb-5 inline-flex w-full gap-1 rounded-2xl border border-border bg-muted/30 p-1">
           {([
             { key: 'feed',       label: 'Feed'       },
             { key: 'networking', label: 'Networking'  },
           ] as { key: Tab; label: string }[]).map((t) => (
             <button
               key={t.key}
+              type="button"
               onClick={() => setActiveTab(t.key)}
+              aria-pressed={activeTab === t.key}
               className={cn(
-                '-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors',
+                'flex-1 rounded-xl px-4 py-3 text-sm font-medium transition-all',
                 activeTab === t.key
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
+                  ? 'bg-background text-primary shadow-xs'
+                  : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
               )}
             >
               {t.label}
@@ -765,7 +772,7 @@ export default function CommunityPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar publicaciones, eventos, oportunidades..."
-                  className="h-10 w-full rounded-xl border border-input bg-background pl-9 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20"
+                  className="h-10 w-full rounded-xl border border-input bg-background/95 pl-9 pr-4 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground/80 focus:border-ring focus:ring-3 focus:ring-ring/20"
                 />
               </div>
 
@@ -774,12 +781,14 @@ export default function CommunityPage() {
                 {CATEGORIES.map(({ key, label, icon: Icon }) => (
                   <button
                     key={key}
+                    type="button"
                     onClick={() => setActiveCategory(key)}
+                    aria-pressed={activeCategory === key}
                     className={cn(
-                      'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                      'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all',
                       activeCategory === key
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
+                        ? 'border-primary bg-primary text-primary-foreground shadow-xs'
+                        : 'border-border text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground'
                     )}
                   >
                     <Icon className="size-3" />{label}
@@ -834,7 +843,7 @@ export default function CommunityPage() {
                 value={netSearch}
                 onChange={(e) => setNetSearch(e.target.value)}
                 placeholder="Buscar por nombre, carrera o interés..."
-                className="h-10 w-full rounded-xl border border-input bg-background pl-9 pr-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20"
+                className="h-10 w-full rounded-xl border border-input bg-background/95 pl-9 pr-4 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground/80 focus:border-ring focus:ring-3 focus:ring-ring/20"
               />
             </div>
             {filteredPeople.length === 0 ? (

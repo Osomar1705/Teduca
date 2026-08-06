@@ -283,10 +283,17 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    background: var(--background);
+  }
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: 'cv11', 'ss01';
     text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(circle at top, oklch(0.47 0.19 264 / 0.06) 0%, transparent 28%),
+      linear-gradient(180deg, oklch(0.99 0.006 264 / 0.96) 0%, transparent 28%);
+    background-attachment: fixed;
   }
   h1, h2, h3, h4 {
     @apply tracking-tight;
@@ -334,6 +341,20 @@
   }
   .shadow-glow {
     box-shadow: var(--shadow-glow);
+  }
+  .surface-card {
+    border: 1px solid var(--border);
+    background: color-mix(in oklch, var(--card) 96%, transparent);
+    box-shadow: var(--shadow-xs);
+  }
+  .surface-card-hover {
+    transition-property: transform, box-shadow, border-color, background-color;
+    transition-duration: 280ms;
+    transition-timing-function: var(--ease-out-soft);
+  }
+  .surface-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
   }
   /* Aura radial para héroes (suave, no satura) */
   .aura {

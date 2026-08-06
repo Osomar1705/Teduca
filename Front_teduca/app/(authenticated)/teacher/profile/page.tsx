@@ -4,7 +4,7 @@ import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
 import { useEffect, useRef, useState } from 'react'
 import { getTeacherProfile, updateTeacherProfile } from '@/lib/teacher/service'
 import {
-  Globe, DollarSign, MapPin, Languages, Camera, Save,
+  DollarSign, MapPin, Languages, Camera, Save,
   CheckCircle2, Loader2,
 } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
@@ -34,7 +34,7 @@ export default function TeacherProfilePage() {
   const { isAllowed }  = useTeacherGuard()
   const didLoad        = useRef(false)
   const [loading,      setLoading]      = useState(true)
-  const [name,         setName]         = useState('')
+  const [name]                         = useState('')
   const [bio,          setBio]          = useState('')
   const [university,   setUniversity]   = useState('')
   const [specialty,    setSpecialty]    = useState('')
@@ -165,7 +165,7 @@ export default function TeacherProfilePage() {
               onChange={(e) => setBio(e.target.value)}
               rows={4}
               placeholder="Cuéntale a tus alumnos quién eres y qué puedes enseñarles..."
-              className="mt-1 w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
+              className="mt-1 w-full resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20"
             />
           </div>
         </StaggerItem>
@@ -226,7 +226,7 @@ export default function TeacherProfilePage() {
                       type="button"
                       onClick={() => setModality(m.id)}
                       className={cn(
-                        'rounded-lg border p-3 text-left transition-colors',
+                    'rounded-xl border p-3 text-left transition-colors',
                         modality === m.id
                           ? 'border-primary bg-primary/8 ring-1 ring-primary/20'
                           : 'border-border hover:bg-muted/40'

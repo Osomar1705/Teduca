@@ -20,13 +20,13 @@ export function TeacherCard({
 }) {
   return (
     <HoverLift>
-      <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-200 hover:border-primary/30 hover:shadow-md">
-        <div className="flex items-start gap-3 p-4 pb-3">
+      <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xs transition-all duration-200 hover:border-primary/30 hover:shadow-md">
+        <div className="flex items-start gap-3 p-4 pb-3.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={teacher.avatar}
             alt={teacher.name}
-            className="size-12 flex-shrink-0 rounded-lg object-cover"
+            className="size-12 flex-shrink-0 rounded-xl object-cover"
           />
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-sm font-semibold text-foreground">{teacher.name}</h3>
@@ -64,9 +64,9 @@ export function TeacherCard({
           </div>
         </div>
 
-        <div className="mx-4 border-t border-border" />
+        <div className="mx-4 border-t border-border/70" />
 
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-3.5">
           <div className="flex flex-wrap gap-1.5">
             <Badge variant="info" className="px-1.5 py-0.5 text-[10px]">
               {MODALITY_LABEL[teacher.modality]}

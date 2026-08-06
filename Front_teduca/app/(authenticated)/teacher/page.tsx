@@ -94,10 +94,10 @@ export default function TeacherDashboard() {
             <p className="mt-0.5 text-sm text-muted-foreground">Bienvenido de vuelta. Tienes 2 sesiones hoy.</p>
           </div>
           <div className="hidden items-center gap-2 sm:flex">
-            <button className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            <button className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground transition-all hover:border-border/80 hover:bg-muted hover:text-foreground hover:shadow-xs">
               <CalendarCheck className="size-3.5" /> Ver agenda
             </button>
-            <button className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90">
+            <button className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90">
               <Zap className="size-3.5" /> Nueva sesión
             </button>
           </div>
@@ -110,7 +110,7 @@ export default function TeacherDashboard() {
           <StaggerItem key={s.label}>
             <div className="rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm">
               <div className="mb-3 flex items-center justify-between">
-                <div className={cn('flex size-8 items-center justify-center rounded-lg', s.bg)}>
+                <div className={cn('flex size-8 items-center justify-center rounded-xl', s.bg)}>
                   <s.icon className={cn('size-4', s.color)} />
                 </div>
                 <ArrowUpRight className="size-3.5 text-muted-foreground/40" />
@@ -145,7 +145,7 @@ export default function TeacherDashboard() {
                   <div className="flex items-center gap-3">
                     <span className="hidden text-xs text-muted-foreground sm:block">{s.time}</span>
                     <StatusBadge status={s.status} />
-                    <button className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    <button className="rounded-xl p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                       <MoreHorizontal className="size-3.5" />
                     </button>
                   </div>
@@ -158,14 +158,14 @@ export default function TeacherDashboard() {
           <div className="rounded-xl border border-border bg-card">
             <div className="flex items-center justify-between border-b border-border/60 px-5 py-4">
               <h2 className="text-sm font-semibold text-foreground">Mis cursos</h2>
-              <button className="flex items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/12 transition-colors">
+              <button className="flex items-center gap-1.5 rounded-xl bg-primary/8 px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/12">
                 <BookOpen className="size-3" /> Crear curso
               </button>
             </div>
             <div className="divide-y divide-border/60">
               {MY_COURSES.map((c) => (
                 <div key={c.id} className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-muted/30">
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/8">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/8">
                     <BookOpen className="size-4 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -215,7 +215,7 @@ export default function TeacherDashboard() {
             <h3 className="mb-3 text-sm font-semibold text-foreground">Reseñas recientes</h3>
             <div className="space-y-3">
               {RECENT_REVIEWS.map((r) => (
-                <div key={r.id} className="rounded-lg bg-muted/40 p-3">
+                <div key={r.id} className="rounded-xl bg-muted/40 p-3">
                   <div className="mb-1.5 flex items-center justify-between">
                     <span className="text-xs font-medium text-foreground">{r.author}</span>
                     <div className="flex">

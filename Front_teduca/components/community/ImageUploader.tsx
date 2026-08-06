@@ -96,17 +96,16 @@ export function ImageUploader({
   const [dragging, setDragging] = useState(false)
   const dragCounter  = useRef(0)
 
-  // Estado interno como ref para evitar closures obsoletos en callbacks async
-  const imagesRef    = useRef<PostImage[]>([])
-  const [, forceRender] = useState(0)
+  // Estado interno renderizable + ref espejo para evitar closures obsoletos en callbacks async
+  const [images, setImagesState] = useState<PostImage[]>([])
+  const imagesRef = useRef<PostImage[]>(images)
 
   function setImages(updater: (prev: PostImage[]) => PostImage[]) {
-    imagesRef.current = updater(imagesRef.current)
-    forceRender((n) => n + 1)
-    onChange(imagesRef.current)
+    const next = updater(imagesRef.current)
+    imagesRef.current = next
+    setImagesState(next)
+    onChange(next)
   }
-
-  const images = imagesRef.current
 
   // ── Validación ──────────────────────────────────────────────────────────
 
@@ -285,7 +284,7 @@ export function ImageUploader({
           onDragOver={onDragOver}
           onDrop={onDrop}
           className={cn(
-            'flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-xl border-2 border-dashed px-4 py-7 text-center transition-colors select-none',
+            'flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed px-4 py-7 text-center transition-colors select-none',
             dragging
               ? 'border-primary bg-primary/5 text-primary'
               : 'border-border text-muted-foreground hover:border-primary/50 hover:bg-muted/30 hover:text-foreground'
@@ -329,7 +328,7 @@ export function ImageUploader({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.92 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
-                className="group relative overflow-hidden rounded-xl border border-border bg-muted"
+                className="group relative overflow-hidden rounded-2xl border border-border bg-muted shadow-xs"
               >
                 {/* Imagen */}
                 <div className="aspect-video w-full overflow-hidden">
@@ -372,9 +371,9 @@ export function ImageUploader({
                 {/* Overlay error */}
                 {img.status === 'error' && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80 p-3 text-center backdrop-blur-[2px]">
-                    <div className="flex size-7 items-center justify-center rounded-full bg-destructive/10">
-                      <X className="size-4 text-destructive" />
-                    </div>
+                  <div className="flex size-7 items-center justify-center rounded-full bg-destructive/10">
+                    <X className="size-4 text-destructive" />
+                  </div>
                     <p className="text-[11px] leading-snug text-destructive line-clamp-3">
                       {img.error}
                     </p>
@@ -383,7 +382,7 @@ export function ImageUploader({
                       <button
                         type="button"
                         onClick={() => handleRetry(img)}
-                        className="mt-1 flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+                        className="mt-1 flex items-center gap-1 rounded-xl bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground transition-opacity hover:opacity-90"
                       >
                         <RefreshCw className="size-3" /> Reintentar
                       </button>
@@ -426,8 +425,8 @@ export function ImageUploader({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className={cn(
-                  'flex aspect-video w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed transition-colors',
+                  className={cn(
+                  'flex aspect-video w-full cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed transition-colors',
                   dragging
                     ? 'border-primary bg-primary/5 text-primary'
                     : 'border-border text-muted-foreground hover:border-primary/50 hover:bg-muted/30 hover:text-primary'
@@ -464,7 +463,7 @@ export function ImageUploaderTrigger({
     <label
       htmlFor={inputId}
       className={cn(
-        'flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors select-none',
+        'flex cursor-pointer items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors select-none',
         count > 0
           ? 'text-primary bg-primary/8 hover:bg-primary/12'
           : 'text-muted-foreground hover:bg-muted hover:text-foreground',

@@ -12,17 +12,16 @@ export function Navbar() {
   const { toggleSidebar } = useUIStore()
 
   return (
-    <nav className="glass sticky top-0 z-40 w-full border-b border-border/60">
-      <div className="flex h-16 items-center justify-between px-4">
-        {/* Left side: Logo and toggle */}
+    <nav className="glass sticky top-0 z-40 w-full border-b border-border/60 backdrop-blur-xl">
+      <div className="flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             onClick={toggleSidebar}
-            className="h-9 w-9 md:hidden"
+            className="md:hidden"
           >
-            <Menu className="h-4 w-4" />
+            <Menu className="size-4" />
             <span className="sr-only">Abrir menú</span>
           </Button>
 
@@ -34,7 +33,6 @@ export function Navbar() {
           </Link>
         </div>
 
-        {/* Right side: Theme toggle and user menu */}
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button variant="brand" size="sm" asChild>

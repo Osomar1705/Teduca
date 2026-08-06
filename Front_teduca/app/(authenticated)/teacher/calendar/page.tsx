@@ -61,7 +61,7 @@ export default function TeacherCalendarPage() {
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Agenda</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">Gestiona tu disponibilidad y sesiones</p>
           </div>
-          <button className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+          <button className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90">
             <Plus className="size-3.5" /> Nueva sesión
           </button>
         </div>
@@ -74,11 +74,11 @@ export default function TeacherCalendarPage() {
           <div className="rounded-xl border border-border bg-card p-4">
             {/* Header mes */}
             <div className="mb-4 flex items-center justify-between">
-              <button onClick={prevMonth} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+              <button onClick={prevMonth} className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                 <ChevronLeft className="size-4" />
               </button>
               <h2 className="text-sm font-semibold text-foreground">{MONTHS[month]} {year}</h2>
-              <button onClick={nextMonth} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+              <button onClick={nextMonth} className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                 <ChevronRight className="size-4" />
               </button>
             </div>
@@ -102,9 +102,9 @@ export default function TeacherCalendarPage() {
                     key={i}
                     onClick={() => setSelected(day)}
                     className={cn(
-                      'relative flex aspect-square items-center justify-center rounded-lg text-sm transition-colors',
+                      'relative flex aspect-square items-center justify-center rounded-xl text-sm transition-all',
                       isSel
-                        ? 'bg-primary text-primary-foreground font-semibold'
+                        ? 'bg-primary font-semibold text-primary-foreground shadow-xs'
                         : isToday
                           ? 'border border-primary/50 font-semibold text-primary'
                           : 'text-foreground hover:bg-muted'
@@ -135,7 +135,7 @@ export default function TeacherCalendarPage() {
                   {sessionsForDay.map((s) => (
                     <StaggerItem key={s.id}>
                       <div className="flex items-center gap-3 px-5 py-3.5">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/8">
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/8">
                           <Clock className="size-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -164,7 +164,7 @@ export default function TeacherCalendarPage() {
               ) : (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <p className="text-sm text-muted-foreground">Día libre</p>
-                  <button className="mt-3 flex items-center gap-1.5 rounded-lg bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/12 transition-colors">
+                  <button className="mt-3 flex items-center gap-1.5 rounded-xl bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/12">
                     <Plus className="size-3.5" /> Agendar sesión
                   </button>
                 </div>
@@ -191,7 +191,7 @@ export default function TeacherCalendarPage() {
                 </div>
               ))}
             </div>
-            <button className="mt-4 w-full rounded-lg border border-dashed border-border py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary">
+            <button className="mt-4 w-full rounded-xl border border-dashed border-border py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary">
               Editar disponibilidad
             </button>
           </div>
@@ -199,7 +199,7 @@ export default function TeacherCalendarPage() {
           <div className="rounded-xl border border-border bg-card p-4">
             <h3 className="mb-1.5 text-sm font-semibold text-foreground">Google Calendar</h3>
             <p className="mb-3 text-xs text-muted-foreground">Sincroniza tu agenda con Google Calendar para gestionar todo desde un solo lugar.</p>
-            <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-border py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="https://www.google.com/favicon.ico" alt="" className="size-3.5" />
               Conectar Google Calendar

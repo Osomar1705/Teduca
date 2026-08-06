@@ -10,7 +10,7 @@ const viewportOnce = { once: true, margin: '0px 0px -80px 0px' } as const
 export function FadeIn({
   className,
   delay = 0,
-  y = 14,
+  y = 12,
   children,
   ...props
 }: HTMLMotionProps<'div'> & { delay?: number; y?: number }) {
@@ -18,7 +18,7 @@ export function FadeIn({
     <motion.div
       initial={{ opacity: 0, y }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay, ease: easeOutSoft }}
+      transition={{ duration: 0.45, delay, ease: easeOutSoft }}
       className={className}
       {...props}
     >
@@ -31,7 +31,7 @@ export function FadeIn({
 export function Reveal({
   className,
   delay = 0,
-  y = 20,
+  y = 16,
   children,
   ...props
 }: HTMLMotionProps<'div'> & { delay?: number; y?: number }) {
@@ -40,7 +40,7 @@ export function Reveal({
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={viewportOnce}
-      transition={{ duration: 0.6, delay, ease: easeOutSoft }}
+      transition={{ duration: 0.5, delay, ease: easeOutSoft }}
       className={className}
       {...props}
     >
@@ -62,7 +62,7 @@ export function Stagger({
       viewport={viewportOnce}
       variants={{
         hidden: {},
-        show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+        show: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
       }}
       className={className}
       {...props}
@@ -81,11 +81,11 @@ export function StaggerItem({
   return (
     <motion.div
       variants={{
-        hidden: { opacity: 0, y: 18 },
+        hidden: { opacity: 0, y: 14 },
         show: {
           opacity: 1,
           y: 0,
-          transition: { duration: 0.5, ease: easeOutSoft },
+          transition: { duration: 0.45, ease: easeOutSoft },
         },
       }}
       className={className}
@@ -104,7 +104,7 @@ export function HoverLift({
 }: HTMLMotionProps<'div'>) {
   return (
     <motion.div
-      whileHover={{ y: -6 }}
+      whileHover={{ y: -4 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       className={cn('h-full', className)}
       {...props}

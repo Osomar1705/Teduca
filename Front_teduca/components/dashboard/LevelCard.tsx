@@ -10,7 +10,7 @@ export function LevelCard({ xp, level }: { xp: number; level: UserLevel }) {
   const pct = level.xpMax === Infinity ? 100 : (done / span) * 100
 
   return (
-    <div className="rounded-xl border border-border p-4">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-xs">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Nivel

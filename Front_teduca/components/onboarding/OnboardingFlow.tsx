@@ -93,7 +93,6 @@ export function OnboardingFlow({ userEmail }: { userEmail: string }) {
   const [dir, setDir] = useState(1)
   const [done, setDone] = useState(false)
   const [data, setData] = useState<OnboardingData | null>(null)
-  const [intentRole, setIntentRole] = useState<'learn' | 'teach' | null>(null)
   const totalSteps = 4 // rol + 3 pasos
 
   useEffect(() => {
@@ -189,8 +188,7 @@ export function OnboardingFlow({ userEmail }: { userEmail: string }) {
             >
               {step === 0 && (
                 <StepRole
-                  onSelect={(role) => {
-                    setIntentRole(role)
+                  onSelect={() => {
                     setDir(1)
                     setStep(1)
                   }}
@@ -215,7 +213,6 @@ export function OnboardingFlow({ userEmail }: { userEmail: string }) {
                   initial={data}
                   onComplete={handleComplete}
                   onBack={goBack}
-                  intentRole={intentRole}
                 />
               )}
             </motion.div>
@@ -521,12 +518,10 @@ function Step3({
   initial,
   onComplete,
   onBack,
-  intentRole,
 }: {
   initial: OnboardingData | null
   onComplete: () => Promise<void>
   onBack: () => void
-  intentRole?: 'learn' | 'teach' | null
 }) {
   const [subjects, setSubjects] = useState<string[]>(initial?.subject_tags ?? [])
   const [projects, setProjects] = useState<string[]>(initial?.project_interests ?? [])

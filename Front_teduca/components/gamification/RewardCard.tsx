@@ -32,11 +32,11 @@ export function RewardCard({
   }
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-border bg-card p-5">
+    <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-xs transition-all duration-200 hover:-translate-y-px hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div
           className={cn(
-            'inline-flex size-11 items-center justify-center rounded-xl',
+            'inline-flex size-11 items-center justify-center rounded-2xl ring-1 ring-inset',
             locked ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary',
           )}
         >
@@ -66,7 +66,7 @@ export function RewardCard({
         <p className="mt-3 rounded-lg bg-primary/5 p-2 text-xs text-primary">{message}</p>
       )}
 
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3">
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/70 pt-3">
         <span className="text-lg font-bold text-foreground">{reward.displayValue}</span>
         {locked ? (
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
