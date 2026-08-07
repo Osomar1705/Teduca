@@ -579,6 +579,32 @@ function PersonCard({ person }: { person: Person }) {
   )
 }
 
+// ── GroupCard ──────────────────────────────────────────────────────────────
+
+function GroupCard({ group }: { group: { id: string; name: string; category: string; members: number; icon: string } }) {
+  const [joined, setJoined] = useState(false)
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 transition-all hover:border-border/80 hover:shadow-sm">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-xl">{group.icon}</div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-foreground">{group.name}</p>
+        <p className="text-xs text-muted-foreground">{group.category} · {group.members} miembros</p>
+      </div>
+      <button
+        onClick={() => setJoined((p) => !p)}
+        className={cn(
+          'shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
+          joined
+            ? 'border-primary/20 bg-primary/10 text-primary'
+            : 'border-border text-muted-foreground hover:border-primary/30 hover:text-primary',
+        )}
+      >
+        {joined ? '✓ Unido' : 'Unirse'}
+      </button>
+    </div>
+  )
+}
+
 // ── RightPanel ─────────────────────────────────────────────────────────────
 
 function RightPanel({ onPublish }: { onPublish: () => void }) {
@@ -960,23 +986,9 @@ export default function CommunityPage() {
                 <p className="text-xs text-muted-foreground">Clubes, laboratorios y comunidades técnicas.</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                {NETWORKING_GROUPS.map((g) => {
-                  const [joined, setJoined] = useState(false)
-                  return (
-                    <div key={g.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 transition-all hover:border-border/80 hover:shadow-sm">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-xl">{g.icon}</div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground">{g.name}</p>
-                        <p className="text-xs text-muted-foreground">{g.category} · {g.members} miembros</p>
-                      </div>
-                      <button onClick={() => setJoined(p => !p)}
-                        className={cn('shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
-                          joined ? 'border-primary/20 bg-primary/8 text-primary' : 'border-border text-muted-foreground hover:border-primary/30 hover:text-primary')}>
-                        {joined ? '✓ Unido' : 'Unirse'}
-                      </button>
-                    </div>
-                  )
-                })}
+                {NETWORKING_GROUPS.map((g) => (
+                  <GroupCard key={g.id} group={g} />
+                ))}
               </div>
             </section>
 
