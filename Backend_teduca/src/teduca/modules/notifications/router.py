@@ -26,6 +26,11 @@ async def list_notifications(
     return Page.create([NotificationRead.model_validate(n) for n in items], total, params)
 
 
+@router.patch("/read-all", status_code=204)
+async def mark_all_read(current_user: CurrentUser, session: DbSession) -> None:
+    await NotificationService(session).mark_all_read(current_user.id)
+
+
 @router.patch("/{notification_id}/read", response_model=NotificationRead)
 async def mark_read(
     notification_id: uuid.UUID, current_user: CurrentUser, session: DbSession

@@ -34,6 +34,17 @@ class NotificationService:
         )
         return list(result.scalars()), total or 0
 
+    async def mark_all_read(self, user_id: uuid.UUID) -> None:
+        result = await self.session.execute(
+            select(Notification).where(
+                Notification.user_id == user_id, Notification.read_at.is_(None)
+            )
+        )
+        now = datetime.now(UTC)
+        for notification in result.scalars():
+            notification.read_at = now
+        await self.session.flush()
+
     async def mark_read(self, notification_id: uuid.UUID, user_id: uuid.UUID) -> Notification:
         notification = await self.session.get(Notification, notification_id)
         if notification is None:
