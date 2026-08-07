@@ -1,5 +1,5 @@
 import Component from "@/components/ui/modern-login-signup";
 
 export default function DemoOne() {
-  return <Component mode="sign-in" />;
+  return <Component defaultMode="sign-in" />;
 }

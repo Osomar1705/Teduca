@@ -9,11 +9,11 @@ import { getOnboardingStatus } from '@/lib/onboarding/service';
 import { Logo } from '@/components/common/Logo';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
-export default function ModernLoginSignup({ mode }: { mode: 'sign-in' | 'sign-up' }) {
+export default function ModernLoginSignup({ defaultMode = 'sign-in' }: { defaultMode?: 'sign-in' | 'sign-up' }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const router = useRouter();
-  const isSignUp = mode === 'sign-up';
 
+  const [isLogin, setIsLogin] = useState(defaultMode === 'sign-in');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,9 +26,9 @@ export default function ModernLoginSignup({ mode }: { mode: 'sign-in' | 'sign-up
     setError(null);
     setLoading(true);
 
-    const { error } = isSignUp
-      ? await authClient.signUp.email({ email, password, name })
-      : await authClient.signIn.email({ email, password });
+    const { error } = isLogin
+      ? await authClient.signIn.email({ email, password })
+      : await authClient.signUp.email({ email, password, name });
 
     setLoading(false);
 
@@ -41,6 +41,14 @@ export default function ModernLoginSignup({ mode }: { mode: 'sign-in' | 'sign-up
     const dest = onboarding?.completed ? APP_ROUTES.DASHBOARD : APP_ROUTES.ONBOARDING;
     router.push(dest);
     router.refresh();
+  };
+
+  const switchMode = (toLogin: boolean) => {
+    setIsLogin(toLogin);
+    setError(null);
+    setName('');
+    setEmail('');
+    setPassword('');
   };
 
   useEffect(() => {
@@ -66,16 +74,14 @@ export default function ModernLoginSignup({ mode }: { mode: 'sign-in' | 'sign-up
         u_time: { value: 0 },
         u_resolution: { value: new THREE.Vector2(window.innerWidth * 2, window.innerHeight * 2) },
         u_opacities: { value: [0.3, 0.3, 0.3, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 1.0] },
-        u_colors: {
-          value: [
-            new THREE.Vector3(1, 1, 1),
-            new THREE.Vector3(1, 1, 1),
-            new THREE.Vector3(1, 1, 1),
-            new THREE.Vector3(1, 1, 1),
-            new THREE.Vector3(1, 1, 1),
-            new THREE.Vector3(1, 1, 1),
-          ],
-        },
+        u_colors: { value: [
+          new THREE.Vector3(1, 1, 1),
+          new THREE.Vector3(1, 1, 1),
+          new THREE.Vector3(1, 1, 1),
+          new THREE.Vector3(1, 1, 1),
+          new THREE.Vector3(1, 1, 1),
+          new THREE.Vector3(1, 1, 1),
+        ]},
         u_total_size: { value: 20.0 },
         u_dot_size: { value: 6.0 },
         u_reverse: { value: 0 },
@@ -190,12 +196,6 @@ export default function ModernLoginSignup({ mode }: { mode: 'sign-in' | 'sign-up
     return cleanup;
   }, []);
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '0.65rem 0.85rem', borderRadius: 6,
-    border: '1px solid #333', background: '#0a0a0a', color: '#fff',
-    fontSize: '0.875rem', outline: 'none',
-  };
-
   const socialBtn: React.CSSProperties = {
     width: '100%', padding: '0.65rem', borderRadius: 6,
     border: '1px solid #333', background: 'transparent', color: '#fff',
@@ -204,9 +204,15 @@ export default function ModernLoginSignup({ mode }: { mode: 'sign-in' | 'sign-up
     marginBottom: '0.4rem',
   };
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '0.65rem 0.85rem', borderRadius: 6,
+    border: '1px solid #333', background: '#0a0a0a', color: '#fff',
+    fontSize: '0.875rem', outline: 'none',
+  };
+
   return (
     <div style={{
-      position: 'fixed', inset: 0, width: '100%', height: '100%',
+      position: 'fixed', inset: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       overflow: 'hidden', background: '#000', color: '#fff',
       fontFamily: "'Inter',-apple-system,sans-serif",
@@ -226,22 +232,21 @@ export default function ModernLoginSignup({ mode }: { mode: 'sign-in' | 'sign-up
         padding: '2rem', width: '100%', maxWidth: 400,
         boxShadow: '0 10px 40px rgba(0,0,0,0.9)',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        border: '1px solid #222',
+        border: '1px solid #222', margin: '0 1rem',
       }}>
         <div style={{ width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-          {/* Logo oficial */}
+
           <Logo className="mb-4 h-10 w-auto" />
 
           <h1 style={{ fontSize: '1.35rem', fontWeight: 600, marginBottom: '0.2rem', letterSpacing: '-0.025em' }}>
-            {isSignUp ? 'Creá tu cuenta' : 'Bienvenido de nuevo'}
+            {isLogin ? 'Bienvenido de nuevo' : 'Creá tu cuenta'}
           </h1>
           <p style={{ fontSize: '0.85rem', color: '#888', marginBottom: '1rem', lineHeight: 1.5 }}>
-            {isSignUp ? 'Registrate para empezar a aprender.' : 'Iniciá sesión para continuar.'}
+            {isLogin ? 'Iniciá sesión para continuar.' : 'Registrate para empezar a aprender.'}
           </p>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            {isSignUp && (
+            {!isLogin && (
               <input
                 style={inputStyle}
                 type="text"
@@ -270,25 +275,25 @@ export default function ModernLoginSignup({ mode }: { mode: 'sign-in' | 'sign-up
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                minLength={isSignUp ? 8 : undefined}
-                autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                minLength={!isLogin ? 8 : undefined}
+                autoComplete={!isLogin ? 'new-password' : 'current-password'}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 style={{
                   position: 'absolute', top: '50%', right: '0.75rem',
                   transform: 'translateY(-50%)', background: 'none', border: 'none',
                   cursor: 'pointer', color: '#666', padding: 0, display: 'flex',
                 }}
-                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
 
-            {isSignUp && (
-              <p style={{ fontSize: '0.75rem', color: '#666', textAlign: 'left', marginTop: '-0.2rem' }}>
+            {!isLogin && (
+              <p style={{ fontSize: '0.75rem', color: '#555', textAlign: 'left' }}>
                 Mínimo 8 caracteres, con mayúsculas, minúsculas y números.
               </p>
             )}
@@ -305,30 +310,29 @@ export default function ModernLoginSignup({ mode }: { mode: 'sign-in' | 'sign-up
               style={{
                 width: '100%', padding: '0.65rem', borderRadius: 6, border: 'none',
                 background: loading ? '#555' : '#ededed', color: '#000',
-                fontWeight: 600, fontSize: '0.875rem', cursor: loading ? 'not-allowed' : 'pointer',
-                marginTop: '0.2rem',
+                fontWeight: 600, fontSize: '0.875rem',
+                cursor: loading ? 'not-allowed' : 'pointer', marginTop: '0.2rem',
               }}
             >
-              {loading ? 'Procesando...' : isSignUp ? 'Crear cuenta' : 'Iniciar sesión'}
+              {loading ? 'Procesando...' : isLogin ? 'Iniciar sesión' : 'Crear cuenta'}
             </button>
           </form>
 
-          {/* Google Sign In (se muestra solo si el backend lo tiene habilitado) */}
+          {/* Google Sign In — visible solo si el backend lo habilita */}
           <div style={{ width: '100%', marginTop: '0.5rem' }}>
             <GoogleSignInButton onError={setError} />
           </div>
 
-          {/* Divider + switch */}
           <div style={{ height: 1, background: '#222', width: '100%', margin: '1rem 0' }} />
 
           <p style={{ fontSize: '0.875rem', color: '#888' }}>
-            {isSignUp ? '¿Ya tenés cuenta? ' : '¿No tenés cuenta? '}
-            <a
-              href={isSignUp ? APP_ROUTES.LOGIN : APP_ROUTES.REGISTER}
-              style={{ color: '#fff', fontWeight: 500, textDecoration: 'none' }}
+            {isLogin ? '¿No tenés cuenta? ' : '¿Ya tenés cuenta? '}
+            <button
+              onClick={() => switchMode(!isLogin)}
+              style={{ color: '#fff', fontWeight: 500, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
             >
-              {isSignUp ? 'Iniciar sesión' : 'Crear cuenta'}
-            </a>
+              {isLogin ? 'Crear cuenta' : 'Iniciar sesión'}
+            </button>
           </p>
 
           <div style={{ marginTop: '0.85rem', fontSize: '0.75rem', color: '#555', lineHeight: 1.5, textAlign: 'center' }}>
