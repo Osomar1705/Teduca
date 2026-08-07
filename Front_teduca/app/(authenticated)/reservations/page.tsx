@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Stagger, StaggerItem } from '@/components/common/Motion'
+import { Skeleton } from '@/components/ui/skeleton'
 import { getReservations, cancelReservation } from '@/lib/edtech/service'
 import { formatPrice, formatDate, MODALITY_LABEL } from '@/lib/format'
 import { APP_ROUTES } from '@/lib/constants'
@@ -49,7 +50,9 @@ export default function ReservationsPage() {
       />
 
       {loading ? (
-        <p className="text-muted-foreground">Cargando...</p>
+        <div className="flex flex-col gap-4">
+          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 rounded-2xl" />)}
+        </div>
       ) : reservations.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-16 text-center">
           <div className="inline-flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">

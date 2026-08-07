@@ -47,17 +47,16 @@ class PostService:
         await self.repo.delete(post_id, user_id)
 
     async def toggle_like(self, post_id: uuid.UUID, user_id: uuid.UUID) -> dict:
+        # La verificación de existencia ocurre dentro del repo (retorna 0 si no existe).
         post = await self.repo.get_by_id(post_id)
         if post is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
-        liked = await self.repo.toggle_like(post_id, user_id)
-        post = await self.repo.get_by_id(post_id)
-        return {"liked": liked, "likes_count": post.likes_count}  # type: ignore[union-attr]
+        liked, likes_count = await self.repo.toggle_like(post_id, user_id)
+        return {"liked": liked, "likes_count": likes_count}
 
     async def toggle_save(self, post_id: uuid.UUID, user_id: uuid.UUID) -> dict:
         post = await self.repo.get_by_id(post_id)
         if post is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
-        saved = await self.repo.toggle_save(post_id, user_id)
-        post = await self.repo.get_by_id(post_id)
-        return {"saved": saved, "saves_count": post.saves_count}  # type: ignore[union-attr]
+        saved, saves_count = await self.repo.toggle_save(post_id, user_id)
+        return {"saved": saved, "saves_count": saves_count}

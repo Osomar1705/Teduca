@@ -2,7 +2,7 @@
 
 import uuid
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from teduca.modules.community.models import Post, PostLike, PostSave
@@ -96,52 +96,59 @@ class PostRepository:
             return
         await self.session.delete(post)
 
-    async def toggle_like(self, post_id: uuid.UUID, user_id: uuid.UUID) -> bool:
-        result = await self.session.execute(
-            select(PostLike).where(
-                PostLike.post_id == post_id, PostLike.user_id == user_id
-            )
+    async def toggle_like(self, post_id: uuid.UUID, user_id: uuid.UUID) -> tuple[bool, int]:
+        """Retorna (liked, new_likes_count). El UPDATE es atómico en la DB."""
+        existing = await self.session.execute(
+            select(PostLike).where(PostLike.post_id == post_id, PostLike.user_id == user_id)
         )
-        existing = result.scalar_one_or_none()
+        is_liked = existing.scalar_one_or_none() is not None
 
-        post = await self.get_by_id(post_id)
-        if post is None:
-            return False
-
-        if existing:
+        if is_liked:
             await self.session.execute(
-                delete(PostLike).where(
-                    PostLike.post_id == post_id, PostLike.user_id == user_id
-                )
+                delete(PostLike).where(PostLike.post_id == post_id, PostLike.user_id == user_id)
             )
-            post.likes_count = max(0, post.likes_count - 1)
-            return False
+            await self.session.execute(
+                update(Post)
+                .where(Post.id == post_id)
+                .values(likes_count=func.greatest(0, Post.likes_count - 1))
+            )
+            liked = False
         else:
             self.session.add(PostLike(post_id=post_id, user_id=user_id))
-            post.likes_count += 1
-            return True
-
-    async def toggle_save(self, post_id: uuid.UUID, user_id: uuid.UUID) -> bool:
-        result = await self.session.execute(
-            select(PostSave).where(
-                PostSave.post_id == post_id, PostSave.user_id == user_id
-            )
-        )
-        existing = result.scalar_one_or_none()
-
-        post = await self.get_by_id(post_id)
-        if post is None:
-            return False
-
-        if existing:
             await self.session.execute(
-                delete(PostSave).where(
-                    PostSave.post_id == post_id, PostSave.user_id == user_id
-                )
+                update(Post).where(Post.id == post_id).values(likes_count=Post.likes_count + 1)
             )
-            post.saves_count = max(0, post.saves_count - 1)
-            return False
+            liked = True
+
+        # Flush y re-fetch para obtener el valor persistido (el UPDATE expira el ORM object).
+        await self.session.flush()
+        post = await self.get_by_id(post_id)
+        return liked, (post.likes_count if post else 0)
+
+    async def toggle_save(self, post_id: uuid.UUID, user_id: uuid.UUID) -> tuple[bool, int]:
+        """Retorna (saved, new_saves_count). El UPDATE es atómico en la DB."""
+        existing = await self.session.execute(
+            select(PostSave).where(PostSave.post_id == post_id, PostSave.user_id == user_id)
+        )
+        is_saved = existing.scalar_one_or_none() is not None
+
+        if is_saved:
+            await self.session.execute(
+                delete(PostSave).where(PostSave.post_id == post_id, PostSave.user_id == user_id)
+            )
+            await self.session.execute(
+                update(Post)
+                .where(Post.id == post_id)
+                .values(saves_count=func.greatest(0, Post.saves_count - 1))
+            )
+            saved = False
         else:
             self.session.add(PostSave(post_id=post_id, user_id=user_id))
-            post.saves_count += 1
-            return True
+            await self.session.execute(
+                update(Post).where(Post.id == post_id).values(saves_count=Post.saves_count + 1)
+            )
+            saved = True
+
+        await self.session.flush()
+        post = await self.get_by_id(post_id)
+        return saved, (post.saves_count if post else 0)

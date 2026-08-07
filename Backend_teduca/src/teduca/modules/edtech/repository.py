@@ -52,7 +52,12 @@ class EdtechRepository:
 
     # --- Cursos del marketplace ------------------------------------------
     async def get_course(self, course_id: uuid.UUID) -> MarketplaceCourse | None:
-        return await self.session.get(MarketplaceCourse, course_id)
+        # session.get() no aplica lazy="joined" → acceder a course.teacher_name
+        # fuera de una query emitiría lazy-load síncrono y fallaría en async.
+        result = await self.session.execute(
+            select(MarketplaceCourse).where(MarketplaceCourse.id == course_id)
+        )
+        return result.scalar_one_or_none()
 
     async def list_courses(
         self, *, teacher_profile_id: uuid.UUID | None = None
@@ -130,7 +135,11 @@ class EdtechRepository:
 
     # --- Reservas ---------------------------------------------------------
     async def get_reservation(self, reservation_id: uuid.UUID) -> Reservation | None:
-        return await self.session.get(Reservation, reservation_id)
+        # Misma razón que get_course: usar select() para que lazy="joined" aplique.
+        result = await self.session.execute(
+            select(Reservation).where(Reservation.id == reservation_id)
+        )
+        return result.scalar_one_or_none()
 
     async def list_reservations(self, user_id: uuid.UUID) -> list[Reservation]:
         result = await self.session.execute(
@@ -142,7 +151,11 @@ class EdtechRepository:
 
     # --- Chat -------------------------------------------------------------
     async def get_thread(self, thread_id: uuid.UUID) -> ChatThread | None:
-        return await self.session.get(ChatThread, thread_id)
+        # Ídem: usar select() para que lazy="joined" en ChatThread.teacher aplique.
+        result = await self.session.execute(
+            select(ChatThread).where(ChatThread.id == thread_id)
+        )
+        return result.scalar_one_or_none()
 
     async def get_thread_by_pair(
         self, student_id: uuid.UUID, teacher_profile_id: uuid.UUID

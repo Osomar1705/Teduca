@@ -170,6 +170,7 @@ class EdtechService:
             raise NotFoundError("Reserva no encontrada.")
         reservation.status = "cancelled"
         await self.session.flush()
+        await self.session.refresh(reservation)
         return reservation
 
     # --- Chat -------------------------------------------------------------
