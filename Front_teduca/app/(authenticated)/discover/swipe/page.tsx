@@ -63,7 +63,7 @@ const CATEGORIES: SwipeCategory[] = [
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MOCK DATA (categorías no-profesores)
+// TIPOS (categorías no-profesores) — sin datos hardcodeados
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface HackathonCard { id: string; title: string; org: string; prize: string; deadline: string; duration: string; team: string; tags: string[]; country: string; level: string; logo: string }
@@ -73,48 +73,6 @@ interface NetworkCard   { id: string; name: string; university: string; career: 
 interface VideoCard     { id: string; title: string; author: string; university: string; duration: string; thumbnail: string; views: string; likes: number; category: string }
 interface MaterialCard  { id: string; title: string; author: string; university: string; course: string; type: string; pages: number; downloads: number; year: string }
 interface ScholarshipCard { id: string; title: string; university: string; country: string; amount: string; deadline: string; level: string; requirements: string[] }
-
-const MOCK_HACKATHONS: HackathonCard[] = [
-  { id:'h1', title:'Google Solution Challenge 2025', org:'Google Developer Groups', prize:'USD 50,000', deadline:'15 mar 2025', duration:'4 semanas', team:'1–4 personas', tags:['IA','Web','Mobile','Cloud'], country:'Internacional', level:'Todos', logo:'🔵' },
-  { id:'h2', title:'NASA Space Apps Challenge',      org:'NASA',                    prize:'Viaje a NASA', deadline:'5 abr 2025', duration:'48 horas',  team:'1–6 personas', tags:['Espacio','Ciencia','Datos'],  country:'Internacional', level:'Todos', logo:'🚀' },
-  { id:'h3', title:'HackMIT 2025',                   org:'MIT',                     prize:'USD 10,000',   deadline:'20 sep 2025', duration:'24 horas',  team:'2–4 personas', tags:['CS','IA','Fintech'],          country:'USA',           level:'Universidad', logo:'⚡' },
-]
-
-const MOCK_EVENTS: EventCard[] = [
-  { id:'e1', title:'Tech Talks: IA Generativa en producción', org:'IEEE UTEC',            date:'6 feb 2025', time:'18:00', city:'Lima',          modality:'Híbrido',   attendees:320, description:'Casos reales de IA generativa en empresas peruanas. Speakers de Rimac, Interbank y Yape.', tags:['IA','Tech','Lima'] },
-  { id:'e2', title:'Feria Laboral UTEC 2025',                 org:'UTEC Careers',         date:'20 feb 2025',time:'09:00', city:'Lima',          modality:'Presencial', attendees:800, description:'La feria de empleo más grande de la región tecnológica. Más de 50 empresas participantes.',   tags:['Empleo','Carrera','Lima'] },
-  { id:'e3', title:'PyCon Latinoamérica 2025',                org:'Python Software Fdn',  date:'12 abr 2025',time:'08:00', city:'Ciudad de México',modality:'Presencial',attendees:1200,description:'La conferencia de Python más grande de Latinoamérica. Tres días de charlas, talleres y sprints.',tags:['Python','Open Source','CDMX'] },
-]
-
-const MOCK_JOBS: JobCard[] = [
-  { id:'j1', title:'Software Engineer Intern',   company:'Mercado Libre',  modality:'Híbrido',  salary:'S/. 2,000/mes', tags:['Java','Spring','AWS'],     experience:'Sin experiencia', logo:'🟡', type:'Prácticas' },
-  { id:'j2', title:'Data Scientist Jr',          company:'Interbank',      modality:'Remoto',   salary:'S/. 4,500/mes', tags:['Python','SQL','ML'],       experience:'0–1 año',         logo:'🔴', type:'Full-time' },
-  { id:'j3', title:'Frontend Developer',         company:'Yape',           modality:'Híbrido',  salary:'S/. 5,000/mes', tags:['React','TypeScript','CSS'],experience:'1–2 años',        logo:'💜', type:'Full-time' },
-]
-
-const MOCK_NETWORK: NetworkCard[] = [
-  { id:'n1', name:'Carlos Mendoza',  university:'PUCP',  career:'Ciencia de Datos',       interests:['IA','Python','NLP'],              open_to:['Mentoría','Proyectos'] },
-  { id:'n2', name:'Valeria Torres',  university:'UPC',   career:'Ingeniería de Software',  interests:['React','UX','Startups'],          open_to:['Proyectos','Trabajo']  },
-  { id:'n3', name:'Diego Ríos',      university:'UTEC',  career:'Mecatrónica',             interests:['Robótica','IoT','Hardware'],       open_to:['Proyectos','Mentoría'] },
-]
-
-const MOCK_VIDEOS: VideoCard[] = [
-  { id:'v1', title:'Algoritmos de búsqueda en 8 min — BFS, DFS y A*', author:'Carlos Mendoza', university:'PUCP', duration:'8:12', thumbnail:'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=600&h=400&fit=crop', views:'12.4k', likes:842,  category:'Programación' },
-  { id:'v2', title:'Cómo pasar entrevistas técnicas en Google',        author:'Valeria Torres', university:'UPC',  duration:'6:45', thumbnail:'https://images.unsplash.com/photo-1573495627361-d9b87960b12d?w=600&h=400&fit=crop', views:'28.1k',likes:1203, category:'Entrevistas'  },
-  { id:'v3', title:'Transformers explicados desde cero',              author:'Dr. Ramírez',    university:'UTEC', duration:'11:30',thumbnail:'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&h=400&fit=crop', views:'45.3k',likes:2104, category:'IA'           },
-]
-
-const MOCK_MATERIALS: MaterialCard[] = [
-  { id:'m1', title:'Apuntes completos de Cálculo Diferencial',   author:'Prof. García',   university:'PUCP',  course:'Cálculo I',        type:'PDF',     pages:84,  downloads:2341, year:'2024' },
-  { id:'m2', title:'Guía de Algoritmos y Estructura de Datos',   author:'Dr. Valdivia',  university:'UTEC',  course:'Algoritmos',       type:'PDF',     pages:156, downloads:1890, year:'2024' },
-  { id:'m3', title:'Laboratorios de Física Universitaria',       author:'Prof. Quispe',  university:'UNMSM', course:'Física General',   type:'PDF',     pages:64,  downloads:987,  year:'2024' },
-]
-
-const MOCK_SCHOLARSHIPS: ScholarshipCard[] = [
-  { id:'s1', title:'Fullbright Graduate Study',   university:'Universities USA',    country:'USA',         amount:'USD 30,000/año', deadline:'15 oct 2025', level:'Maestría/Doctorado', requirements:['Promedio ≥ 14','Inglés B2','Carta motivación'] },
-  { id:'s2', title:'Beca PRONABEC Bicentenario',  university:'Todas las nacionales',country:'Perú',        amount:'Cobertura total',  deadline:'30 jun 2025', level:'Pregrado',           requirements:['Ingreso 2025','NSE A/B','Promedio ≥ 15']      },
-  { id:'s3', title:'Erasmus+ Latinoamérica',      university:'Universidades EU',    country:'Europa',      amount:'EUR 850/mes',      deadline:'1 feb 2025',  level:'Intercambio',        requirements:['Matrícula activa','Inglés/Español B2']         },
-]
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MOTOR GENÉRICO DE SWIPE
@@ -611,22 +569,14 @@ export default function SwipePage() {
   const [loadingT, setLoadingT]     = useState(false)
   const [matchTeacher, setMatchT]   = useState<TeacherProfile | null>(null)
 
-  // Estado genérico (mock data)
-  const [hackathons]    = useState<HackathonCard[]>(MOCK_HACKATHONS)
-  const [events]        = useState<EventCard[]>(MOCK_EVENTS)
-  const [jobs]          = useState<JobCard[]>(MOCK_JOBS)
-  const [network, setNetwork] = useState<NetworkCard[]>(MOCK_NETWORK)
-  const [videos]        = useState<VideoCard[]>(MOCK_VIDEOS)
-  const [materials]     = useState<MaterialCard[]>(MOCK_MATERIALS)
-  const [scholarships]  = useState<ScholarshipCard[]>(MOCK_SCHOLARSHIPS)
-
-  const [deckH, setDeckH] = useState(hackathons)
-  const [deckE, setDeckE] = useState(events)
-  const [deckJ, setDeckJ] = useState(jobs)
-  const [deckN, setDeckN] = useState(network)
-  const [deckV, setDeckV] = useState(videos)
-  const [deckM, setDeckM] = useState(materials)
-  const [deckS, setDeckS] = useState(scholarships)
+  // Categorías no-profesores: pendientes de endpoint backend — decks vacíos
+  const [deckH, setDeckH] = useState<HackathonCard[]>([])
+  const [deckE, setDeckE] = useState<EventCard[]>([])
+  const [deckJ, setDeckJ] = useState<JobCard[]>([])
+  const [deckN, setDeckN] = useState<NetworkCard[]>([])
+  const [deckV, setDeckV] = useState<VideoCard[]>([])
+  const [deckM, setDeckM] = useState<MaterialCard[]>([])
+  const [deckS, setDeckS] = useState<ScholarshipCard[]>([])
 
   const loadTeachers = useCallback(async () => {
     setLoadingT(true)
@@ -727,7 +677,7 @@ export default function SwipePage() {
           <motion.div key="hackathons" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
             <p className="mb-6 text-center text-sm text-muted-foreground">Encontrá hackathons que se ajusten a tu perfil.</p>
             <SwipeEngine items={deckH} loading={false} onSwipeRight={() => {}} onSwipeLeft={(h) => setDeckH(p => p.filter(x => x.id !== h.id))}
-              onReset={() => setDeckH(MOCK_HACKATHONS)}
+              onReset={() => setDeckH([])}
               renderCard={(h, active, offset, onSwipe) => <HackathonSwipeCard key={h.id} item={h} active={active} offset={offset} onSwipe={onSwipe} />} />
           </motion.div>
         )}
@@ -737,7 +687,7 @@ export default function SwipePage() {
           <motion.div key="events" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
             <p className="mb-6 text-center text-sm text-muted-foreground">Conferencias, talleres y eventos cercanos a vos.</p>
             <SwipeEngine items={deckE} loading={false} onSwipeRight={() => {}} onSwipeLeft={(e) => setDeckE(p => p.filter(x => x.id !== e.id))}
-              onReset={() => setDeckE(MOCK_EVENTS)}
+              onReset={() => setDeckE([])}
               renderCard={(e, active, offset, onSwipe) => <EventSwipeCard key={e.id} item={e} active={active} offset={offset} onSwipe={onSwipe} />} />
           </motion.div>
         )}
@@ -747,7 +697,7 @@ export default function SwipePage() {
           <motion.div key="jobs" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
             <p className="mb-6 text-center text-sm text-muted-foreground">Oportunidades laborales que coinciden con tu perfil.</p>
             <SwipeEngine items={deckJ} loading={false} onSwipeRight={() => {}} onSwipeLeft={(j) => setDeckJ(p => p.filter(x => x.id !== j.id))}
-              onReset={() => setDeckJ(MOCK_JOBS)}
+              onReset={() => setDeckJ([])}
               renderCard={(j, active, offset, onSwipe) => <JobSwipeCard key={j.id} item={j} active={active} offset={offset} onSwipe={onSwipe} />} />
           </motion.div>
         )}
@@ -757,7 +707,7 @@ export default function SwipePage() {
           <motion.div key="networking" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
             <p className="mb-6 text-center text-sm text-muted-foreground">Conectá con personas que comparten tus intereses.</p>
             <SwipeEngine items={deckN} loading={false} onSwipeRight={() => {}} onSwipeLeft={(n) => setDeckN(p => p.filter(x => x.id !== n.id))}
-              onReset={() => setDeckN(MOCK_NETWORK)}
+              onReset={() => setDeckN([])}
               renderCard={(n, active, offset, onSwipe) => <NetworkSwipeCard key={n.id} item={n} active={active} offset={offset} onSwipe={onSwipe} />} />
           </motion.div>
         )}
@@ -767,7 +717,7 @@ export default function SwipePage() {
           <motion.div key="videos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
             <p className="mb-6 text-center text-sm text-muted-foreground">Videos educativos cortos para aprender en minutos.</p>
             <SwipeEngine items={deckV} loading={false} onSwipeRight={() => {}} onSwipeLeft={(v) => setDeckV(p => p.filter(x => x.id !== v.id))}
-              onReset={() => setDeckV(MOCK_VIDEOS)}
+              onReset={() => setDeckV([])}
               renderCard={(v, active, offset, onSwipe) => <VideoSwipeCard key={v.id} item={v} active={active} offset={offset} onSwipe={onSwipe} />} />
           </motion.div>
         )}
@@ -777,7 +727,7 @@ export default function SwipePage() {
           <motion.div key="materials" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
             <p className="mb-6 text-center text-sm text-muted-foreground">Material de estudio compartido por la comunidad.</p>
             <SwipeEngine items={deckM} loading={false} onSwipeRight={() => {}} onSwipeLeft={(m) => setDeckM(p => p.filter(x => x.id !== m.id))}
-              onReset={() => setDeckM(MOCK_MATERIALS)}
+              onReset={() => setDeckM([])}
               renderCard={(m, active, offset, onSwipe) => <MaterialSwipeCard key={m.id} item={m} active={active} offset={offset} onSwipe={onSwipe} />} />
           </motion.div>
         )}
@@ -787,7 +737,7 @@ export default function SwipePage() {
           <motion.div key="scholarships" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
             <p className="mb-6 text-center text-sm text-muted-foreground">Becas y programas que pueden financiar tu educación.</p>
             <SwipeEngine items={deckS} loading={false} onSwipeRight={() => {}} onSwipeLeft={(s) => setDeckS(p => p.filter(x => x.id !== s.id))}
-              onReset={() => setDeckS(MOCK_SCHOLARSHIPS)}
+              onReset={() => setDeckS([])}
               renderCard={(s, active, offset, onSwipe) => <ScholarshipSwipeCard key={s.id} item={s} active={active} offset={offset} onSwipe={onSwipe} />} />
           </motion.div>
         )}
