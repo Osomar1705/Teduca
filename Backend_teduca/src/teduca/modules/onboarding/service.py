@@ -27,11 +27,13 @@ class OnboardingService:
     async def get_status(self, user_id: uuid.UUID) -> OnboardingStatus:
         obj = await self.repo.get_or_create(user_id)
         await self.session.commit()
+        await self.session.refresh(obj)
         return OnboardingStatus(completed=obj.completed, current_step=obj.current_step)
 
     async def get(self, user_id: uuid.UUID) -> OnboardingRead:
         obj = await self.repo.get_or_create(user_id)
         await self.session.commit()
+        await self.session.refresh(obj)
         return OnboardingRead.model_validate(obj)
 
     async def check_username(self, username: str, user_id: uuid.UUID) -> UsernameCheck:

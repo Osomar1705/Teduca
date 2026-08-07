@@ -4,7 +4,6 @@ import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from typing import Any
 
 
 class RoleRead(BaseModel):
@@ -59,9 +58,9 @@ class TeacherProfileRead(BaseModel):
     hourly_price: float = 0
     currency: str = "USD"
     modality: str = "virtual"
-    languages: list[Any] = []
-    categories: list[Any] = []
-    socials: list[Any] = []
+    languages: list[str] = []
+    categories: list[str] = []
+    socials: list[dict] = []
     is_published: bool = True
     rating: float = 0
     reviews_count: int = 0
@@ -91,7 +90,7 @@ class TeacherProfileUpdate(BaseModel):
     hourly_price: float | None = None
     currency: str | None = Field(default=None, max_length=8)
     modality: str | None = Field(default=None, max_length=20)
-    languages: list[Any] | None = None
-    categories: list[Any] | None = None
-    socials: list[Any] | None = None
+    languages: list[str] | None = None
+    categories: list[str] | None = None
+    socials: list[dict] | None = None
     is_published: bool | None = None
