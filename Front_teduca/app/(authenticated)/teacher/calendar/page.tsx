@@ -2,15 +2,16 @@
 
 import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, Clock, User, Video, MapPin } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { cn } from '@/lib/utils'
+import { getReservations } from '@/lib/edtech/service'
+import type { Reservation } from '@/lib/edtech/types'
 
 const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
-// Genera días del mes (mock: febrero 2025)
 function buildCalendar(year: number, month: number) {
   const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -21,33 +22,38 @@ function buildCalendar(year: number, month: number) {
   return days
 }
 
-const SESSIONS = [
-  { id: '1', day: 5,  time: '4:00 PM',  student: 'Valeria Torres',  subject: 'React Avanzado',     mode: 'virtual',    duration: 60 },
-  { id: '2', day: 5,  time: '6:30 PM',  student: 'Carlos Mendoza',  subject: 'Machine Learning',   mode: 'virtual',    duration: 60 },
-  { id: '3', day: 6,  time: '9:00 AM',  student: 'Sofía Ramírez',   subject: 'Estadística con R',  mode: 'presencial', duration: 90 },
-  { id: '4', day: 6,  time: '11:00 AM', student: 'Diego Ríos',      subject: 'Robótica e IoT',     mode: 'virtual',    duration: 60 },
-  { id: '5', day: 10, time: '3:00 PM',  student: 'Andrés Castillo', subject: 'Computer Vision',    mode: 'virtual',    duration: 60 },
-  { id: '6', day: 12, time: '5:00 PM',  student: 'Valeria Torres',  subject: 'React Avanzado',     mode: 'virtual',    duration: 60 },
-  { id: '7', day: 14, time: '10:00 AM', student: 'Miguel Sánchez',  subject: 'Machine Learning',   mode: 'presencial', duration: 90 },
-]
-
-const AVAILABILITY = [
-  { day: 'Lunes',    slots: ['9:00 AM', '11:00 AM', '4:00 PM', '6:00 PM'] },
-  { day: 'Martes',   slots: ['10:00 AM', '2:00 PM'] },
-  { day: 'Miércoles',slots: ['9:00 AM', '4:00 PM', '6:00 PM'] },
-  { day: 'Jueves',   slots: ['11:00 AM', '3:00 PM', '6:00 PM'] },
-  { day: 'Viernes',  slots: ['9:00 AM', '2:00 PM'] },
-]
-
 export default function TeacherCalendarPage() {
   const { isAllowed } = useTeacherGuard()
   const today = new Date()
   const [year, setYear]     = useState(today.getFullYear())
   const [month, setMonth]   = useState(today.getMonth())
   const [selected, setSelected] = useState<number | null>(today.getDate())
+  const [reservations, setReservations] = useState<Reservation[]>([])
+
+  useEffect(() => {
+    if (!isAllowed) return
+    getReservations().then(setReservations).catch(() => {})
+  }, [isAllowed])
 
   const calendar = buildCalendar(year, month)
-  const sessionsForDay = SESSIONS.filter((s) => s.day === selected)
+
+  // Filtra reservas del mes/año actual y del día seleccionado
+  const sessionsForDay = reservations.filter((r) => {
+    if (!r.date) return false
+    const d = new Date(r.date)
+    return d.getFullYear() === year && d.getMonth() === month && d.getDate() === selected
+  })
+
+  // Días del mes actual con reservas (para marcar en el calendario)
+  const daysWithSessions = new Set(
+    reservations
+      .filter((r) => {
+        if (!r.date) return false
+        const d = new Date(r.date)
+        return d.getFullYear() === year && d.getMonth() === month
+      })
+      .map((r) => new Date(r.date).getDate())
+  )
 
   function prevMonth() { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }
   function nextMonth() { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }
@@ -94,7 +100,7 @@ export default function TeacherCalendarPage() {
             <div className="grid grid-cols-7 gap-0.5">
               {calendar.map((day, i) => {
                 if (!day) return <div key={i} />
-                const hasSession = SESSIONS.some((s) => s.day === day && month === today.getMonth())
+                const hasSession = daysWithSessions.has(day)
                 const isToday    = day === today.getDate() && month === today.getMonth() && year === today.getFullYear()
                 const isSel      = day === selected
                 return (
@@ -132,29 +138,28 @@ export default function TeacherCalendarPage() {
               </div>
               {sessionsForDay.length > 0 ? (
                 <Stagger className="divide-y divide-border/60">
-                  {sessionsForDay.map((s) => (
-                    <StaggerItem key={s.id}>
+                  {sessionsForDay.map((r) => (
+                    <StaggerItem key={r.id}>
                       <div className="flex items-center gap-3 px-5 py-3.5">
                         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/8">
                           <Clock className="size-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-foreground">{s.time}</p>
-                            <span className="text-xs text-muted-foreground">({s.duration} min)</span>
+                            <p className="text-sm font-medium text-foreground">{r.time}</p>
                           </div>
-                          <p className="text-xs text-muted-foreground">{s.subject}</p>
+                          <p className="text-xs text-muted-foreground">{r.courseTitle ?? r.modality}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <User className="size-3" />{s.student.split(' ')[0]}
+                            <User className="size-3" />{r.teacherName.split(' ')[0]}
                           </div>
                           <span className={cn(
                             'flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium',
-                            s.mode === 'virtual' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                            r.modality === 'virtual' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                           )}>
-                            {s.mode === 'virtual' ? <Video className="size-2.5" /> : <MapPin className="size-2.5" />}
-                            {s.mode}
+                            {r.modality === 'virtual' ? <Video className="size-2.5" /> : <MapPin className="size-2.5" />}
+                            {r.modality}
                           </span>
                         </div>
                       </div>
@@ -177,20 +182,9 @@ export default function TeacherCalendarPage() {
         <div className="space-y-4">
           <div className="rounded-xl border border-border bg-card p-4">
             <h3 className="mb-3 text-sm font-semibold text-foreground">Mi disponibilidad</h3>
-            <div className="space-y-3">
-              {AVAILABILITY.map((a) => (
-                <div key={a.day}>
-                  <p className="mb-1.5 text-xs font-medium text-muted-foreground">{a.day}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {a.slots.map((slot) => (
-                      <span key={slot} className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                        {slot}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Configura tu disponibilidad desde tu perfil de profesor.
+            </p>
             <button className="mt-4 w-full rounded-xl border border-dashed border-border py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary">
               Editar disponibilidad
             </button>

@@ -19,13 +19,12 @@ import { getOnboarding } from '@/lib/onboarding/service'
 // ─── getMentorData ──────────────────────────────────────────────────────────
 
 export async function getMentorData(): Promise<MentorData> {
-  const [user, courses, reservations] = await Promise.all([
+  const [user, courses, reservations, gamification] = await Promise.all([
     getCurrentUser(),
     getCourses(),
     getReservations(),
+    getGamificationState().catch(() => null),
   ])
-
-  const gamification = getGamificationState()
 
   let onboarding = null
   try {

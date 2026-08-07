@@ -615,10 +615,11 @@ function Field({ label, children, className }: { label: string; children: React.
 export default function ProfilePage() {
   const [tab, setTab] = useState<Tab>('profile')
   const [profile, setProfile] = useState<ExtendedProfile | null>(null)
-  const [game] = useState<GamificationState | null>(getGamificationState)
+  const [game, setGame] = useState<GamificationState | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    getGamificationState().then(setGame).catch(() => {})
     async function load() {
       const user = await getCurrentUser().catch(() => ({
         name: 'Estudiante',

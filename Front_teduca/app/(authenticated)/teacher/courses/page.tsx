@@ -2,47 +2,38 @@
 
 import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Plus, BookOpen, Users, Star, Upload, Edit2,
-  MoreHorizontal, Video, FileText, ClipboardList, Eye, EyeOff,
+  Plus, BookOpen, Star, Upload, Edit2,
+  MoreHorizontal,
 } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
-import { cn } from '@/lib/utils'
-
-type CourseStatus = 'published' | 'draft' | 'archived'
-
-const COURSES = [
-  {
-    id: '1', title: 'React & Next.js para todos', description: 'Aprende React desde cero hasta nivel avanzado con proyectos reales.',
-    students: 48, rating: 4.9, reviews: 32, status: 'published' as CourseStatus,
-    materials: { videos: 24, pdfs: 8, tasks: 6 }, revenue: 'S/ 1,440', thumbnail: null,
-  },
-  {
-    id: '2', title: 'Machine Learning con Python', description: 'Desde regresión lineal hasta redes neuronales. Enfoque práctico.',
-    students: 36, rating: 4.8, reviews: 21, status: 'published' as CourseStatus,
-    materials: { videos: 18, pdfs: 12, tasks: 4 }, revenue: 'S/ 1,080', thumbnail: null,
-  },
-  {
-    id: '3', title: 'Robótica e IoT con Arduino', description: 'Construye proyectos de robótica e internet de las cosas desde cero.',
-    students: 12, rating: 4.7, reviews: 8, status: 'draft' as CourseStatus,
-    materials: { videos: 6, pdfs: 3, tasks: 2 }, revenue: 'S/ 360', thumbnail: null,
-  },
-]
-
-const STATUS_STYLE: Record<CourseStatus, string> = {
-  published: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  draft:     'bg-muted text-muted-foreground',
-  archived:  'bg-rose-500/10 text-rose-600 dark:text-rose-400',
-}
-const STATUS_LABEL: Record<CourseStatus, string> = {
-  published: 'Publicado', draft: 'Borrador', archived: 'Archivado',
-}
+import { getMyProfile, getCoursesByTeacher } from '@/lib/edtech/service'
+import type { Course } from '@/lib/edtech/types'
 
 export default function TeacherCoursesPage() {
   const { isAllowed } = useTeacherGuard()
   const [showNew, setShowNew] = useState(false)
+  const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!isAllowed) return
+    async function load() {
+      try {
+        const profile = await getMyProfile()
+        const cs = await getCoursesByTeacher(profile.id)
+        setCourses(cs)
+      } catch {
+        // mantener vacío
+      } finally {
+        setLoading(false)
+      }
+    }
+    void load()
+  }, [isAllowed])
+
   if (!isAllowed) return null
   return (
     <div className="mx-auto max-w-5xl space-y-5">
@@ -50,7 +41,9 @@ export default function TeacherCoursesPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Mis Cursos</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">{COURSES.length} cursos · {COURSES.reduce((a,c) => a+c.students,0)} alumnos en total</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {loading ? 'Cargando…' : `${courses.length} cursos`}
+            </p>
           </div>
           <button
             onClick={() => setShowNew(true)}
@@ -62,7 +55,7 @@ export default function TeacherCoursesPage() {
       </FadeIn>
 
       <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {COURSES.map((c) => (
+        {courses.map((c) => (
           <StaggerItem key={c.id}>
             <div className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-border/80 hover:shadow-sm">
               {/* Thumbnail */}
@@ -72,8 +65,8 @@ export default function TeacherCoursesPage() {
 
               <div className="flex flex-1 flex-col p-4">
                 <div className="mb-2 flex items-start justify-between gap-2">
-                  <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-medium', STATUS_STYLE[c.status])}>
-                    {STATUS_LABEL[c.status]}
+                  <span className="rounded-full px-2 py-0.5 text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    {c.level}
                   </span>
                   <button className="rounded-xl p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-foreground">
                     <MoreHorizontal className="size-3.5" />
@@ -85,16 +78,15 @@ export default function TeacherCoursesPage() {
 
                 {/* Métricas */}
                 <div className="mb-3 flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><Users className="size-3" />{c.students}</span>
-                  <span className="flex items-center gap-1"><Star className="size-3 fill-amber-400 text-amber-400" />{c.rating}</span>
-                  <span className="ml-auto font-medium text-emerald-600 dark:text-emerald-400">{c.revenue}</span>
+                  <span className="flex items-center gap-1"><Star className="size-3 fill-amber-400 text-amber-400" />{c.rating.toFixed(1)}</span>
+                  <span className="ml-auto font-medium text-emerald-600 dark:text-emerald-400">
+                    {c.currency} {c.price}
+                  </span>
                 </div>
 
-                {/* Materiales */}
-                <div className="mb-4 flex items-center gap-3 rounded-xl bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><Video className="size-3" />{c.materials.videos}</span>
-                  <span className="flex items-center gap-1"><FileText className="size-3" />{c.materials.pdfs}</span>
-                  <span className="flex items-center gap-1"><ClipboardList className="size-3" />{c.materials.tasks}</span>
+                {/* Duración */}
+                <div className="mb-4 rounded-xl bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  {c.durationHours}h · {c.category}
                 </div>
 
                 {/* Acciones */}
@@ -104,9 +96,6 @@ export default function TeacherCoursesPage() {
                   </button>
                   <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                     <Upload className="size-3" /> Material
-                  </button>
-                  <button className="flex items-center justify-center rounded-xl border border-border p-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                    {c.status === 'published' ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                   </button>
                 </div>
               </div>

@@ -22,12 +22,13 @@ import type { RewardItem } from '@/lib/rewards/types'
 type Filter = 'all' | 'unlocked' | 'locked'
 
 export default function AchievementsPage() {
-  const [state] = useState<GamificationState | null>(getGamificationState)
+  const [state, setState] = useState<GamificationState | null>(null)
   const [rewards] = useState<RewardItem[]>(() => getMarketplaceItems().slice(0, 4))
   const [filter, setFilter] = useState<Filter>('all')
 
   useEffect(() => {
-    recordDailyActivity()
+    getGamificationState().then(setState).catch(() => {})
+    recordDailyActivity().catch(() => {})
   }, [])
 
   const filtered = useMemo(() => {

@@ -74,6 +74,14 @@ export const API_ENDPOINTS = {
     APPROVE_TEACHER:   (id: string) => `/api/v1/users/${id}/approve-teacher`,
     REVOKE_TEACHER:    (id: string) => `/api/v1/users/${id}/revoke-teacher`,
   },
+  GAMIFICATION: {
+    ME: '/api/v1/gamification/me',
+    REWARDS: '/api/v1/gamification/rewards',
+    REDEEM: (id: string) => `/api/v1/gamification/rewards/${id}/redeem`,
+  },
+  PARTICIPATION: {
+    ME: '/api/v1/participation/me',
+  },
   ONBOARDING: {
     STATUS: '/api/v1/onboarding/status',
     ME: '/api/v1/onboarding/me',

@@ -2,23 +2,52 @@
 
 import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Search, MoreHorizontal, Mail, MessageCircle, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { cn } from '@/lib/utils'
+import { getReservations } from '@/lib/edtech/service'
+import type { Reservation } from '@/lib/edtech/types'
 
 type Filter = 'todos' | 'activos' | 'inactivos' | 'nuevos'
 
-const STUDENTS = [
-  { id: '1', name: 'Valeria Torres',  username: 'val_torres', course: 'React & Next.js',      sessions: 12, progress: 78, rating: 5.0, lastSeen: 'Hace 2h',   status: 'activo',  trend: 'up'   },
-  { id: '2', name: 'Carlos Mendoza',  username: 'carlos_m',  course: 'Machine Learning',      sessions: 8,  progress: 55, rating: 4.8, lastSeen: 'Hace 1d',   status: 'activo',  trend: 'up'   },
-  { id: '3', name: 'Sofía Ramírez',   username: 'sofia_r',   course: 'Estadística con R',     sessions: 5,  progress: 35, rating: 4.5, lastSeen: 'Hace 3d',   status: 'activo',  trend: 'flat' },
-  { id: '4', name: 'Diego Ríos',      username: 'diego_rios',course: 'Robótica e IoT',        sessions: 15, progress: 92, rating: 5.0, lastSeen: 'Hace 5h',   status: 'activo',  trend: 'up'   },
-  { id: '5', name: 'Andrés Castillo', username: 'andres_c',  course: 'Computer Vision',       sessions: 3,  progress: 15, rating: null, lastSeen: 'Hace 1sem', status: 'nuevo',   trend: 'flat' },
-  { id: '6', name: 'Lucía Vargas',    username: 'lucia_v',   course: 'React & Next.js',       sessions: 2,  progress: 10, rating: null, lastSeen: 'Hace 2sem', status: 'inactivo',trend: 'down' },
-  { id: '7', name: 'Miguel Sánchez',  username: 'miguel_s',  course: 'Machine Learning',      sessions: 6,  progress: 42, rating: 4.6, lastSeen: 'Hace 4h',   status: 'activo',  trend: 'up'   },
-  { id: '8', name: 'Andrea López',    username: 'andrea_l',  course: 'Estadística con R',     sessions: 4,  progress: 28, rating: 4.9, lastSeen: 'Hace 6h',   status: 'activo',  trend: 'up'   },
-]
+// Derivamos "estudiantes" a partir de reservas reales del profesor
+interface StudentRow {
+  id: string
+  name: string
+  username: string
+  course: string
+  sessions: number
+  progress: number
+  rating: number | null
+  lastSeen: string
+  status: 'activo' | 'inactivo' | 'nuevo'
+  trend: 'up' | 'down' | 'flat'
+}
+
+function reservationsToStudents(reservations: Reservation[]): StudentRow[] {
+  const map = new Map<string, StudentRow>()
+  for (const r of reservations) {
+    const key = r.teacherId + (r.courseTitle ?? '')
+    if (!map.has(key)) {
+      map.set(key, {
+        id: r.id,
+        name: r.teacherName,
+        username: r.teacherName.toLowerCase().replace(/\s+/g, '_'),
+        course: r.courseTitle ?? r.modality,
+        sessions: 0,
+        progress: 0,
+        rating: null,
+        lastSeen: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '–',
+        status: r.status === 'confirmed' ? 'activo' : r.status === 'pending' ? 'nuevo' : 'inactivo',
+        trend: r.status === 'confirmed' ? 'up' : 'flat',
+      })
+    }
+    const entry = map.get(key)!
+    entry.sessions += 1
+  }
+  return Array.from(map.values())
+}
 
 const STATUS_STYLE: Record<string, string> = {
   activo:   'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
@@ -50,8 +79,25 @@ export default function StudentsPage() {
   const { isAllowed } = useTeacherGuard()
   const [search, setSearch]   = useState('')
   const [filter, setFilter]   = useState<Filter>('todos')
+  const [students, setStudents] = useState<StudentRow[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = STUDENTS.filter((s) => {
+  useEffect(() => {
+    if (!isAllowed) return
+    async function load() {
+      try {
+        const reservations = await getReservations()
+        setStudents(reservationsToStudents(reservations))
+      } catch {
+        // mantener vacío
+      } finally {
+        setLoading(false)
+      }
+    }
+    void load()
+  }, [isAllowed])
+
+  const filtered = students.filter((s) => {
     const matchFilter = filter === 'todos' || s.status === filter.replace('activos','activo').replace('inactivos','inactivo').replace('nuevos','nuevo')
     const q = search.toLowerCase()
     const matchSearch = !q || s.name.toLowerCase().includes(q) || s.course.toLowerCase().includes(q)
@@ -65,7 +111,9 @@ export default function StudentsPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Mis Alumnos</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">{STUDENTS.length} alumnos en total</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {loading ? 'Cargando…' : `${students.length} alumnos en total`}
+            </p>
           </div>
           <button className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90">
             <Mail className="size-3.5" /> Mensaje grupal

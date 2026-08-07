@@ -1,11 +1,15 @@
+import { apiClient } from '../api-client'
+import { API_ENDPOINTS } from '../constants'
 import type { ParticipationStats } from './types'
 
 /**
- * Estadísticas de participación. El backend aún no expone este recurso, por lo
- * que devolvemos `null` y la UI muestra un estado vacío motivador. Cuando el
- * endpoint (`/api/v1/participation/me`) esté disponible, este stub se
- * reemplaza por la llamada real sin cambiar la firma.
+ * Obtiene las estadísticas de participación del usuario autenticado
+ * desde el endpoint GET /api/v1/participation/me.
  */
 export async function getParticipationStats(): Promise<ParticipationStats | null> {
-  return null
+  try {
+    return await apiClient.get<ParticipationStats>(API_ENDPOINTS.PARTICIPATION.ME)
+  } catch {
+    return null
+  }
 }

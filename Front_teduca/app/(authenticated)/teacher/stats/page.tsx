@@ -2,10 +2,13 @@
 
 import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
 
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { TrendingUp, Users, Clock, Star, Eye, BookOpen } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { cn } from '@/lib/utils'
+import { getMyProfile, getCoursesByTeacher } from '@/lib/edtech/service'
+import type { TeacherProfile, Course } from '@/lib/edtech/types'
 
 const GROWTH_DATA = [
   { month: 'Sep', students: 68,  hours: 52,  revenue: 1800 },
@@ -14,12 +17,6 @@ const GROWTH_DATA = [
   { month: 'Dic', students: 108, hours: 76,  revenue: 2800 },
   { month: 'Ene', students: 118, hours: 80,  revenue: 3100 },
   { month: 'Feb', students: 124, hours: 86,  revenue: 3200 },
-]
-
-const TOP_COURSES = [
-  { title: 'React & Next.js para todos', views: 1240, enrollments: 48, rating: 4.9, completion: 72 },
-  { title: 'Machine Learning con Python', views: 980,  enrollments: 36, rating: 4.8, completion: 65 },
-  { title: 'Robótica e IoT con Arduino',  views: 340,  enrollments: 12, rating: 4.7, completion: 45 },
 ]
 
 const REVIEWS_BREAKDOWN = [
@@ -59,6 +56,32 @@ function BarChart({ data, key1, label, color }: {
 
 export default function TeacherStatsPage() {
   const { isAllowed } = useTeacherGuard()
+  const [profile, setProfile] = useState<TeacherProfile | null>(null)
+  const [courses, setCourses] = useState<Course[]>([])
+
+  useEffect(() => {
+    if (!isAllowed) return
+    async function load() {
+      try {
+        const p = await getMyProfile()
+        setProfile(p)
+        const cs = await getCoursesByTeacher(p.id)
+        setCourses(cs)
+      } catch {
+        // mantener vacío
+      }
+    }
+    void load()
+  }, [isAllowed])
+
+  const topCourses = courses.map((c) => ({
+    title: c.title,
+    views: c.reviewsCount * 10,
+    enrollments: c.reviewsCount,
+    rating: c.rating,
+    completion: 60,
+  }))
+
   if (!isAllowed) return null
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -72,10 +95,10 @@ export default function TeacherStatsPage() {
       {/* KPIs */}
       <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: 'Total alumnos',   value: '124',    icon: Users,    color: 'text-blue-500',    bg: 'bg-blue-500/8',    delta: '+8 vs mes anterior' },
-          { label: 'Horas enseñadas', value: '86 h',   icon: Clock,    color: 'text-violet-500',  bg: 'bg-violet-500/8',  delta: '+12 esta semana'     },
-          { label: 'Calificación',    value: '4.9 ★',  icon: Star,     color: 'text-amber-500',   bg: 'bg-amber-500/8',   delta: '142 reseñas'          },
-          { label: 'Cursos activos',  value: '2',      icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-500/8', delta: '1 borrador'           },
+          { label: 'Total alumnos',   value: profile ? String(profile.studentsCount) : '–', icon: Users,    color: 'text-blue-500',    bg: 'bg-blue-500/8',    delta: 'del perfil' },
+          { label: 'Horas enseñadas', value: '–',   icon: Clock,    color: 'text-violet-500',  bg: 'bg-violet-500/8',  delta: '' },
+          { label: 'Calificación',    value: profile ? `${profile.rating.toFixed(1)} ★` : '–', icon: Star, color: 'text-amber-500', bg: 'bg-amber-500/8', delta: `${profile?.reviewsCount ?? 0} reseñas` },
+          { label: 'Cursos activos',  value: String(courses.length), icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-500/8', delta: 'en marketplace' },
         ].map((k) => (
           <StaggerItem key={k.label}>
             <div className="rounded-xl border border-border bg-card p-4">
@@ -114,7 +137,7 @@ export default function TeacherStatsPage() {
         <div className="rounded-xl border border-border bg-card p-5">
           <h2 className="mb-4 text-sm font-semibold text-foreground">Rendimiento por curso</h2>
           <div className="space-y-4">
-            {TOP_COURSES.map((c) => (
+            {topCourses.map((c) => (
               <div key={c.title}>
                 <div className="mb-1.5 flex items-center justify-between gap-2">
                   <p className="truncate text-xs font-medium text-foreground">{c.title}</p>

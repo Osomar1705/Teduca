@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Home, Users, Compass, BookOpen, MessageCircle, CalendarCheck,
@@ -148,7 +148,10 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 // ── GamificationFooter ─────────────────────────────────────────────────────
 
 function GamificationFooter() {
-  const [game] = useState<GamificationState | null>(getGamificationState)
+  const [game, setGame] = useState<GamificationState | null>(null)
+  useEffect(() => {
+    getGamificationState().then(setGame).catch(() => {})
+  }, [])
   if (!game) return null
   return (
     <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/35 px-3 py-2 text-xs text-muted-foreground">

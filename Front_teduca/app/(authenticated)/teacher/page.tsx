@@ -6,47 +6,12 @@ import {
   Clock, CalendarCheck, ArrowUpRight, MoreHorizontal,
   ChevronRight, Zap,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { cn } from '@/lib/utils'
 import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
-
-// ── Mock data ──────────────────────────────────────────────────────────────
-
-const STATS = [
-  { label: 'Alumnos activos',     value: '124',   delta: '+8 este mes',  icon: Users,        color: 'text-blue-500',   bg: 'bg-blue-500/8'   },
-  { label: 'Horas enseñadas',     value: '86 h',  delta: '+12 esta sem', icon: Clock,        color: 'text-violet-500', bg: 'bg-violet-500/8' },
-  { label: 'Ganancias del mes',   value: 'S/ 3,200', delta: '+18%',      icon: DollarSign,   color: 'text-emerald-500',bg: 'bg-emerald-500/8'},
-  { label: 'Calificación',        value: '4.9',   delta: '142 reseñas',  icon: Star,         color: 'text-amber-500',  bg: 'bg-amber-500/8'  },
-]
-
-const UPCOMING_SESSIONS = [
-  { id: '1', student: 'Valeria Torres',   subject: 'React Avanzado',      time: 'Hoy, 4:00 PM',     avatar: 'VT', status: 'confirmed' },
-  { id: '2', student: 'Carlos Mendoza',   subject: 'Machine Learning',    time: 'Hoy, 6:30 PM',     avatar: 'CM', status: 'confirmed' },
-  { id: '3', student: 'Sofía Ramírez',    subject: 'Estadística con R',   time: 'Mañana, 9:00 AM',  avatar: 'SR', status: 'pending'   },
-  { id: '4', student: 'Diego Ríos',       subject: 'Robótica e IoT',      time: 'Mañana, 11:00 AM', avatar: 'DR', status: 'confirmed' },
-  { id: '5', student: 'Andrés Castillo',  subject: 'Computer Vision',     time: 'Jue, 3:00 PM',     avatar: 'AC', status: 'confirmed' },
-]
-
-const MY_COURSES = [
-  { id: '1', title: 'React & Next.js para todos',  students: 48, rating: 4.9, revenue: 'S/ 1,440', status: 'published' },
-  { id: '2', title: 'Machine Learning con Python', students: 36, rating: 4.8, revenue: 'S/ 1,080', status: 'published' },
-  { id: '3', title: 'Robótica e IoT con Arduino',  students: 12, rating: 4.7, revenue: 'S/ 360',   status: 'draft'     },
-]
-
-const RECENT_REVIEWS = [
-  { id: '1', author: 'Valeria T.', rating: 5, text: 'Excelente profesor, muy didáctico y siempre dispuesto a ayudar.', course: 'React & Next.js', ago: 'hace 2h' },
-  { id: '2', author: 'Carlos M.',  rating: 5, text: 'Las clases de ML son increíbles. Aprendo muchísimo cada sesión.', course: 'Machine Learning', ago: 'hace 1d' },
-]
-
-const MONTHLY_INCOME = [
-  { month: 'Sep', amount: 1800 },
-  { month: 'Oct', amount: 2100 },
-  { month: 'Nov', amount: 2600 },
-  { month: 'Dic', amount: 2800 },
-  { month: 'Ene', amount: 3100 },
-  { month: 'Feb', amount: 3200 },
-]
-const MAX_INCOME = Math.max(...MONTHLY_INCOME.map((m) => m.amount))
+import { getMyProfile, getCoursesByTeacher, getReservations } from '@/lib/edtech/service'
+import type { TeacherProfile, Course, Reservation } from '@/lib/edtech/types'
 
 // ── Componentes ────────────────────────────────────────────────────────────
 
@@ -80,18 +45,62 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
+function getInitials(name: string): string {
+  return name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+}
+
 // ── Página ─────────────────────────────────────────────────────────────────
 
 export default function TeacherDashboard() {
   const { isAllowed } = useTeacherGuard()
+  const [profile, setProfile] = useState<TeacherProfile | null>(null)
+  const [courses, setCourses] = useState<Course[]>([])
+  const [reservations, setReservations] = useState<Reservation[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!isAllowed) return
+    async function load() {
+      try {
+        const p = await getMyProfile()
+        setProfile(p)
+        const [cs, rs] = await Promise.all([
+          getCoursesByTeacher(p.id),
+          getReservations(),
+        ])
+        setCourses(cs)
+        setReservations(rs)
+      } catch {
+        // mantener estado vacío
+      } finally {
+        setLoading(false)
+      }
+    }
+    void load()
+  }, [isAllowed])
+
   if (!isAllowed) return null
+
+  const upcomingSessions = reservations
+    .filter((r) => r.status !== 'cancelled')
+    .slice(0, 5)
+
+  const stats = [
+    { label: 'Alumnos activos',     value: profile ? String(profile.studentsCount) : '–',   delta: 'del perfil',       icon: Users,        color: 'text-blue-500',   bg: 'bg-blue-500/8'   },
+    { label: 'Horas enseñadas',     value: '–',   delta: '',  icon: Clock,        color: 'text-violet-500', bg: 'bg-violet-500/8' },
+    { label: 'Precio por hora',     value: profile ? `${profile.currency} ${profile.hourlyPrice}` : '–', delta: 'tarifa actual', icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-500/8' },
+    { label: 'Calificación',        value: profile ? String(profile.rating.toFixed(1)) : '–', delta: `${profile?.reviewsCount ?? 0} reseñas`, icon: Star, color: 'text-amber-500', bg: 'bg-amber-500/8' },
+  ]
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <FadeIn>
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Panel del Profesor</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">Bienvenido de vuelta. Tienes 2 sesiones hoy.</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {loading ? 'Cargando datos…' : `Hola, ${profile?.name ?? 'Profesor'}. Tienes ${upcomingSessions.length} sesiones próximas.`}
+            </p>
           </div>
           <div className="hidden items-center gap-2 sm:flex">
             <button className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground transition-all hover:border-border/80 hover:bg-muted hover:text-foreground hover:shadow-xs">
@@ -106,7 +115,7 @@ export default function TeacherDashboard() {
 
       {/* Stats */}
       <Stagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {STATS.map((s) => (
+        {stats.map((s) => (
           <StaggerItem key={s.label}>
             <div className="rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm">
               <div className="mb-3 flex items-center justify-between">
@@ -135,16 +144,19 @@ export default function TeacherDashboard() {
               </button>
             </div>
             <div className="divide-y divide-border/60">
-              {UPCOMING_SESSIONS.map((s) => (
-                <div key={s.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/30">
-                  <Avatar2 initials={s.avatar} />
+              {upcomingSessions.length === 0 && (
+                <p className="px-5 py-6 text-sm text-muted-foreground">No tienes sesiones próximas.</p>
+              )}
+              {upcomingSessions.map((r) => (
+                <div key={r.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/30">
+                  <Avatar2 initials={getInitials(r.teacherName)} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground">{s.student}</p>
-                    <p className="text-xs text-muted-foreground">{s.subject}</p>
+                    <p className="text-sm font-medium text-foreground">{r.teacherName}</p>
+                    <p className="text-xs text-muted-foreground">{r.courseTitle ?? r.modality}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="hidden text-xs text-muted-foreground sm:block">{s.time}</span>
-                    <StatusBadge status={s.status} />
+                    <span className="hidden text-xs text-muted-foreground sm:block">{r.date} {r.time}</span>
+                    <StatusBadge status={r.status} />
                     <button className="rounded-xl p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                       <MoreHorizontal className="size-3.5" />
                     </button>
@@ -163,18 +175,22 @@ export default function TeacherDashboard() {
               </button>
             </div>
             <div className="divide-y divide-border/60">
-              {MY_COURSES.map((c) => (
+              {courses.length === 0 && (
+                <p className="px-5 py-6 text-sm text-muted-foreground">No tienes cursos aún.</p>
+              )}
+              {courses.map((c) => (
                 <div key={c.id} className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-muted/30">
                   <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/8">
                     <BookOpen className="size-4 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-foreground">{c.title}</p>
-                    <p className="text-xs text-muted-foreground">{c.students} alumnos · ⭐ {c.rating}</p>
+                    <p className="text-xs text-muted-foreground">{c.reviewsCount} reseñas · ⭐ {c.rating.toFixed(1)}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="hidden text-xs font-medium text-emerald-600 dark:text-emerald-400 sm:block">{c.revenue}</span>
-                    <StatusBadge status={c.status} />
+                    <span className="hidden text-xs font-medium text-emerald-600 dark:text-emerald-400 sm:block">
+                      {c.currency} {c.price}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -186,60 +202,33 @@ export default function TeacherDashboard() {
         {/* Panel derecho */}
         <div className="space-y-5">
 
-          {/* Ingresos mensuales */}
+          {/* Perfil resumen */}
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground">Ingresos mensuales</h3>
+              <h3 className="text-sm font-semibold text-foreground">Mi perfil</h3>
               <TrendingUp className="size-4 text-emerald-500" />
             </div>
-            <div className="flex items-end gap-1.5 h-24">
-              {MONTHLY_INCOME.map((m) => (
-                <div key={m.month} className="flex flex-1 flex-col items-center gap-1">
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${(m.amount / MAX_INCOME) * 80}px` }}
-                    transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
-                    className="w-full rounded-sm bg-primary/70"
-                  />
-                  <span className="text-[9px] text-muted-foreground">{m.month}</span>
-                </div>
-              ))}
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Total este mes: <span className="font-semibold text-foreground">S/ 3,200</span>
-            </p>
-          </div>
-
-          {/* Reseñas recientes */}
-          <div className="rounded-xl border border-border bg-card p-4">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">Reseñas recientes</h3>
-            <div className="space-y-3">
-              {RECENT_REVIEWS.map((r) => (
-                <div key={r.id} className="rounded-xl bg-muted/40 p-3">
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <span className="text-xs font-medium text-foreground">{r.author}</span>
-                    <div className="flex">
-                      {Array.from({ length: r.rating }).map((_, i) => (
-                        <Star key={i} className="size-3 fill-amber-400 text-amber-400" />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-[11px] leading-relaxed text-muted-foreground line-clamp-2">{r.text}</p>
-                  <p className="mt-1 text-[10px] text-muted-foreground/50">{r.course} · {r.ago}</p>
-                </div>
-              ))}
-            </div>
+            {profile ? (
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <p><span className="font-medium text-foreground">Especialidad:</span> {profile.specialty}</p>
+                <p><span className="font-medium text-foreground">Universidad:</span> {profile.university}</p>
+                <p><span className="font-medium text-foreground">Modalidad:</span> {profile.modality}</p>
+                <p><span className="font-medium text-foreground">Experiencia:</span> {profile.experienceYears} años</p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">{loading ? 'Cargando…' : 'Perfil no disponible'}</p>
+            )}
           </div>
 
           {/* Resumen rápido */}
           <div className="rounded-xl border border-border bg-card p-4">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">Esta semana</h3>
+            <h3 className="mb-3 text-sm font-semibold text-foreground">Resumen</h3>
             <div className="space-y-2.5">
               {[
-                { label: 'Sesiones completadas', value: '8' },
-                { label: 'Nuevos alumnos',        value: '3' },
-                { label: 'Horas enseñadas',       value: '12 h' },
-                { label: 'Mensajes recibidos',    value: '24' },
+                { label: 'Reservas activas',  value: String(reservations.filter(r => r.status === 'confirmed').length) },
+                { label: 'Reservas pendientes', value: String(reservations.filter(r => r.status === 'pending').length) },
+                { label: 'Cursos publicados', value: String(courses.length) },
+                { label: 'Total alumnos',     value: String(profile?.studentsCount ?? '–') },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{label}</span>

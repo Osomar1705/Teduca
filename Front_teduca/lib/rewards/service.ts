@@ -1,3 +1,5 @@
+import { apiClient } from '../api-client'
+import { API_ENDPOINTS } from '../constants'
 import type {
   EarnEventType,
   EarnRule,
@@ -433,11 +435,32 @@ export function getMarketplaceItems(): RewardItem[] {
   return MARKETPLACE_ITEMS
 }
 
+interface ApiReward {
+  id: string
+  code: string
+  name: string
+  description: string | null
+  cost_points: number
+}
+
+/**
+ * Obtiene las recompensas disponibles desde el backend.
+ */
+export async function getBackendRewards(): Promise<ApiReward[]> {
+  return apiClient.get<ApiReward[]>(API_ENDPOINTS.GAMIFICATION.REWARDS)
+}
+
 export async function redeemItem(
   itemId: string,
 ): Promise<{ success: boolean; message: string }> {
-  void itemId
-  return { success: false, message: 'Función disponible próximamente' }
+  try {
+    await apiClient.post(API_ENDPOINTS.GAMIFICATION.REDEEM(itemId))
+    return { success: true, message: 'Recompensa canjeada exitosamente' }
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : 'No se pudo canjear la recompensa'
+    return { success: false, message }
+  }
 }
 
 const CURRENT_USER_ID = 'me'

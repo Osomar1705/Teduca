@@ -30,18 +30,18 @@ export default function ForYouPage() {
           getCourses().catch(() => [] as Course[]),
           getTeachers().catch(() => [] as TeacherProfile[]),
         ])
-        const state = getGamificationState()
+        const state = await getGamificationState().catch(() => null)
 
         setContext({
           userName: onboarding?.full_name || user.name,
           goals: onboarding?.goals ?? [],
           subjects: onboarding?.subject_tags ?? [],
-          streakDays: state.streak.current,
+          streakDays: state?.streak.current ?? 0,
           recentActivity: [],
-          xp: state.xp,
-          level: state.level.title,
-          weeklyXP: state.weeklyXP,
-          weeklyGoal: state.weeklyGoal,
+          xp: state?.xp ?? 0,
+          level: state?.level.title ?? 'Explorador',
+          weeklyXP: state?.weeklyXP ?? 0,
+          weeklyGoal: state?.weeklyGoal ?? 500,
           orbits: 0,
           reservationsCount: 0,
           coursesCount: allCourses.length,
