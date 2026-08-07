@@ -1,5 +1,5 @@
-import { AuthForm } from '@/components/auth/AuthForm'
+import ModernLoginSignup from '@/components/ui/modern-login-signup'
 
 export default function SignInPage() {
-  return <AuthForm mode="sign-in" />
+  return <ModernLoginSignup mode="sign-in" />
 }
