@@ -8,7 +8,7 @@ import {
   Home, Users, Compass, BookOpen, MessageCircle, CalendarCheck,
   Heart, BarChart3, Trophy, Gift, User, Bell, Settings, Flame,
   LayoutDashboard, GraduationCap, CalendarDays, LineChart, UserSquare2,
-  Brain,
+  Brain, ShoppingBag, Megaphone,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -50,6 +50,13 @@ const NAV_ALUMNO: NavGroup[] = [
       { label: 'Participación', href: APP_ROUTES.PARTICIPATE,  icon: BarChart3     },
       { label: 'Logros',        href: APP_ROUTES.ACHIEVEMENTS, icon: Trophy        },
       { label: 'Orbits',        href: APP_ROUTES.REWARDS,      icon: Gift          },
+    ],
+  },
+  {
+    title: 'TEDUCA',
+    items: [
+      { label: 'Anuncios',  href: APP_ROUTES.ANNOUNCEMENTS, icon: Megaphone  },
+      { label: 'Merch',     href: APP_ROUTES.MERCH,         icon: ShoppingBag },
     ],
   },
   {

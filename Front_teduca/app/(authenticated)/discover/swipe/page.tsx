@@ -636,7 +636,8 @@ export default function SwipePage() {
   }, [])
 
   useEffect(() => {
-    if (selected === 'teachers') loadTeachers()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (selected === 'teachers') void loadTeachers()
   }, [selected, loadTeachers])
 
   const cat = CATEGORIES.find((c) => c.key === selected)

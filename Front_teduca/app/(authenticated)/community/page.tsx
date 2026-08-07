@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Plus, Heart, MessageCircle, Bookmark, Share2,
@@ -105,12 +106,12 @@ const VIDEO_CATEGORIES: { key: VideoCategory; label: string; icon: React.Element
 ]
 
 const FEED_TRENDS = [
-  { key: 'hackathons',    label: '🔥 Hackathons',    count: 12 },
-  { key: 'becas',         label: '🎓 Becas',         count: 8  },
-  { key: 'trabajo',       label: '💼 Trabajo',       count: 24 },
-  { key: 'cursos',        label: '📚 Cursos',        count: 6  },
-  { key: 'investigacion', label: '🧪 Investigación', count: 4  },
-  { key: 'eventos',       label: '🚀 Eventos',       count: 9  },
+  { key: 'hackathons',    label: 'Hackathons'    },
+  { key: 'becas',         label: 'Becas'         },
+  { key: 'trabajo',       label: 'Trabajo'       },
+  { key: 'cursos',        label: 'Cursos'        },
+  { key: 'investigacion', label: 'Investigacion' },
+  { key: 'eventos',       label: 'Eventos'       },
 ]
 
 const CAT_STYLE: Record<Category, { pill: string; dot: string }> = {
@@ -135,133 +136,10 @@ const OPEN_TO_LABEL: Record<string, string> = {
   mentoria: 'Mentoría', proyectos: 'Proyectos', trabajo: 'Trabajo',
 }
 
-// ── Mock data ──────────────────────────────────────────────────────────────
+// ── Mock data eliminado — las secciones de videos, personas y eventos
+// muestran estado vacío hasta que el backend implemente esos endpoints.
 
-const MOCK_POSTS: Post[] = [
-  {
-    id: '1',
-    author: { name: 'Google Developer Groups', username: 'gdg_peru', role: 'Organización verificada', verified: true },
-    category: 'hackathons',
-    title: 'Google Solution Challenge 2025',
-    content: 'Estamos abriendo inscripciones para el Solution Challenge 2025. Teams de hasta 4 personas. Resuelve problemas reales usando tecnología Google. Premios globales y mentorías con Googlers.',
-    tags: ['Google', 'Hackathon', 'IA', 'Desarrollo'],
-    deadline: '15 mar 2025',
-    link: 'developers.google.com',
-    likes: 284, comments: 47, saves: 132, timeAgo: 'hace 2h',
-  },
-  {
-    id: '2',
-    author: { name: 'Ana Gutierrez', username: 'ana_g', role: 'Ing. de Sistemas · UTEC' },
-    category: 'becas',
-    title: 'Beca Fullbright 2025 — Maestría en USA',
-    content: 'Acabo de terminar mi aplicación a Fullbright. Si alguien está en el proceso, con gusto comparto mi experiencia y reviso essays. El programa cubre tuition, vivienda y manutención completa.',
-    tags: ['Fullbright', 'Posgrado', 'USA', 'Beca'],
-    deadline: '30 abr 2025',
-    likes: 156, comments: 38, saves: 201, timeAgo: 'hace 5h',
-  },
-  {
-    id: '3',
-    author: { name: 'UTEC Careers', username: 'utec_careers', role: 'Universidad', verified: true },
-    category: 'trabajo',
-    title: 'Prácticas en Mercado Libre — Ingeniería',
-    content: 'Mercado Libre busca estudiantes de los últimos ciclos para prácticas en tecnología. Modalidad híbrida Lima. Remuneración competitiva + beneficios. Proceso abierto hasta el viernes.',
-    tags: ['Prácticas', 'ML', 'Tecnología', 'Lima'],
-    deadline: 'Viernes 7 feb',
-    link: 'careers.mercadolibre.com',
-    likes: 412, comments: 64, saves: 287, timeAgo: 'hace 1d',
-  },
-  {
-    id: '4',
-    author: { name: 'IEEE UTEC', username: 'ieee_utec', role: 'Club estudiantil', verified: true },
-    category: 'eventos',
-    title: 'Tech Talks: IA Generativa en producción',
-    content: 'Este jueves presentamos casos reales de empresas peruanas usando IA generativa. Speakers de Rimac, Interbank y Yape. Presencial + streaming. Cupos limitados.',
-    tags: ['IA', 'IEEE', 'Tech Talks', 'Lima'],
-    deadline: 'Jueves 6 feb · 6pm',
-    location: 'UTEC Auditorio A',
-    likes: 98, comments: 22, saves: 74, timeAgo: 'hace 2d',
-  },
-  {
-    id: '5',
-    author: { name: 'Microsoft Student Club', username: 'ms_students', role: 'Organización', verified: true },
-    category: 'programas',
-    title: 'Microsoft Learn Student Ambassadors',
-    content: 'Buscamos estudiantes apasionados por la tecnología para unirse al programa MLSA. Acceso a recursos Azure, certificaciones gratuitas, comunidad global y oportunidades de networking con Microsoft.',
-    tags: ['Microsoft', 'Azure', 'Programa', 'Ambassadors'],
-    deadline: '28 feb 2025',
-    link: 'studentambassadors.microsoft.com',
-    likes: 321, comments: 55, saves: 198, timeAgo: 'hace 3d',
-  },
-]
-
-const MOCK_VIDEOS: VideoItem[] = [
-  {
-    id: 'v1', title: 'Algoritmos de búsqueda en 8 minutos — BFS, DFS y A*',
-    author: { name: 'Carlos Mendoza', username: 'carlos_m', university: 'PUCP' },
-    duration: '8:12', thumbnail: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=225&fit=crop',
-    category: 'programacion', likes: 842, comments: 64, saves: 210, views: '12.4k', timeAgo: 'hace 2d',
-  },
-  {
-    id: 'v2', title: 'Cómo pasar entrevistas técnicas en Google — Tips reales',
-    author: { name: 'Valeria Torres', username: 'val_torres', university: 'UPC' },
-    duration: '6:45', thumbnail: 'https://images.unsplash.com/photo-1573495627361-d9b87960b12d?w=400&h=225&fit=crop',
-    category: 'entrevistas', likes: 1203, comments: 98, saves: 445, views: '28.1k', timeAgo: 'hace 3d',
-  },
-  {
-    id: 'v3', title: 'Transformers explicados desde cero — IA para todos',
-    author: { name: 'Dr. Ramírez', username: 'dr_ramirez', university: 'UTEC' },
-    duration: '11:30', thumbnail: 'https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=400&h=225&fit=crop',
-    category: 'ia', likes: 2104, comments: 187, saves: 890, views: '45.3k', timeAgo: 'hace 1sem',
-  },
-  {
-    id: 'v4', title: 'Cálculo diferencial en 5 minutos — Derivadas visuales',
-    author: { name: 'Sofía Ramírez', username: 'sofia_r', university: 'UNMSM' },
-    duration: '5:22', thumbnail: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=225&fit=crop',
-    category: 'matematicas', likes: 567, comments: 43, saves: 312, views: '8.9k', timeAgo: 'hace 5d',
-  },
-  {
-    id: 'v5', title: 'Física cuántica básica — El principio de incertidumbre',
-    author: { name: 'Prof. Quispe', username: 'prof_quispe', university: 'UNMSM' },
-    duration: '9:05', thumbnail: 'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=400&h=225&fit=crop',
-    category: 'fisica', likes: 398, comments: 29, saves: 154, views: '6.2k', timeAgo: 'hace 1sem',
-  },
-  {
-    id: 'v6', title: 'Productividad para estudiantes — Técnica Pomodoro + Notion',
-    author: { name: 'Lucía Vargas', username: 'lucia_v', university: 'USIL' },
-    duration: '7:18', thumbnail: 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=400&h=225&fit=crop',
-    category: 'productividad', likes: 934, comments: 72, saves: 521, views: '19.7k', timeAgo: 'hace 2d',
-  },
-]
-
-const MOCK_PEOPLE: Person[] = [
-  { id: '1', name: 'Carlos Mendoza',  username: 'carlos_m',  university: 'PUCP',   career: 'Ciencia de Datos',        specialty: 'Machine Learning',  interests: ['IA','Python','Research','NLP'],              goal: 'Investigador en IA aplicada a salud',          linkedin: 'carlos-m',   github: 'carlos-m',   open_to: ['mentoria','proyectos'] },
-  { id: '2', name: 'Valeria Torres',  username: 'val_torres', university: 'UPC',    career: 'Ingeniería de Software',  specialty: 'Frontend & UX',     interests: ['React','Startups','UX','Diseño'],           goal: 'Construir un producto SaaS educativo',         linkedin: 'val-torres',                       open_to: ['proyectos','trabajo']  },
-  { id: '3', name: 'Diego Ríos',      username: 'diego_rios', university: 'UTEC',   career: 'Mecatrónica',             specialty: 'Robótica e IoT',    interests: ['Robótica','IoT','Hardware','Arduino'],      goal: 'Emprender en automatización industrial',                              github: 'diego-rios',  open_to: ['proyectos','mentoria'] },
-  { id: '4', name: 'Sofía Ramírez',   username: 'sofia_r',    university: 'UNMSM',  career: 'Estadística',             specialty: 'Data Science',      interests: ['R','Python','Econometría','Visualización'], goal: 'Analista de datos en sector público',          linkedin: 'sofia-r',                          open_to: ['mentoria','trabajo']   },
-  { id: '5', name: 'Andrés Castillo', username: 'andres_c',   university: 'UTEC',   career: 'Bioingeniería',           specialty: 'Imágenes médicas',  interests: ['CV','Salud','Deep Learning','DICOM'],       goal: 'Diagnóstico asistido por IA',                                         github: 'andres-c',    open_to: ['proyectos','mentoria'] },
-  { id: '6', name: 'Lucía Vargas',    username: 'lucia_v',    university: 'USIL',   career: 'Administración',          specialty: 'Startups & Venture', interests: ['Emprendimiento','Fintech','GTM','Marketing'], goal: 'Fundar una startup edtech en Latam',          linkedin: 'lucia-v',                          open_to: ['proyectos','trabajo']  },
-]
-
-const UPCOMING_EVENTS = [
-  { id: '1', title: 'Google Solution Challenge', date: '15', month: 'mar', type: 'Hackathon', org: 'GDG'       },
-  { id: '2', title: 'Tech Talks IEEE',            date: '6',  month: 'feb', type: 'Evento',    org: 'IEEE UTEC' },
-  { id: '3', title: 'Feria Laboral UTEC',         date: '20', month: 'feb', type: 'Empleo',    org: 'UTEC'      },
-]
-
-const TRENDS = ['IAGenerativa','GoogleSolutionChallenge','Fullbright2025','ReactNative','Investigacion']
-
-const NETWORKING_GROUPS = [
-  { id: 'g1', name: 'IEEE Student Branch UTEC', members: 284, category: 'Club académico', icon: '⚡' },
-  { id: 'g2', name: 'Google DSC PUCP',          members: 412, category: 'Tech community',  icon: '🔵' },
-  { id: 'g3', name: 'GitHub Campus Experts',    members: 156, category: 'Open source',     icon: '🐙' },
-  { id: 'g4', name: 'Microsoft MLSA Perú',      members: 230, category: 'Tech community',  icon: '🪟' },
-]
-
-const NETWORKING_COMPANIES = [
-  { id: 'c1', name: 'Mercado Libre',  role: 'Internship · Backend',     logo: '🟡' },
-  { id: 'c2', name: 'Yape',           role: 'Junior · Mobile iOS',      logo: '💜' },
-  { id: 'c3', name: 'Interbank',      role: 'Prácticas · Data Science', logo: '🔴' },
-]
+// Tendencias, grupos y empresas: pendiente de endpoint — se muestran vacíos.
 
 // ── Modal Crear Publicación ────────────────────────────────────────────────
 
@@ -613,32 +491,12 @@ function RightPanel({ onPublish }: { onPublish: () => void }) {
       <div className="sticky top-20 flex flex-col gap-4">
         <div className="rounded-2xl border border-border bg-card p-4 shadow-xs">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Próximos eventos</p>
-          <div className="space-y-3">
-            {UPCOMING_EVENTS.map((ev) => (
-              <div key={ev.id} className="flex items-center gap-3 group cursor-pointer">
-                <div className="flex size-9 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/8 text-center leading-none">
-                  <span className="text-[13px] font-bold text-primary">{ev.date}</span>
-                  <span className="text-[9px] font-medium uppercase text-primary/60">{ev.month}</span>
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-medium text-foreground group-hover:text-primary transition-colors">{ev.title}</p>
-                  <p className="text-[11px] text-muted-foreground">{ev.type} · {ev.org}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <p className="text-xs text-muted-foreground">Próximamente disponible.</p>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-4 shadow-xs">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tendencias</p>
-          <div className="space-y-2.5">
-            {TRENDS.map((tag, i) => (
-              <div key={tag} className="flex items-center justify-between group cursor-pointer">
-                <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">#{tag}</span>
-                <span className="text-[10px] text-muted-foreground/40">#{i + 1}</span>
-              </div>
-            ))}
-          </div>
+          <p className="text-xs text-muted-foreground">Próximamente disponible.</p>
         </div>
 
         <button onClick={onPublish} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-3 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary">
@@ -696,7 +554,7 @@ export default function CommunityPage() {
       const feed = await fetchPosts({ category, search: q || undefined, page_size: 50 })
       setPosts(feed.items.map(apiToPost))
     } catch {
-      setPosts(MOCK_POSTS)
+      setPosts([])
     } finally {
       setLoadingPosts(false)
     }
@@ -715,11 +573,8 @@ export default function CommunityPage() {
   }, [activeCategory, search, loadPosts])
 
   const filteredPosts  = posts
-  const filteredVideos = videoCategory === 'todo' ? MOCK_VIDEOS : MOCK_VIDEOS.filter((v) => v.category === videoCategory)
-  const filteredPeople = MOCK_PEOPLE.filter((p) => {
-    const q = netSearch.toLowerCase()
-    return !q || p.name.toLowerCase().includes(q) || p.career.toLowerCase().includes(q) || p.university.toLowerCase().includes(q) || p.interests.some((i) => i.toLowerCase().includes(q))
-  })
+  const filteredVideos: VideoItem[] = []
+  const filteredPeople: Person[] = []
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -786,10 +641,6 @@ export default function CommunityPage() {
                     className={cn('flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all',
                       activeCategory === t.key ? 'border-primary bg-primary text-primary-foreground shadow-xs' : 'border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground')}>
                     {t.label}
-                    <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-bold',
-                      activeCategory === t.key ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground')}>
-                      {t.count}
-                    </span>
                   </button>
                 ))}
               </div>
@@ -848,36 +699,26 @@ export default function CommunityPage() {
               </p>
             </div>
 
-            {/* Profesores recomendados */}
+            {/* Descubrir profesores */}
             <section>
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-foreground">Profesores recomendados</h2>
-                <a href="/discover" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">Ver más <ArrowRight className="size-3" /></a>
+                <Link href="/discover" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">Ver más <ArrowRight className="size-3" /></Link>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {MOCK_PEOPLE.slice(0, 3).map((p) => (<PersonCard key={p.id} person={p} />))}
-              </div>
-            </section>
-
-            {/* Videos recomendados */}
-            <section>
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-foreground">Videos para ti</h2>
-                <button onClick={() => setActiveTab('videos')} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">Ver todos <ArrowRight className="size-3" /></button>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {MOCK_VIDEOS.slice(0, 3).map((v) => (<VideoCard key={v.id} video={v} />))}
+              <div className="py-8 text-center text-muted-foreground">
+                <p className="text-sm font-medium">Aún no hay recomendaciones personalizadas</p>
+                <p className="mt-1 text-xs">Cuando interactúes más, aparecerán aquí.</p>
               </div>
             </section>
 
-            {/* Oportunidades recomendadas */}
+            {/* Oportunidades recientes */}
             <section>
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-foreground">Oportunidades para ti</h2>
                 <button onClick={() => setActiveTab('feed')} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">Ver feed <ArrowRight className="size-3" /></button>
               </div>
               <div className="flex flex-col gap-3">
-                {MOCK_POSTS.slice(0, 3).map((post) => (<PostCard key={post.id} post={post} />))}
+                {filteredPosts.slice(0, 3).map((post) => (<PostCard key={post.id} post={post} />))}
               </div>
             </section>
           </motion.div>
@@ -965,17 +806,9 @@ export default function CommunityPage() {
                 <h2 className="text-sm font-semibold text-foreground">Empresas buscando estudiantes</h2>
                 <p className="text-xs text-muted-foreground">Oportunidades de prácticas y empleo destacadas.</p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {NETWORKING_COMPANIES.map((c) => (
-                  <div key={c.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 transition-all hover:border-border/80 hover:shadow-sm group cursor-pointer">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-xl">{c.logo}</div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground">{c.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{c.role}</p>
-                    </div>
-                    <ArrowRight className="size-4 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                ))}
+              <div className="py-8 text-center text-muted-foreground">
+                <p className="text-sm font-medium">Aún no hay oportunidades disponibles</p>
+                <p className="mt-1 text-xs">Cuando haya contenido nuevo aparecerá aquí.</p>
               </div>
             </section>
 
@@ -985,10 +818,9 @@ export default function CommunityPage() {
                 <h2 className="text-sm font-semibold text-foreground">Grupos y comunidades</h2>
                 <p className="text-xs text-muted-foreground">Clubes, laboratorios y comunidades técnicas.</p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {NETWORKING_GROUPS.map((g) => (
-                  <GroupCard key={g.id} group={g} />
-                ))}
+              <div className="py-8 text-center text-muted-foreground">
+                <p className="text-sm font-medium">Aún no hay grupos disponibles</p>
+                <p className="mt-1 text-xs">Cuando haya contenido nuevo aparecerá aquí.</p>
               </div>
             </section>
 

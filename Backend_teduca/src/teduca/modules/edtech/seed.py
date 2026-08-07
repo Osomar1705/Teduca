@@ -13,7 +13,8 @@ from teduca.modules.users.models import Role, User
 
 
 def _avatar(n: int) -> str:
-    return f"https://i.pravatar.cc/400?img={n}"
+    # Avatares placeholder externos eliminados — se usa null para no mostrar URLs inválidas en producción
+    return None  # type: ignore[return-value]
 
 
 def _cover(seed: str) -> str:

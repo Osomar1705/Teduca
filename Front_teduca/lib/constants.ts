@@ -35,6 +35,8 @@ export const APP_ROUTES = {
   // Acceso restringido
   BECOME_TEACHER:   '/become-teacher',
   EVALUATION:       '/evaluation',
+  MERCH:            '/merch',
+  ANNOUNCEMENTS:    '/announcements',
 } as const
 
 // API endpoints (backend FastAPI, versionado /api/v1)
@@ -81,6 +83,13 @@ export const API_ENDPOINTS = {
   },
   PARTICIPATION: {
     ME: '/api/v1/participation/me',
+  },
+  MERCH: {
+    LIST: '/api/v1/merch',
+    GET: (id: string) => `/api/v1/merch/${id}`,
+  },
+  ANNOUNCEMENTS: {
+    LIST: '/api/v1/announcements',
   },
   ONBOARDING: {
     STATUS: '/api/v1/onboarding/status',

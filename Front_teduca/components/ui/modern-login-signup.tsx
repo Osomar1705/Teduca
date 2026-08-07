@@ -53,13 +53,19 @@ export default function ModernLoginSignup({ defaultMode = 'sign-in' }: { default
 
   useEffect(() => {
     let active = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let renderer: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let geometry: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let material: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let scene: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let camera: any;
     let animationId: number;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const initThree = (THREE: any) => {
       if (!canvasRef.current || !active) return;
       const canvas = canvasRef.current;
@@ -180,7 +186,9 @@ export default function ModernLoginSignup({ defaultMode = 'sign-in' }: { default
       if (material) material.dispose();
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((window as any).THREE) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const cleanUp = initThree((window as any).THREE);
       return () => { cleanup(); if (cleanUp) cleanUp(); };
     } else {
@@ -188,6 +196,7 @@ export default function ModernLoginSignup({ defaultMode = 'sign-in' }: { default
       script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
       script.async = true;
       script.onload = () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((window as any).THREE) initThree((window as any).THREE);
       };
       document.head.appendChild(script);

@@ -50,6 +50,16 @@ async def seed(session: AsyncSession) -> None:
 
     await seed_marketplace(session)
 
+    # Productos de merch (idempotente).
+    from teduca.modules.merch.seed import seed_merch
+
+    await seed_merch(session)
+
+    # Comunicados oficiales (idempotente).
+    from teduca.modules.announcements.seed import seed_announcements
+
+    await seed_announcements(session)
+
 
 async def _main() -> None:
     """Permite sembrar la BD manualmente: `python -m teduca.core.seed`."""
