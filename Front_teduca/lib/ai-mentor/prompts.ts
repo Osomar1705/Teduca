@@ -1,151 +1,91 @@
 /**
- * Funciones que generan contenido del mentor IA.
- * Hoy devuelven datos simulados pero coherentes con el contexto del usuario.
- * Preparadas para swapear a fetch('/api/ai-mentor') en el futuro.
+ * System prompt del Mentor TEDUCA.
+ *
+ * Antes este archivo tenía ~150 líneas de plantillas de texto que simulaban
+ * ser IA. Ahora su única función es describirle al modelo quién es y qué sabe
+ * del alumno.
  */
 
-import type { MentorContext, MentorRecommendation, WeeklyGoal } from './types'
-import { APP_ROUTES } from '@/lib/constants'
+import type { StudentContext } from './types'
 
-function pick<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)]
+/**
+ * Español neutro peruano. Se declara explícitamente porque los modelos suelen
+ * derivar a voseo rioplatense ("llevás", "reservá") y TEDUCA es un producto
+ * peruano.
+ */
+const VOICE = `Escribes en español neutro de Perú: tuteo ("tú tienes", "reserva",
+"organiza"). Nunca uses voseo rioplatense ("vos tenés", "reservá", "fijate") ni
+expresiones de España ("vosotros", "ordenador", "vale").`
+
+function renderCourses(context: StudentContext): string {
+  if (context.courses.length === 0) {
+    return `El alumno todavía no está inscrito en ningún curso. Si pregunta por
+contenido concreto, puedes ayudarlo igual, pero sugiérele explorar el catálogo
+de cursos de TEDUCA para tener un plan estructurado.`
+  }
+
+  const list = context.courses
+    .map(
+      (c) =>
+        `- "${c.title}" (${c.category}, nivel ${c.level}) — profesor: ${c.teacherName}`,
+    )
+    .join('\n')
+
+  return `Cursos que el alumno está llevando ahora:\n${list}`
 }
 
-// ─── Greeting ──────────────────────────────────────────────────────────────
+function renderTranscripts(context: StudentContext): string {
+  if (context.transcripts.length === 0) return ''
 
-export function generateGreeting(ctx: MentorContext): string {
-  const firstName = ctx.userName.split(' ')[0] || 'estudiante'
-  const prevWeekXP = 120 // simulado — se reemplazará con histórico real
-  const pct = prevWeekXP > 0
-    ? Math.round(((ctx.weeklyXP - prevWeekXP) / prevWeekXP) * 100)
-    : 0
+  const list = context.transcripts
+    .map(
+      (t) =>
+        `— Clase de "${t.courseTitle}" del ${t.date}:\n${t.excerpt}`,
+    )
+    .join('\n\n')
 
-  if (ctx.weeklyXP === 0) {
-    return `Esta semana todavía no registraste actividad. Hoy es un buen momento para empezar.`
-  }
-  if (pct > 0) {
-    return `Esta semana avanzaste un ${pct}% más que la semana pasada. Vas bien.`
-  }
-  if (pct < 0) {
-    return `Esta semana bajaste un poco el ritmo. Nada grave: es normal. ¿Qué necesitás para retomar?`
-  }
-  return `Mantuviste el ritmo de la semana pasada. Consistencia es la clave.`
+  return `
+Fragmentos de las clases a las que el alumno asistió. Es tu fuente más
+confiable sobre lo que realmente vio: cita estos contenidos cuando expliques
+algo, y menciona de qué clase salió.
+
+${list}`
 }
 
-// ─── Daily Recommendation ──────────────────────────────────────────────────
+export function buildSystemPrompt(context: StudentContext): string {
+  const goals =
+    context.goals.length > 0
+      ? `Sus metas declaradas: ${context.goals.join(', ')}.`
+      : 'Todavía no declaró metas concretas.'
 
-export function generateDailyRecommendation(ctx: MentorContext): MentorRecommendation {
-  // Si no tiene reservas: recomendar mentoría
-  if (ctx.reservationsCount === 0) {
-    const subject = ctx.subjects[0] || 'un área de tu interés'
-    return {
-      type: 'mentoría',
-      text: `Todavía no reservaste ninguna mentoría. Una sesión con un profesor puede acelerar mucho tu comprensión de ${subject}. Explorá los perfiles disponibles.`,
-      ctaLabel: 'Descubrir profesores',
-      ctaHref: APP_ROUTES.DISCOVER,
-    }
-  }
+  const subjects =
+    context.subjects.length > 0
+      ? `Temas e intereses que marcó: ${context.subjects.join(', ')}.`
+      : ''
 
-  // Si tiene cursos: recomendar retomar
-  if (ctx.coursesCount > 0) {
-    return {
-      type: 'curso',
-      text: `Tenés cursos en progreso. Dedicar 20 minutos hoy a continuar donde lo dejaste es más efectivo que empezar algo nuevo.`,
-      ctaLabel: 'Ver mis cursos',
-      ctaHref: APP_ROUTES.COURSES,
-    }
-  }
+  return `Eres el Mentor de TEDUCA, un tutor académico que acompaña a ${context.userName}.
 
-  // Si tiene metas definidas: recomendar según goals
-  if (ctx.goals.length > 0) {
-    const goal = ctx.goals[0]
-    return {
-      type: 'estudio',
-      text: `Tu meta es "${goal}". Un buen paso hoy es dedicar 30 minutos a una actividad específica que te acerque a ese objetivo. La constancia supera a la intensidad.`,
-    }
-  }
+${VOICE}
 
-  // Default: participar en comunidad
-  return {
-    type: 'comunidad',
-    text: `Participar en la comunidad es una forma subvalorada de aprender. Responder una duda de otro estudiante solidifica lo que ya sabés.`,
-    ctaLabel: 'Ir a comunidad',
-    ctaHref: APP_ROUTES.COMMUNITY,
-  }
+CÓMO RESPONDES
+- Directo y concreto. Nada de relleno motivacional vacío.
+- Cuando expliques un concepto: primero la idea en una frase, después el
+  desarrollo, y cierra con un ejemplo o un ejercicio pequeño.
+- Si la pregunta es ambigua, pregunta antes de asumir.
+- Si no sabes algo o no está en el material del alumno, dilo. No inventes
+  contenidos de clases que no tienes.
+- Usa markdown para estructurar (listas, negritas, bloques de código) cuando
+  ayude a la claridad. Para fórmulas usa notación simple, no LaTeX.
+
+QUÉ SABES DEL ALUMNO
+${renderCourses(context)}
+${goals}
+${subjects}
+${renderTranscripts(context)}
+
+LÍMITES
+- Eres un tutor, no un buscador general. Si te preguntan algo totalmente ajeno
+  a lo académico, redirige con amabilidad hacia sus estudios.
+- No resuelves exámenes ni tareas para que las entreguen sin entender: guías
+  hacia la respuesta con pistas y preguntas.`
 }
-
-// ─── Weekly Goal ───────────────────────────────────────────────────────────
-
-const WEEKLY_GOALS_POOL: Omit<WeeklyGoal, 'progress' | 'completed'>[] = [
-  {
-    title: 'Sesión de estudio',
-    description: 'Completá al menos 3 sesiones de estudio de 25 minutos esta semana.',
-    xpReward: 50,
-  },
-  {
-    title: 'Reservá una mentoría',
-    description: 'Agendá una sesión con un profesor para avanzar en tu área de interés.',
-    xpReward: 75,
-  },
-  {
-    title: 'Participá en comunidad',
-    description: 'Respondé o hacé al menos una pregunta en la comunidad de TEDUCA.',
-    xpReward: 40,
-  },
-  {
-    title: 'Completá un módulo',
-    description: 'Finalizá al menos un módulo de cualquiera de tus cursos activos.',
-    xpReward: 60,
-  },
-]
-
-export function generateWeeklyGoal(ctx: MentorContext): WeeklyGoal {
-  // Rotar el objetivo según la semana del año para que no sea aleatorio en cada render
-  const weekOfYear = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000))
-  const base = WEEKLY_GOALS_POOL[weekOfYear % WEEKLY_GOALS_POOL.length]
-
-  // Progreso basado en XP semanal vs meta
-  const rawProgress = ctx.weeklyGoal > 0
-    ? Math.min(100, Math.round((ctx.weeklyXP / ctx.weeklyGoal) * 100))
-    : 0
-  const completed = rawProgress >= 100
-
-  return {
-    ...base,
-    progress: rawProgress,
-    completed,
-  }
-}
-
-// ─── Pattern Analysis ──────────────────────────────────────────────────────
-
-export function generatePatternAnalysis(ctx: MentorContext): string[] {
-  const patterns: string[] = []
-
-  if (ctx.streakDays >= 7) {
-    patterns.push(`Racha de ${ctx.streakDays} días consecutivos: demostras disciplina.`)
-  } else if (ctx.streakDays >= 3) {
-    patterns.push(`Llevas ${ctx.streakDays} días seguidos activo. Seguí así.`)
-  } else {
-    patterns.push('La regularidad diaria tiene más impacto que los maratones de estudio.')
-  }
-
-  if (ctx.subjects.length > 0) {
-    patterns.push(`Tu área principal es ${ctx.subjects[0]}. Enfocarte en un tema a la vez mejora la retención.`)
-  }
-
-  if (ctx.reservationsCount > 2) {
-    patterns.push(`Ya reservaste ${ctx.reservationsCount} mentorías. Las clases personalizadas aceleran el progreso.`)
-  } else if (ctx.reservationsCount === 0) {
-    patterns.push('Todavía no tuviste mentorías. Una sesión puede desbloquear conceptos que no avanzan solos.')
-  }
-
-  if (ctx.goals.length > 0) {
-    patterns.push(`Tu meta declarada es "${ctx.goals[0]}". Recordarla ayuda a tomar mejores decisiones de aprendizaje.`)
-  }
-
-  return patterns
-}
-
-// ─── Chat Response ─────────────────────────────────────────────────────────
-// (La lógica de chat vive en service.ts para mantener la separación)

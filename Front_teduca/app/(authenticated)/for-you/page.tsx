@@ -5,18 +5,16 @@ import Link from 'next/link'
 import { Telescope, ArrowRight, UserCog } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/common/EmptyState'
-import { MentorChat } from '@/components/ai-mentor/MentorChat'
+import { Button } from '@/components/ui/button'
 import { FadeIn } from '@/components/common/Motion'
 import { APP_ROUTES } from '@/lib/constants'
 import { getCourses, getCurrentUser, getTeachers } from '@/lib/edtech/service'
 import { getOnboarding, type OnboardingData } from '@/lib/onboarding/service'
-import { getGamificationState } from '@/lib/gamification/service'
-import type { MentorContext } from '@/lib/ai-mentor/types'
 import type { Course, TeacherProfile } from '@/lib/edtech/types'
 
 export default function ForYouPage() {
   const [loading, setLoading] = useState(true)
-  const [context, setContext] = useState<MentorContext | null>(null)
+  const [userName, setUserName] = useState<string | null>(null)
   const [goals, setGoals] = useState<string[]>([])
   const [courses, setCourses] = useState<Course[]>([])
   const [teachers, setTeachers] = useState<TeacherProfile[]>([])
@@ -30,24 +28,7 @@ export default function ForYouPage() {
           getCourses().catch(() => [] as Course[]),
           getTeachers().catch(() => [] as TeacherProfile[]),
         ])
-        const state = await getGamificationState().catch(() => null)
-
-        setContext({
-          userName: onboarding?.full_name || user.name,
-          goals: onboarding?.goals ?? [],
-          subjects: onboarding?.subject_tags ?? [],
-          streakDays: state?.streak.current ?? 0,
-          recentActivity: [],
-          xp: state?.xp ?? 0,
-          level: state?.level.title ?? 'Explorador',
-          weeklyXP: state?.weeklyXP ?? 0,
-          weeklyGoal: state?.weeklyGoal ?? 500,
-          orbits: 0,
-          reservationsCount: 0,
-          coursesCount: allCourses.length,
-          projectInterests: onboarding?.project_interests ?? [],
-          learningStyles: onboarding?.learning_styles ?? [],
-        })
+        setUserName(onboarding?.full_name || user.name)
         setGoals(onboarding?.goals ?? [])
         setCourses(allCourses.slice(0, 3))
         setTeachers(allTeachers.slice(0, 3))
@@ -68,13 +49,13 @@ export default function ForYouPage() {
     )
   }
 
-  if (!context) {
+  if (!userName) {
     return (
       <div className="mx-auto max-w-3xl">
         <EmptyState
           icon={UserCog}
           title="No se pudo cargar el contenido"
-          description="Verificá tu conexión e intentá recargar la página."
+          description="Verifica tu conexión e intenta recargar la página."
         />
       </div>
     )
@@ -94,7 +75,24 @@ export default function ForYouPage() {
               Beta
             </span>
           </div>
-          <MentorChat context={context} />
+          {/* El chat vive completo en /mentor (con historial de conversaciones);
+              acá solo se ofrece la entrada para no duplicar su estado. */}
+          <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold text-foreground">
+                Conversa con tu mentor
+              </p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Resuelve dudas de tus cursos y arma tu plan de estudio.
+              </p>
+            </div>
+            <Button variant="brand" className="shrink-0" asChild>
+              <Link href={APP_ROUTES.MENTOR}>
+                Abrir mentor
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </div>
         </section>
       </FadeIn>
 

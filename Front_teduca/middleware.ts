@@ -4,6 +4,7 @@ const AUTH_COOKIE = 'teduca_auth'
 
 const PROTECTED_PREFIXES = [
   '/dashboard',
+  '/mentor',
   '/discover',
   '/courses',
   '/favorites',

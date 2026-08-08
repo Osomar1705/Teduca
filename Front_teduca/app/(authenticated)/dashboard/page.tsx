@@ -13,6 +13,7 @@ import { StreakCard } from '@/components/dashboard/StreakCard'
 import { LevelCard } from '@/components/dashboard/LevelCard'
 import { WeeklyGoals } from '@/components/dashboard/WeeklyGoals'
 import { RewardSummaryWidget } from '@/components/dashboard/RewardSummaryWidget'
+import { MentorInsights } from '@/components/dashboard/MentorInsights'
 import { TeacherCard } from '@/components/edtech/TeacherCard'
 import { CourseCard } from '@/components/edtech/CourseCard'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -30,9 +31,11 @@ import {
   getGamificationState,
   recordDailyActivity,
 } from '@/lib/gamification/service'
+import { buildStudentContext } from '@/lib/ai-mentor/context'
 import { formatDate } from '@/lib/format'
 import type { Course, Reservation, TeacherProfile } from '@/lib/edtech/types'
 import type { GamificationState } from '@/lib/gamification/types'
+import type { StudentContext } from '@/lib/ai-mentor/types'
 
 export default function DashboardPage() {
   const [name, setName] = useState('')
@@ -44,6 +47,7 @@ export default function DashboardPage() {
   const [courseCount, setCourseCount] = useState(0)
   const [goals, setGoals] = useState<string[]>([])
   const [game, setGame] = useState<GamificationState | null>(null)
+  const [mentorContext, setMentorContext] = useState<StudentContext | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -67,8 +71,14 @@ export default function DashboardPage() {
       setFavCount(f.length)
       setReservations(r)
       getOnboarding()
-        .then((o) => setGoals(o.goals ?? []))
-        .catch(() => {})
+        .then((o) => {
+          setGoals(o.goals ?? [])
+          setMentorContext(buildStudentContext(user, c, o))
+        })
+        .catch(() => {
+          // Sin onboarding el análisis igual se puede generar con los cursos.
+          setMentorContext(buildStudentContext(user, c, null))
+        })
       setLoading(false)
     }
     load()
@@ -133,6 +143,22 @@ export default function DashboardPage() {
           {/* Widgets compactos en mobile */}
           {game && (
             <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:hidden">{widgets}</div>
+          )}
+
+          {/* Análisis del mentor: fortalezas, áreas por mejorar y
+              recomendación del día, generados por IA. */}
+          {mentorContext && game && (
+            <section className="mb-6">
+              <MentorInsights
+                context={mentorContext}
+                signals={{
+                  streakDays: game.streak.current,
+                  weeklyXP: game.weeklyXP,
+                  weeklyGoal: game.weeklyGoal,
+                  reservationsCount: activeReservations.length,
+                }}
+              />
+            </section>
           )}
 
           <section className="mb-6">

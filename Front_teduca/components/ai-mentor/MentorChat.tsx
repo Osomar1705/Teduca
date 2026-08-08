@@ -1,183 +1,277 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { Brain, Send, X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ArrowUp, Brain, PanelLeft, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { sendMessage } from '@/lib/ai-mentor/service'
-import { loadMemory, saveMemory } from '@/lib/ai-mentor/memory'
-import type { MentorContext, MentorMessage } from '@/lib/ai-mentor/types'
+import { MentorError, streamMentorReply } from '@/lib/ai-mentor/service'
+import { newId } from '@/lib/ai-mentor/storage'
+import type { MentorMessage, StudentContext } from '@/lib/ai-mentor/types'
 
 const SUGGESTIONS = [
-  '¿Cómo organizo mi semana?',
-  'Recomiéndame un curso',
-  '¿Cómo mejoro mi racha?',
-  'Explícame un concepto',
+  'Explícame un concepto que no entiendo',
+  'Ayúdame a organizar mi semana de estudio',
+  'Hazme preguntas de repaso',
+  'Resúmeme lo que estoy llevando',
 ]
 
-function uid() {
-  return Math.random().toString(36).slice(2)
-}
-
 interface Props {
-  context: MentorContext
-  onClose?: () => void
+  context: StudentContext
+  messages: MentorMessage[]
+  onMessagesChange: (messages: MentorMessage[]) => void
+  /** Abre el sidebar en móvil. */
+  onOpenSidebar: () => void
 }
 
-export function MentorChat({ context, onClose }: Props) {
-  const firstName = context.userName.split(' ')[0] || 'estudiante'
-
-  const [messages, setMessages] = useState<MentorMessage[]>(() => {
-    const memory = loadMemory()
-    if (memory.chatHistory.length > 0) return memory.chatHistory
-    return [
-      {
-        id: 'welcome',
-        role: 'mentor',
-        content: `¡Hola ${firstName}! Soy tu mentor académico. Estoy acá para ayudarte a organizar tu estudio, resolver dudas y mantenerte motivado. ¿En qué querés que trabajemos hoy?`,
-        createdAt: new Date().toISOString(),
-      },
-    ]
-  })
-
+export function MentorChat({
+  context,
+  messages,
+  onMessagesChange,
+  onOpenSidebar,
+}: Props) {
   const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [streaming, setStreaming] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const scrollRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
-  // Scroll to bottom on new messages
+  const firstName = context.userName.split(' ')[0] || 'estudiante'
+  const isEmpty = messages.length === 0
+
+  // Autoscroll mientras llega la respuesta.
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages, loading])
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: streaming ? 'auto' : 'smooth',
+    })
+  }, [messages, streaming])
 
-  // Persist chat history
+  // El textarea crece con el contenido, hasta un tope.
   useEffect(() => {
-    const memory = loadMemory()
-    saveMemory({ ...memory, chatHistory: messages, lastSeen: new Date().toISOString() })
-  }, [messages])
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`
+  }, [input])
 
-  async function send(text: string) {
-    const trimmed = text.trim()
-    if (!trimmed || loading) return
+  // Cancela el stream si el usuario abandona la pantalla.
+  useEffect(() => () => abortRef.current?.abort(), [])
 
-    const userMsg: MentorMessage = {
-      id: uid(),
-      role: 'user',
-      content: trimmed,
-      createdAt: new Date().toISOString(),
-    }
-    const history = [...messages, userMsg]
-    setMessages(history)
-    setInput('')
-    setLoading(true)
+  const stop = useCallback(() => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    setStreaming(false)
+  }, [])
 
-    try {
-      const reply = await sendMessage(history, trimmed, context)
-      setMessages((prev) => [
-        ...prev,
-        { id: uid(), role: 'mentor', content: reply, createdAt: new Date().toISOString() },
-      ])
-    } finally {
-      setLoading(false)
-    }
-  }
+  const send = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim()
+      if (!trimmed || streaming) return
+
+      setError(null)
+      setInput('')
+
+      const userMessage: MentorMessage = {
+        id: newId(),
+        role: 'user',
+        content: trimmed,
+        createdAt: new Date().toISOString(),
+      }
+      const assistantMessage: MentorMessage = {
+        id: newId(),
+        role: 'assistant',
+        content: '',
+        createdAt: new Date().toISOString(),
+      }
+
+      const withUser = [...messages, userMessage]
+      // Se pinta de inmediato la burbuja vacía del mentor: es lo que da la
+      // sensación de "está escribiendo" sin necesidad de un estado aparte.
+      onMessagesChange([...withUser, assistantMessage])
+      setStreaming(true)
+
+      const controller = new AbortController()
+      abortRef.current = controller
+
+      let accumulated = ''
+      try {
+        await streamMentorReply(
+          withUser,
+          context,
+          (chunk) => {
+            accumulated += chunk
+            onMessagesChange([
+              ...withUser,
+              { ...assistantMessage, content: accumulated },
+            ])
+          },
+          controller.signal,
+        )
+
+        if (!accumulated.trim()) {
+          throw new MentorError('El mentor no devolvió respuesta. Intenta de nuevo.')
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          // Cancelado por el usuario: se conserva lo que alcanzó a escribir.
+          onMessagesChange(
+            accumulated.trim()
+              ? [...withUser, { ...assistantMessage, content: accumulated }]
+              : withUser,
+          )
+        } else {
+          setError(
+            err instanceof MentorError
+              ? err.message
+              : 'No se pudo conectar con el mentor. Revisa tu conexión.',
+          )
+          // Se descarta la burbuja vacía para no dejar un hueco en el hilo.
+          onMessagesChange(withUser)
+        }
+      } finally {
+        abortRef.current = null
+        setStreaming(false)
+      }
+    },
+    [context, messages, onMessagesChange, streaming],
+  )
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
-          <Brain className="size-4 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground">Mentor TEDUCA</p>
-          <p className="text-xs text-muted-foreground">Tu asistente académico personal</p>
-        </div>
-        {onClose && (
-          <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0">
-            <X className="size-4" />
-            <span className="sr-only">Cerrar</span>
-          </Button>
-        )}
-      </div>
-
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            className={cn('flex gap-2', m.role === 'user' ? 'justify-end' : 'justify-start')}
-          >
-            {m.role === 'mentor' && (
-              <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 mt-1">
-                <Brain className="size-3.5 text-primary" />
-              </div>
-            )}
-            <div
-              className={cn(
-                'max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
-                m.role === 'user'
-                  ? 'rounded-br-md bg-primary text-primary-foreground'
-                  : 'rounded-bl-md bg-muted/60 text-foreground'
-              )}
-            >
-              {m.content}
-            </div>
-          </div>
-        ))}
-
-        {loading && (
-          <div className="flex justify-start gap-2">
-            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 mt-1">
-              <Brain className="size-3.5 text-primary" />
-            </div>
-            <div className="flex items-center gap-1 rounded-2xl rounded-bl-md bg-muted/60 px-4 py-3">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="size-1.5 animate-bounce rounded-full bg-muted-foreground/50"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Quick suggestions (only on first message) */}
-        {messages.length === 1 && !loading && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {SUGGESTIONS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => send(s)}
-                className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Input */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          send(input)
-        }}
-        className="flex items-center gap-2 border-t border-border bg-background/60 p-3"
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Escribile a tu mentor..."
-          className="h-10 flex-1 rounded-lg border border-input bg-background px-3.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/20"
-        />
-        <Button type="submit" variant="brand" size="icon-lg" disabled={loading || !input.trim()}>
-          <Send className="size-4" />
-          <span className="sr-only">Enviar</span>
+    <div className="flex h-full flex-col">
+      {/* Cabecera: solo existe en móvil, para poder abrir el sidebar. */}
+      <header className="flex items-center gap-2 border-b border-border px-3 py-2.5 lg:hidden">
+        <Button variant="ghost" size="icon" onClick={onOpenSidebar}>
+          <PanelLeft className="size-4" />
+          <span className="sr-only">Ver conversaciones</span>
         </Button>
-      </form>
+        <p className="text-sm font-semibold text-foreground">Mentor TEDUCA</p>
+      </header>
+
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-3xl px-4 py-6">
+          {isEmpty ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary/10">
+                <Brain className="size-6 text-primary" />
+              </div>
+              <h2 className="text-xl font-semibold text-foreground">
+                Hola, {firstName}
+              </h2>
+              <p className="mt-1 max-w-md text-sm text-muted-foreground">
+                {context.courses.length > 0
+                  ? `Conozco los ${context.courses.length} curso(s) que estás llevando. Pregúntame lo que necesites.`
+                  : 'Pregúntame lo que necesites sobre lo que estás estudiando.'}
+              </p>
+
+              <div className="mt-8 grid w-full max-w-lg gap-2 sm:grid-cols-2">
+                {SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => send(suggestion)}
+                    className="rounded-xl border border-border bg-card px-4 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {messages.map((message) =>
+                message.role === 'user' ? (
+                  <div key={message.id} className="flex justify-end">
+                    <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm leading-relaxed text-primary-foreground whitespace-pre-wrap">
+                      {message.content}
+                    </div>
+                  </div>
+                ) : (
+                  <div key={message.id} className="flex gap-3">
+                    <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <Brain className="size-4 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                      {message.content || (
+                        <span className="inline-flex items-center gap-1 py-1">
+                          {[0, 1, 2].map((i) => (
+                            <span
+                              key={i}
+                              className="size-1.5 animate-bounce rounded-full bg-muted-foreground/50"
+                              style={{ animationDelay: `${i * 0.15}s` }}
+                            />
+                          ))}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ),
+              )}
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Composer */}
+      <div className="border-t border-border bg-background/80 backdrop-blur">
+        <div className="mx-auto w-full max-w-3xl px-4 py-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              send(input)
+            }}
+            className="flex items-end gap-2 rounded-2xl border border-input bg-background p-2 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/20"
+          >
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                // Enter envía; Shift+Enter hace salto de línea.
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  send(input)
+                }
+              }}
+              placeholder="Pregúntale a tu mentor..."
+              className="max-h-[200px] flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground"
+            />
+            {streaming ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={stop}
+                className="shrink-0 rounded-xl"
+              >
+                <Square className="size-3.5 fill-current" />
+                <span className="sr-only">Detener</span>
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                variant="brand"
+                size="icon"
+                disabled={!input.trim()}
+                className="shrink-0 rounded-xl"
+              >
+                <ArrowUp className="size-4" />
+                <span className="sr-only">Enviar</span>
+              </Button>
+            )}
+          </form>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            El mentor puede equivocarse. Verifica lo importante con tu profesor.
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

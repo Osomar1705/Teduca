@@ -1,37 +1,73 @@
 /**
- * Construye el MentorContext unificando datos del estudiante.
- * Agnóstico de origen de datos: recibe objetos ya cargados.
+ * Construye el contexto académico que se le inyecta al modelo.
+ *
+ * Regla de alcance: el mentor solo debe conocer lo que el alumno está
+ * estudiando (cursos y, en el futuro, transcripciones de sus clases). Los
+ * datos de gamificación (XP, racha, orbits) quedan deliberadamente fuera:
+ * viven en el dashboard y ensuciaban las respuestas del chat.
  */
 
-import type { GamificationState } from '@/lib/gamification/types'
-import type { Course, CurrentUser, Reservation } from '@/lib/edtech/types'
+import type { Course, CurrentUser } from '@/lib/edtech/types'
 import type { OnboardingData } from '@/lib/onboarding/service'
-import type { MentorContext } from './types'
+import type { ClassTranscript, ContextCourse, StudentContext } from './types'
 
-export function buildMentorContext(
+const LEVEL_LABELS: Record<string, string> = {
+  beginner: 'inicial',
+  intermediate: 'intermedio',
+  advanced: 'avanzado',
+}
+
+/**
+ * Traduce las claves crudas del onboarding a texto legible.
+ * Sin esto el modelo recibe cosas como "live_classes" o "learn" y las repite
+ * tal cual (el bug que se veía en las tarjetas viejas del mentor).
+ */
+const GOAL_LABELS: Record<string, string> = {
+  learn: 'aprender algo nuevo',
+  improve: 'mejorar sus notas',
+  exam: 'preparar un examen',
+  career: 'crecer profesionalmente',
+  project: 'sacar adelante un proyecto',
+}
+
+const STYLE_LABELS: Record<string, string> = {
+  live_classes: 'clases en vivo',
+  videos: 'videos grabados',
+  reading: 'lectura',
+  practice: 'ejercicios prácticos',
+  group: 'estudio en grupo',
+}
+
+function humanize(value: string, dictionary: Record<string, string>): string {
+  return dictionary[value] ?? value.replace(/_/g, ' ')
+}
+
+function toContextCourse(course: Course): ContextCourse {
+  return {
+    id: course.id,
+    title: course.title,
+    category: course.category,
+    level: LEVEL_LABELS[course.level] ?? course.level,
+    teacherName: course.teacherName,
+  }
+}
+
+export function buildStudentContext(
   user: CurrentUser,
-  gamification: GamificationState | null,
   courses: Course[],
-  reservations: Reservation[],
   onboarding: OnboardingData | null,
-  orbits = 0,
-): MentorContext {
-  const activeReservations = reservations.filter((r) => r.status !== 'cancelled')
+  transcripts: ClassTranscript[] = [],
+): StudentContext {
+  const goals = (onboarding?.goals ?? []).map((g) => humanize(g, GOAL_LABELS))
+  const styles = (onboarding?.learning_styles ?? []).map((s) =>
+    humanize(s, STYLE_LABELS),
+  )
 
   return {
     userName: user.name || onboarding?.full_name || 'Estudiante',
-    goals: onboarding?.goals ?? [],
-    subjects: onboarding?.subject_tags ?? [],
-    projectInterests: onboarding?.project_interests ?? [],
-    learningStyles: onboarding?.learning_styles ?? [],
-    streakDays: gamification?.streak.current ?? 0,
-    recentActivity: [],
-    xp: gamification?.xp ?? 0,
-    level: gamification?.level.title ?? 'Explorador',
-    weeklyXP: gamification?.weeklyXP ?? 0,
-    weeklyGoal: gamification?.weeklyGoal ?? 500,
-    orbits,
-    reservationsCount: activeReservations.length,
-    coursesCount: courses.length,
+    courses: courses.map(toContextCourse),
+    transcripts,
+    goals,
+    subjects: [...(onboarding?.subject_tags ?? []), ...styles],
   }
 }
