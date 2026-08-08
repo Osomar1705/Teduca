@@ -29,3 +29,19 @@ class UserRewardRead(BaseModel):
     id: uuid.UUID
     reward_id: uuid.UUID
     redeemed_at: datetime | None = None
+
+
+class PointsLedgerRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    points: int
+    reason: str
+    event_name: str | None = None
+    created_at: datetime
+
+
+class AwardPointsRequest(BaseModel):
+    event: str
+    points: int
+    reason: str

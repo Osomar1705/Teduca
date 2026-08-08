@@ -85,6 +85,16 @@ class GamificationService:
         await self.session.flush()
         return user_reward
 
+    async def list_ledger(
+        self, user_id: uuid.UUID, *, offset: int = 0, limit: int = 50
+    ) -> tuple[list[PointsLedger], int]:
+        base = select(PointsLedger).where(PointsLedger.user_id == user_id)
+        total = await self.session.scalar(select(func.count()).select_from(base.subquery()))
+        result = await self.session.execute(
+            base.order_by(PointsLedger.created_at.desc()).offset(offset).limit(limit)
+        )
+        return list(result.scalars()), int(total or 0)
+
     async def get_summary(self, user_id: uuid.UUID) -> dict:
         streak = await self._get_or_create_streak(user_id)
         return {

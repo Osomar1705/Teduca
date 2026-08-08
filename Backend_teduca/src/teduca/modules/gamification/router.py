@@ -1,12 +1,16 @@
 """Endpoints de gamificación."""
 
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 
 from teduca.core.dependencies import CurrentUser, DbSession
+from teduca.core.pagination import Page, PaginationParams, pagination_params
 from teduca.modules.gamification.schemas import (
+    AwardPointsRequest,
     GamificationSummary,
+    PointsLedgerRead,
     RewardRead,
     UserRewardRead,
 )
@@ -23,6 +27,27 @@ async def my_summary(current_user: CurrentUser, session: DbSession) -> Gamificat
 @router.get("/rewards", response_model=list[RewardRead])
 async def list_rewards(session: DbSession) -> list[RewardRead]:
     return await GamificationService(session).list_rewards()
+
+
+@router.get("/ledger", response_model=Page[PointsLedgerRead])
+async def my_ledger(
+    current_user: CurrentUser,
+    session: DbSession,
+    params: Annotated[PaginationParams, Depends(pagination_params)],
+) -> Page[PointsLedgerRead]:
+    items, total = await GamificationService(session).list_ledger(
+        current_user.id, offset=params.offset, limit=params.limit
+    )
+    return Page.create([PointsLedgerRead.model_validate(e) for e in items], total, params)
+
+
+@router.post("/award", status_code=204)
+async def award_points(
+    body: AwardPointsRequest, current_user: CurrentUser, session: DbSession
+) -> None:
+    await GamificationService(session).award_points(
+        current_user.id, body.points, body.reason, body.event
+    )
 
 
 @router.post(
