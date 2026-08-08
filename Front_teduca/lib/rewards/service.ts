@@ -433,38 +433,34 @@ export async function getRanking(): Promise<RankingData> {
     // sin sesión
   }
 
-  const global: RankingEntry[] = [
-    { position: 1, userId: 'u1', name: 'Valentina Ríos', university: 'UNI Andes', career: 'Ingeniería de Software', score: 4820, pointsBalance: 3200, streak: 64 },
-    { position: 2, userId: 'u2', name: 'Mateo Fernández', university: 'UNI Andes', career: 'Data Science', score: 4510, pointsBalance: 2980, streak: 41 },
-    { position: 3, userId: 'u3', name: 'Sofía Castro', university: 'Tec Central', career: 'Diseño', score: 4290, pointsBalance: 2750, streak: 38 },
-    { position: 4, userId: 'u4', name: 'Diego Morales', university: 'UNI Andes', career: 'Ingeniería de Software', score: 3980, pointsBalance: 2400, streak: 29 },
-    { position: 5, userId: 'me', name: 'Tú', university: 'UNI Andes', career: 'Ingeniería de Software', score: 3710, pointsBalance: balance, streak: 0, isCurrentUser: true },
-    { position: 6, userId: 'u6', name: 'Camila Vega', university: 'Tec Central', career: 'Matemáticas', score: 3540, pointsBalance: 2100, streak: 22 },
-    { position: 7, userId: 'u7', name: 'Lucas Ibáñez', university: 'UNI Sur', career: 'Física', score: 3320, pointsBalance: 1950, streak: 18 },
-    { position: 8, userId: 'u8', name: 'Antonia Paz', university: 'UNI Andes', career: 'Data Science', score: 3110, pointsBalance: 1800, streak: 15 },
-    { position: 9, userId: 'u9', name: 'Benjamín Rojas', university: 'Tec Central', career: 'Diseño', score: 2940, pointsBalance: 1650, streak: 12 },
-    { position: 10, userId: 'u10', name: 'Isabella Núñez', university: 'UNI Sur', career: 'Biología', score: 2780, pointsBalance: 1500, streak: 9 },
-  ]
+  // El ranking global se habilitará cuando el backend implemente
+  // el endpoint /api/v1/gamification/ranking con datos reales.
+  // Por ahora mostramos solo al usuario actual si tiene puntos.
+  const myEntry: RankingEntry = {
+    position: 1,
+    userId: 'me',
+    name: 'Tú',
+    university: '',
+    career: '',
+    score: balance,
+    pointsBalance: balance,
+    streak: 0,
+    isCurrentUser: true,
+  }
 
-  const byUniversity = global
-    .filter((e) => e.university === 'UNI Andes')
-    .map((e, i) => ({ ...e, position: i + 1 }))
-  const byCareer = global
-    .filter((e) => e.career === 'Ingeniería de Software')
-    .map((e, i) => ({ ...e, position: i + 1 }))
-  const weekly = [...global].sort((a, b) => b.streak - a.streak).map((e, i) => ({ ...e, position: i + 1 }))
+  const globalEntries: RankingEntry[] = balance > 0 ? [myEntry] : []
 
   return {
-    global,
-    byUniversity,
-    byCareer,
-    weekly,
-    monthly: global,
+    global: globalEntries,
+    byUniversity: [],
+    byCareer: [],
+    weekly: [],
+    monthly: [],
     friends: [],
     currentUserPosition: {
-      global: global.find((e) => e.isCurrentUser)?.position ?? 0,
-      university: byUniversity.find((e) => e.isCurrentUser)?.position ?? 0,
-      career: byCareer.find((e) => e.isCurrentUser)?.position ?? 0,
+      global: balance > 0 ? 1 : 0,
+      university: 0,
+      career: 0,
     },
   }
 }

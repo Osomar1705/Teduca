@@ -343,11 +343,19 @@ function RankingTab() {
         ))}
       </div>
 
-      {sub === 'friends' && entries.length === 0 ? (
+      {entries.length === 0 ? (
         <EmptyState
           icon={Trophy}
-          title="Invitá compañeros para ver tu ranking entre amigos."
-          description="Cuando tus amigos se unan a TEDUCA aparecerán acá."
+          title={
+            sub === 'friends'
+              ? 'Invitá compañeros para ver tu ranking entre amigos.'
+              : 'El ranking estará disponible próximamente.'
+          }
+          description={
+            sub === 'friends'
+              ? 'Cuando tus amigos se unan a TEDUCA aparecerán acá.'
+              : 'A medida que más estudiantes usen la plataforma, el ranking global se activará.'
+          }
         />
       ) : (
         <RankingTable entries={entries} />
