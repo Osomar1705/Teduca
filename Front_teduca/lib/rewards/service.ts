@@ -424,43 +424,58 @@ export async function redeemItem(
   }
 }
 
+interface ApiRankingEntry {
+  position: number
+  user_id: string
+  name: string
+  avatar_url: string | null
+  total_points: number
+  current_streak: number
+}
+
+interface ApiRankingResponse {
+  entries: ApiRankingEntry[]
+  current_user_position: number | null
+}
+
 export async function getRanking(): Promise<RankingData> {
-  let balance = 0
   try {
-    const summary = await apiClient.get<ApiSummary>('/api/v1/gamification/me')
-    balance = summary.total_points
+    const data = await apiClient.get<ApiRankingResponse>('/api/v1/gamification/ranking')
+    const globalEntries: RankingEntry[] = data.entries.map((e) => ({
+      position: e.position,
+      userId: e.user_id,
+      name: e.name,
+      avatar: e.avatar_url ?? undefined,
+      university: '',
+      career: '',
+      score: e.total_points,
+      pointsBalance: e.total_points,
+      streak: e.current_streak,
+      isCurrentUser: e.position === (data.current_user_position ?? -1),
+    }))
+
+    return {
+      global: globalEntries,
+      byUniversity: [],
+      byCareer: [],
+      weekly: [],
+      monthly: [],
+      friends: [],
+      currentUserPosition: {
+        global: data.current_user_position ?? 0,
+        university: 0,
+        career: 0,
+      },
+    }
   } catch {
-    // sin sesión
-  }
-
-  // El ranking global se habilitará cuando el backend implemente
-  // el endpoint /api/v1/gamification/ranking con datos reales.
-  // Por ahora mostramos solo al usuario actual si tiene puntos.
-  const myEntry: RankingEntry = {
-    position: 1,
-    userId: 'me',
-    name: 'Tú',
-    university: '',
-    career: '',
-    score: balance,
-    pointsBalance: balance,
-    streak: 0,
-    isCurrentUser: true,
-  }
-
-  const globalEntries: RankingEntry[] = balance > 0 ? [myEntry] : []
-
-  return {
-    global: globalEntries,
-    byUniversity: [],
-    byCareer: [],
-    weekly: [],
-    monthly: [],
-    friends: [],
-    currentUserPosition: {
-      global: balance > 0 ? 1 : 0,
-      university: 0,
-      career: 0,
-    },
+    return {
+      global: [],
+      byUniversity: [],
+      byCareer: [],
+      weekly: [],
+      monthly: [],
+      friends: [],
+      currentUserPosition: { global: 0, university: 0, career: 0 },
+    }
   }
 }

@@ -6,13 +6,15 @@ import { useEffect, useState } from 'react'
 import { TrendingUp, Users, Clock, Star, BookOpen, BarChart3 } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { cn } from '@/lib/utils'
-import { getMyProfile, getCoursesByTeacher } from '@/lib/edtech/service'
+import { getMyProfile, getCoursesByTeacher, getMyStats } from '@/lib/edtech/service'
 import type { TeacherProfile, Course } from '@/lib/edtech/types'
+import type { TeacherStats } from '@/lib/edtech/service'
 
 export default function TeacherStatsPage() {
   const { isAllowed } = useTeacherGuard()
   const [profile, setProfile] = useState<TeacherProfile | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
+  const [stats, setStats] = useState<TeacherStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -21,8 +23,12 @@ export default function TeacherStatsPage() {
       try {
         const p = await getMyProfile()
         setProfile(p)
-        const cs = await getCoursesByTeacher(p.id)
+        const [cs, st] = await Promise.all([
+          getCoursesByTeacher(p.id),
+          getMyStats(),
+        ])
         setCourses(cs)
+        setStats(st)
       } catch {
         // mantener vacío
       } finally {
@@ -46,7 +52,7 @@ export default function TeacherStatsPage() {
       {/* KPIs */}
       <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: 'Total alumnos',   value: loading ? '…' : (profile ? String(profile.studentsCount) : '0'), icon: Users,    color: 'text-blue-500',    bg: 'bg-blue-500/8',    delta: 'del perfil' },
+          { label: 'Total alumnos',   value: loading ? '…' : (stats ? String(stats.students_count) : (profile ? String(profile.studentsCount) : '0')), icon: Users,    color: 'text-blue-500',    bg: 'bg-blue-500/8',    delta: stats ? `${stats.reservations_total} reservas totales` : 'del perfil' },
           { label: 'Horas enseñadas', value: '–',   icon: Clock,    color: 'text-violet-500',  bg: 'bg-violet-500/8',  delta: 'próximamente' },
           { label: 'Calificación',    value: loading ? '…' : (profile && profile.rating > 0 ? `${profile.rating.toFixed(1)} ★` : '–'), icon: Star, color: 'text-amber-500', bg: 'bg-amber-500/8', delta: loading ? '' : `${profile?.reviewsCount ?? 0} reseñas` },
           { label: 'Cursos activos',  value: loading ? '…' : String(courses.length), icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-500/8', delta: 'en marketplace' },
@@ -69,18 +75,43 @@ export default function TeacherStatsPage() {
 
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">Crecimiento de alumnos</h2>
+            <h2 className="text-sm font-semibold text-foreground">Reservas por mes</h2>
             <TrendingUp className="size-4 text-emerald-500" />
           </div>
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <BarChart3 className="mb-3 size-8 text-muted-foreground/30" />
-            <p className="text-sm font-medium text-muted-foreground">
-              Las estadísticas históricas estarán disponibles próximamente.
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground/60">
-              Los datos se acumularán a medida que uses la plataforma.
-            </p>
-          </div>
+          {loading || !stats ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <BarChart3 className="mb-3 size-8 text-muted-foreground/30" />
+              <p className="text-sm font-medium text-muted-foreground">Cargando datos…</p>
+            </div>
+          ) : stats.reservations_by_month.every((m) => m.count === 0) ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <BarChart3 className="mb-3 size-8 text-muted-foreground/30" />
+              <p className="text-sm font-medium text-muted-foreground">
+                Aún no hay reservas registradas.
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground/60">
+                Los datos se acumularán a medida que uses la plataforma.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(() => {
+                const max = Math.max(...stats.reservations_by_month.map((m) => m.count), 1)
+                return stats.reservations_by_month.map((m) => (
+                  <div key={m.month} className="flex items-center gap-3">
+                    <span className="w-16 shrink-0 text-xs text-muted-foreground">{m.month.slice(5)}/{m.month.slice(2, 4)}</span>
+                    <div className="flex-1 rounded-full bg-muted h-5 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all"
+                        style={{ width: `${Math.round((m.count / max) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="w-6 shrink-0 text-right text-xs font-medium text-foreground">{m.count}</span>
+                  </div>
+                ))
+              })()}
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl border border-border bg-card p-5">

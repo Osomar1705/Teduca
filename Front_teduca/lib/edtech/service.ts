@@ -363,3 +363,21 @@ export async function sendChatMessage(
   )
   return toMessage(message)
 }
+
+// --- Stats del profesor ---------------------------------------------------
+export interface MonthStat {
+  month: string
+  count: number
+}
+
+export interface TeacherStats {
+  students_count: number
+  reservations_total: number
+  reservations_by_month: MonthStat[]
+  rating: number
+  reviews_count: number
+}
+
+export async function getMyStats(): Promise<TeacherStats> {
+  return apiClient.get<TeacherStats>(`${BASE}/me/stats`)
+}

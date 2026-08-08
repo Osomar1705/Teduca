@@ -31,6 +31,8 @@ import {
   toggleFavorite,
   createReservation,
 } from '@/lib/edtech/service'
+import { getReviewSummary } from '@/lib/reviews/service'
+import type { ReviewSummary } from '@/lib/reviews/types'
 import { formatPrice, MODALITY_LABEL } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { Course, SocialLink, TeacherProfile } from '@/lib/edtech/types'
@@ -55,10 +57,16 @@ export default function TeacherProfilePage({
   const [fav, setFav] = useState(false)
   const [reserving, setReserving] = useState(false)
   const [reserved, setReserved] = useState(false)
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null)
 
   useEffect(() => {
     getTeacher(id).then(setTeacher)
-    getCoursesByTeacher(id).then(setCourses)
+    getCoursesByTeacher(id).then((cs) => {
+      setCourses(cs)
+      if (cs.length > 0) {
+        getReviewSummary(cs[0].id).then(setReviewSummary).catch(() => {/* sin reviews */})
+      }
+    })
     isFavorite(id).then(setFav)
   }, [id])
 
@@ -207,6 +215,30 @@ export default function TeacherProfilePage({
               <h2 className="mb-4 font-semibold text-foreground">
                 Cursos que enseña
               </h2>
+              {reviewSummary && reviewSummary.count > 0 && (
+                <div className="mb-4 rounded-xl border border-border bg-muted/30 px-4 py-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Reseñas del curso destacado</p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-bold text-foreground">{reviewSummary.avg_rating.toFixed(1)}</span>
+                    <div>
+                      <div className="flex gap-0.5">
+                        {[1,2,3,4,5].map((i) => (
+                          <Star
+                            key={i}
+                            className={cn(
+                              'size-3.5',
+                              i <= Math.round(reviewSummary.avg_rating)
+                                ? 'fill-amber-400 text-amber-400'
+                                : 'text-muted-foreground/30'
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{reviewSummary.count} {reviewSummary.count === 1 ? 'reseña' : 'reseñas'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <Stagger className="grid gap-6 sm:grid-cols-2">
                 {courses.map((c) => (
                   <StaggerItem key={c.id}>
