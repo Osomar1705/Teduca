@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowUpRight, Orbit } from 'lucide-react'
 import { APP_ROUTES } from '@/lib/constants'
@@ -8,7 +8,11 @@ import { getRewardBalance } from '@/lib/rewards/service'
 import type { RewardBalance } from '@/lib/rewards/types'
 
 export function RewardSummaryWidget() {
-  const [balance] = useState<RewardBalance | null>(getRewardBalance)
+  const [balance, setBalance] = useState<RewardBalance | null>(null)
+
+  useEffect(() => {
+    getRewardBalance().then(setBalance).catch(() => {})
+  }, [])
 
   if (!balance) {
     return (

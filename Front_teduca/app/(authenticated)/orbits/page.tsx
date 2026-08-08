@@ -25,7 +25,7 @@ import {
   getMarketplaceItems,
   getRanking,
   getRewardBalance,
-  getTransactions,
+  getTransactionsAsync,
   redeemItem,
 } from '@/lib/rewards/service'
 import { cn } from '@/lib/utils'
@@ -84,9 +84,14 @@ export default function RewardsPage() {
 }
 
 function BalanceTab() {
-  const [balance] = useState<RewardBalance | null>(getRewardBalance)
-  const [transactions] = useState<RewardTransaction[]>(getTransactions)
+  const [balance, setBalance] = useState<RewardBalance | null>(null)
+  const [transactions, setTransactions] = useState<RewardTransaction[]>([])
   const [showAll, setShowAll] = useState(false)
+
+  useEffect(() => {
+    getRewardBalance().then(setBalance).catch(() => {})
+    getTransactionsAsync().then(setTransactions).catch(() => {})
+  }, [])
 
   if (!balance) {
     return <Skeleton className="h-64 rounded-2xl" />
@@ -220,8 +225,12 @@ const CATEGORIES: { key: RewardCategory | 'all'; label: string }[] = [
 
 function RedeemTab() {
   const [items] = useState<RewardItem[]>(getMarketplaceItems)
-  const [balance] = useState<RewardBalance | null>(getRewardBalance)
+  const [balance, setBalance] = useState<RewardBalance | null>(null)
   const [category, setCategory] = useState<RewardCategory | 'all'>('all')
+
+  useEffect(() => {
+    getRewardBalance().then(setBalance).catch(() => {})
+  }, [])
 
   const filtered = useMemo(
     () => (category === 'all' ? items : items.filter((i) => i.category === category)),

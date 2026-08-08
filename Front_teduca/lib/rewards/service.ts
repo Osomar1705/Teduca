@@ -10,26 +10,6 @@ import type {
   RewardTransaction,
 } from './types'
 
-/**
- * Servicio de recompensas. Persiste balance e historial en localStorage.
- * La arquitectura está lista para conectarse al backend (`/api/v1/rewards`).
- */
-
-const BALANCE_KEY = 'teduca_reward_balance'
-const TRANSACTIONS_KEY = 'teduca_reward_transactions'
-const LAST_ACTIVE_KEY = 'teduca_last_active'
-const DAILY_LOGIN_KEY = 'teduca_reward_daily_login'
-
-function isBrowser(): boolean {
-  return typeof window !== 'undefined'
-}
-
-interface StoredBalance {
-  total: number
-  totalEarned: number
-  totalRedeemed: number
-}
-
 export const EARN_RULES: EarnRule[] = [
   {
     event: 'daily_login',
@@ -318,112 +298,104 @@ export const MARKETPLACE_ITEMS: RewardItem[] = [
   },
 ]
 
-function readStoredBalance(): StoredBalance {
-  if (!isBrowser()) return { total: 0, totalEarned: 0, totalRedeemed: 0 }
-  const raw = window.localStorage.getItem(BALANCE_KEY)
-  if (!raw) return { total: 0, totalEarned: 0, totalRedeemed: 0 }
-  try {
-    const parsed = JSON.parse(raw) as Partial<StoredBalance>
-    return {
-      total: Number(parsed.total) || 0,
-      totalEarned: Number(parsed.totalEarned) || 0,
-      totalRedeemed: Number(parsed.totalRedeemed) || 0,
-    }
-  } catch {
-    return { total: 0, totalEarned: 0, totalRedeemed: 0 }
-  }
+interface ApiSummary {
+  total_points: number
+  current_streak: number
+  longest_streak: number
+  last_active_date: string | null
 }
 
-function writeStoredBalance(balance: StoredBalance): void {
-  if (!isBrowser()) return
-  window.localStorage.setItem(BALANCE_KEY, JSON.stringify(balance))
+interface ApiLedgerEntry {
+  id: string
+  points: number
+  reason: string
+  event_name: string | null
+  created_at: string
 }
 
-export function getTransactions(): RewardTransaction[] {
-  if (!isBrowser()) return []
-  const raw = window.localStorage.getItem(TRANSACTIONS_KEY)
-  if (!raw) return []
-  try {
-    const parsed = JSON.parse(raw) as RewardTransaction[]
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
+interface ApiReward {
+  id: string
+  code: string
+  name: string
+  description: string | null
+  cost_points: number
 }
 
-function writeTransactions(txs: RewardTransaction[]): void {
-  if (!isBrowser()) return
-  window.localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(txs))
-}
+export async function getRewardBalance(): Promise<RewardBalance> {
+  const summary = await apiClient.get<ApiSummary>('/api/v1/gamification/me')
+  const ledger = await apiClient.get<{ data: ApiLedgerEntry[] }>('/api/v1/gamification/ledger?limit=100')
 
-function sumSince(txs: RewardTransaction[], sinceMs: number): number {
-  return txs
-    .filter((t) => t.type === 'earned' && new Date(t.createdAt).getTime() >= sinceMs)
-    .reduce((acc, t) => acc + t.points, 0)
-}
-
-export function getRewardBalance(): RewardBalance {
-  const stored = readStoredBalance()
-  const txs = getTransactions()
   const now = Date.now()
   const weekMs = now - 7 * 86_400_000
   const monthMs = now - 30 * 86_400_000
 
+  const entries = ledger.data
+  const weeklyEarned = entries
+    .filter((e) => e.points > 0 && new Date(e.created_at).getTime() >= weekMs)
+    .reduce((acc, e) => acc + e.points, 0)
+  const monthlyEarned = entries
+    .filter((e) => e.points > 0 && new Date(e.created_at).getTime() >= monthMs)
+    .reduce((acc, e) => acc + e.points, 0)
+  const totalEarned = entries.filter((e) => e.points > 0).reduce((acc, e) => acc + e.points, 0)
+  const totalRedeemed = entries.filter((e) => e.points < 0).reduce((acc, e) => acc + Math.abs(e.points), 0)
+
   return {
-    total: stored.total,
+    total: summary.total_points,
     unit: 'Orbits',
     label: 'Orbits',
-    weeklyEarned: sumSince(txs, weekMs),
-    monthlyEarned: sumSince(txs, monthMs),
-    totalEarned: stored.totalEarned,
-    totalRedeemed: stored.totalRedeemed,
+    weeklyEarned,
+    monthlyEarned,
+    totalEarned,
+    totalRedeemed,
   }
 }
 
-export function addEarnTransaction(
+export function getTransactions(): RewardTransaction[] {
+  return []
+}
+
+export async function getTransactionsAsync(): Promise<RewardTransaction[]> {
+  const ledger = await apiClient.get<{ data: ApiLedgerEntry[] }>('/api/v1/gamification/ledger?limit=50')
+  return ledger.data.map((e, i, arr) => {
+    const runningBalance = arr.slice(i).reduce((acc, x) => acc + x.points, 0)
+    return {
+      id: e.id,
+      type: e.points > 0 ? 'earned' : 'redeemed',
+      event: e.event_name as EarnEventType | undefined,
+      points: Math.abs(e.points),
+      balance: runningBalance,
+      description: e.reason,
+      createdAt: e.created_at,
+      status: 'completed',
+    } as RewardTransaction
+  })
+}
+
+export async function addEarnTransaction(
   event: EarnEventType,
   description: string,
-): RewardTransaction {
+): Promise<RewardTransaction> {
   const rule = EARN_RULES.find((r) => r.event === event)
   const points = rule?.pointsAwarded ?? 0
-  const stored = readStoredBalance()
-  const newTotal = stored.total + points
-
-  const tx: RewardTransaction = {
-    id: `tx_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+  await apiClient.post('/api/v1/gamification/award', { event, points, reason: description })
+  return {
+    id: `tx_${Date.now()}`,
     type: 'earned',
     event,
     points,
-    balance: newTotal,
+    balance: 0,
     description,
     createdAt: new Date().toISOString(),
     status: 'completed',
   }
-
-  const txs = getTransactions()
-  txs.unshift(tx)
-  writeTransactions(txs)
-  writeStoredBalance({
-    total: newTotal,
-    totalEarned: stored.totalEarned + points,
-    totalRedeemed: stored.totalRedeemed,
-  })
-
-  return tx
 }
 
-/**
- * Otorga 5 Orbits por ingreso diario. Idempotente por día usando la misma
- * fecha que la racha (`teduca_last_active`).
- */
-export function maybeAwardDailyLogin(): RewardTransaction | null {
-  if (!isBrowser()) return null
-  const today =
-    window.localStorage.getItem(LAST_ACTIVE_KEY) ?? new Date().toISOString().slice(0, 10)
-  const lastAwarded = window.localStorage.getItem(DAILY_LOGIN_KEY)
-  if (lastAwarded === today) return null
-
-  window.localStorage.setItem(DAILY_LOGIN_KEY, today)
+export async function maybeAwardDailyLogin(): Promise<RewardTransaction | null> {
+  if (typeof window === 'undefined') return null
+  const today = new Date().toISOString().slice(0, 10)
+  const key = 'teduca_reward_daily_login'
+  if (localStorage.getItem(key) === today) return null
+  localStorage.setItem(key, today)
   return addEarnTransaction('daily_login', 'Ingreso diario — Orbits ganados')
 }
 
@@ -435,17 +407,6 @@ export function getMarketplaceItems(): RewardItem[] {
   return MARKETPLACE_ITEMS
 }
 
-interface ApiReward {
-  id: string
-  code: string
-  name: string
-  description: string | null
-  cost_points: number
-}
-
-/**
- * Obtiene las recompensas disponibles desde el backend.
- */
 export async function getBackendRewards(): Promise<ApiReward[]> {
   return apiClient.get<ApiReward[]>(API_ENDPOINTS.GAMIFICATION.REWARDS)
 }
@@ -463,21 +424,21 @@ export async function redeemItem(
   }
 }
 
-const CURRENT_USER_ID = 'me'
-
 export async function getRanking(): Promise<RankingData> {
-  // TODO: conectar a /api/v1/ranking
-  const balance = getRewardBalance()
-  const streakRaw = isBrowser()
-    ? Number(window.localStorage.getItem('teduca_streak_current')) || 0
-    : 0
+  let balance = 0
+  try {
+    const summary = await apiClient.get<ApiSummary>('/api/v1/gamification/me')
+    balance = summary.total_points
+  } catch {
+    // sin sesión
+  }
 
   const global: RankingEntry[] = [
     { position: 1, userId: 'u1', name: 'Valentina Ríos', university: 'UNI Andes', career: 'Ingeniería de Software', score: 4820, pointsBalance: 3200, streak: 64 },
     { position: 2, userId: 'u2', name: 'Mateo Fernández', university: 'UNI Andes', career: 'Data Science', score: 4510, pointsBalance: 2980, streak: 41 },
     { position: 3, userId: 'u3', name: 'Sofía Castro', university: 'Tec Central', career: 'Diseño', score: 4290, pointsBalance: 2750, streak: 38 },
     { position: 4, userId: 'u4', name: 'Diego Morales', university: 'UNI Andes', career: 'Ingeniería de Software', score: 3980, pointsBalance: 2400, streak: 29 },
-    { position: 5, userId: CURRENT_USER_ID, name: 'Tú', university: 'UNI Andes', career: 'Ingeniería de Software', score: 3710, pointsBalance: balance.total, streak: streakRaw, isCurrentUser: true },
+    { position: 5, userId: 'me', name: 'Tú', university: 'UNI Andes', career: 'Ingeniería de Software', score: 3710, pointsBalance: balance, streak: 0, isCurrentUser: true },
     { position: 6, userId: 'u6', name: 'Camila Vega', university: 'Tec Central', career: 'Matemáticas', score: 3540, pointsBalance: 2100, streak: 22 },
     { position: 7, userId: 'u7', name: 'Lucas Ibáñez', university: 'UNI Sur', career: 'Física', score: 3320, pointsBalance: 1950, streak: 18 },
     { position: 8, userId: 'u8', name: 'Antonia Paz', university: 'UNI Andes', career: 'Data Science', score: 3110, pointsBalance: 1800, streak: 15 },
@@ -491,17 +452,14 @@ export async function getRanking(): Promise<RankingData> {
   const byCareer = global
     .filter((e) => e.career === 'Ingeniería de Software')
     .map((e, i) => ({ ...e, position: i + 1 }))
-  const weekly = [...global]
-    .sort((a, b) => b.streak - a.streak)
-    .map((e, i) => ({ ...e, position: i + 1 }))
-  const monthly = global
+  const weekly = [...global].sort((a, b) => b.streak - a.streak).map((e, i) => ({ ...e, position: i + 1 }))
 
   return {
     global,
     byUniversity,
     byCareer,
     weekly,
-    monthly,
+    monthly: global,
     friends: [],
     currentUserPosition: {
       global: global.find((e) => e.isCurrentUser)?.position ?? 0,

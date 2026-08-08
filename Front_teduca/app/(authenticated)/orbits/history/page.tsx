@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ArrowDownRight, ArrowUpRight, Receipt, Wallet } from 'lucide-react'
 import { PageHeader } from '@/components/common/PageHeader'
@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/common/EmptyState'
 import { TransactionRow } from '@/components/rewards/TransactionRow'
 import { APP_ROUTES } from '@/lib/constants'
-import { getRewardBalance, getTransactions } from '@/lib/rewards/service'
+import { getRewardBalance, getTransactionsAsync } from '@/lib/rewards/service'
 import { cn } from '@/lib/utils'
 import type { RewardBalance, RewardTransaction } from '@/lib/rewards/types'
 
@@ -25,10 +25,15 @@ const FILTERS: { key: Filter; label: string }[] = [
 ]
 
 export default function RewardsHistoryPage() {
-  const [balance] = useState<RewardBalance | null>(getRewardBalance)
-  const [transactions] = useState<RewardTransaction[]>(getTransactions)
+  const [balance, setBalance] = useState<RewardBalance | null>(null)
+  const [transactions, setTransactions] = useState<RewardTransaction[]>([])
   const [filter, setFilter] = useState<Filter>('all')
   const [now] = useState(() => Date.now())
+
+  useEffect(() => {
+    getRewardBalance().then(setBalance).catch(() => {})
+    getTransactionsAsync().then(setTransactions).catch(() => {})
+  }, [])
 
   const filtered = useMemo(() => {
     return transactions.filter((t) => {
