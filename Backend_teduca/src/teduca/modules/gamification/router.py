@@ -11,6 +11,7 @@ from teduca.modules.gamification.schemas import (
     AwardPointsRequest,
     GamificationSummary,
     PointsLedgerRead,
+    RankingResponse,
     RewardRead,
     UserRewardRead,
 )
@@ -48,6 +49,11 @@ async def award_points(
     await GamificationService(session).award_points(
         current_user.id, body.points, body.reason, body.event
     )
+
+
+@router.get("/ranking", response_model=RankingResponse)
+async def get_ranking(current_user: CurrentUser, session: DbSession) -> RankingResponse:
+    return await GamificationService(session).get_ranking(current_user.id)
 
 
 @router.post(

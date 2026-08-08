@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from teduca.core.exceptions import ConflictError, NotFoundError
 from teduca.modules.gamification.models import PointsLedger, Reward, Streak, UserReward
+from teduca.modules.gamification.schemas import RankingEntry, RankingResponse
+from teduca.modules.users.models import User
 
 
 class GamificationService:
@@ -94,6 +96,54 @@ class GamificationService:
             base.order_by(PointsLedger.created_at.desc()).offset(offset).limit(limit)
         )
         return list(result.scalars()), int(total or 0)
+
+    async def get_ranking(self, current_user_id: uuid.UUID | None, limit: int = 20) -> RankingResponse:
+        """Top usuarios por total de puntos, con posición del usuario actual."""
+        # Subconsulta: total de puntos por usuario
+        points_subq = (
+            select(
+                PointsLedger.user_id,
+                func.coalesce(func.sum(PointsLedger.points), 0).label("total_points"),
+            )
+            .group_by(PointsLedger.user_id)
+            .subquery()
+        )
+
+        # JOIN con users y streaks
+        stmt = (
+            select(
+                User.id,
+                User.name,
+                User.avatar,
+                points_subq.c.total_points,
+                func.coalesce(Streak.current_streak, 0).label("current_streak"),
+            )
+            .join(points_subq, User.id == points_subq.c.user_id)
+            .outerjoin(Streak, User.id == Streak.user_id)
+            .where(User.is_active.is_(True), User.deleted_at.is_(None))
+            .order_by(points_subq.c.total_points.desc())
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        rows = result.fetchall()
+
+        entries: list[RankingEntry] = []
+        current_user_position: int | None = None
+        for i, row in enumerate(rows, start=1):
+            entries.append(
+                RankingEntry(
+                    position=i,
+                    user_id=row.id,
+                    name=row.name,
+                    avatar_url=row.avatar,
+                    total_points=int(row.total_points),
+                    current_streak=int(row.current_streak),
+                )
+            )
+            if current_user_id and row.id == current_user_id:
+                current_user_position = i
+
+        return RankingResponse(entries=entries, current_user_position=current_user_position)
 
     async def get_summary(self, user_id: uuid.UUID) -> dict:
         streak = await self._get_or_create_streak(user_id)

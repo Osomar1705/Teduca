@@ -45,3 +45,17 @@ class AwardPointsRequest(BaseModel):
     event: str
     points: int
     reason: str
+
+
+class RankingEntry(BaseModel):
+    position: int
+    user_id: uuid.UUID
+    name: str
+    avatar_url: str | None = None
+    total_points: int
+    current_streak: int
+
+
+class RankingResponse(BaseModel):
+    entries: list[RankingEntry]
+    current_user_position: int | None = None
