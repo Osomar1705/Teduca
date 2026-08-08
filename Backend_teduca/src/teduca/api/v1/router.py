@@ -28,6 +28,7 @@ from teduca.modules.participation.router import router as participation_router
 from teduca.modules.users.router import router as users_router
 from teduca.modules.merch.router import router as merch_router
 from teduca.modules.announcements.router import router as announcements_router
+from teduca.modules.reviews.router import router as reviews_router
 
 api_router = APIRouter()
 
@@ -63,3 +64,4 @@ api_router.include_router(community_router)
 api_router.include_router(participation_router)
 api_router.include_router(merch_router)
 api_router.include_router(announcements_router)
+api_router.include_router(reviews_router)

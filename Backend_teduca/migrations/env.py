@@ -27,6 +27,7 @@ from teduca.modules.community import models as _community  # noqa: E402, F401
 from teduca.modules.users import models as _users  # noqa: E402, F401
 from teduca.modules.merch import models as _merch  # noqa: E402, F401
 from teduca.modules.announcements import models as _announcements  # noqa: E402, F401
+from teduca.modules.reviews import models as _reviews  # noqa: E402, F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
