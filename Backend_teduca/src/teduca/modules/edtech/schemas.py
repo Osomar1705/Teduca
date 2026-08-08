@@ -151,3 +151,17 @@ class ChatThreadRead(BaseModel):
     teacher_name: str
     teacher_avatar: str | None = None
     updated_at: datetime
+
+
+# --- Stats del profesor --------------------------------------------------
+class MonthStat(BaseModel):
+    month: str  # "2026-02"
+    count: int
+
+
+class TeacherStats(BaseModel):
+    students_count: int
+    reservations_total: int
+    reservations_by_month: list[MonthStat]
+    rating: float
+    reviews_count: int

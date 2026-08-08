@@ -2,7 +2,9 @@
 reservas y chat (habilitado solo cuando existe un match)."""
 
 import uuid
+from datetime import UTC, datetime, timedelta
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from teduca.core.exceptions import ForbiddenError, NotFoundError
@@ -18,8 +20,10 @@ from teduca.modules.edtech.models import (
 from teduca.modules.edtech.repository import EdtechRepository
 from teduca.modules.edtech.schemas import (
     MarketplaceCourseCreate,
+    MonthStat,
     ReservationCreate,
     TeacherProfileWrite,
+    TeacherStats,
 )
 from teduca.modules.users.models import User
 
@@ -206,6 +210,49 @@ class EdtechService:
     async def list_messages(self, user: User, thread_id: uuid.UUID) -> list[ChatMessage]:
         await self._thread_for_member(user, thread_id)
         return await self.repo.list_messages(thread_id)
+
+    # --- Stats del profesor -----------------------------------------------
+    async def get_my_stats(self, user: User) -> TeacherStats:
+        profile = await self.get_or_create_my_profile(user)
+
+        # Reservaciones del perfil docente
+        reservations_result = await self.session.execute(
+            select(Reservation).where(Reservation.teacher_profile_id == profile.id)
+        )
+        reservations = list(reservations_result.scalars())
+        reservations_total = len(reservations)
+
+        # Alumnos únicos
+        students_count = len({r.user_id for r in reservations})
+
+        # Reservaciones por mes (últimos 6 meses)
+        now = datetime.now(UTC)
+        months: dict[str, int] = {}
+        for i in range(5, -1, -1):
+            # Calcular mes: retroceder i meses
+            target = now.replace(day=1) - timedelta(days=1)
+            for _ in range(i):
+                target = target.replace(day=1) - timedelta(days=1)
+            month_key = target.strftime("%Y-%m")
+            months[month_key] = 0
+
+        for r in reservations:
+            # r.date es un string ISO "YYYY-MM-DD"
+            month_key = r.date[:7]  # "YYYY-MM"
+            if month_key in months:
+                months[month_key] += 1
+
+        reservations_by_month = [
+            MonthStat(month=m, count=c) for m, c in sorted(months.items())
+        ]
+
+        return TeacherStats(
+            students_count=students_count,
+            reservations_total=reservations_total,
+            reservations_by_month=reservations_by_month,
+            rating=float(profile.rating),
+            reviews_count=profile.reviews_count,
+        )
 
     async def post_message(self, user: User, thread_id: uuid.UUID, body: str) -> ChatMessage:
         thread = await self._thread_for_member(user, thread_id)

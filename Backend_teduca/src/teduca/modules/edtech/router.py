@@ -1,10 +1,11 @@
 """Endpoints del dominio marketplace (/api/v1/edtech)."""
 
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 
-from teduca.core.dependencies import CurrentUser, DbSession
+from teduca.core.dependencies import CurrentUser, DbSession, require_role
 from teduca.modules.edtech.schemas import (
     ChatMessageCreate,
     ChatMessageRead,
@@ -17,8 +18,12 @@ from teduca.modules.edtech.schemas import (
     SwipeResult,
     TeacherProfileRead,
     TeacherProfileWrite,
+    TeacherStats,
 )
 from teduca.modules.edtech.service import EdtechService
+from teduca.modules.users.models import User
+
+TeacherUser = Annotated[User, Depends(require_role("teacher"))]
 
 router = APIRouter(prefix="/edtech", tags=["edtech"])
 
@@ -31,20 +36,25 @@ async def list_teachers(session: DbSession) -> list[TeacherProfileRead]:
 
 
 @router.get("/me/profile", response_model=TeacherProfileRead)
-async def get_my_profile(current_user: CurrentUser, session: DbSession) -> TeacherProfileRead:
+async def get_my_profile(current_user: TeacherUser, session: DbSession) -> TeacherProfileRead:
     profile = await EdtechService(session).get_or_create_my_profile(current_user)
     return TeacherProfileRead.model_validate(profile)
 
 
 @router.put("/me/profile", response_model=TeacherProfileRead)
 async def update_my_profile(
-    data: MyProfileUpdate, current_user: CurrentUser, session: DbSession
+    data: MyProfileUpdate, current_user: TeacherUser, session: DbSession
 ) -> TeacherProfileRead:
     profile_fields = TeacherProfileWrite(**data.model_dump(exclude={"courses"}))
     profile = await EdtechService(session).update_my_profile(
         current_user, profile_fields, data.courses
     )
     return TeacherProfileRead.model_validate(profile)
+
+
+@router.get("/me/stats", response_model=TeacherStats)
+async def get_my_stats(current_user: TeacherUser, session: DbSession) -> TeacherStats:
+    return await EdtechService(session).get_my_stats(current_user)
 
 
 @router.get("/teachers/{teacher_id}", response_model=TeacherProfileRead)
