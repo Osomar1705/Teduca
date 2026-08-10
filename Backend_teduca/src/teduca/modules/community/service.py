@@ -15,7 +15,24 @@ class PostService:
         self.repo = PostRepository(session)
 
     async def create_post(self, data: PostCreate, author_id: uuid.UUID) -> Post:
-        return await self.repo.create(data, author_id)
+        post = await self.repo.create(data, author_id)
+
+        # Orbits por primera publicación en comunidad.
+        from teduca.modules.gamification.service import GamificationService
+        from teduca.modules.gamification.models import PointsLedger
+        from sqlalchemy import select as _select
+        already = await self.repo.session.scalar(
+            _select(PointsLedger).where(
+                PointsLedger.user_id == author_id,
+                PointsLedger.event_name == "community.post.created",
+            )
+        )
+        if already is None:
+            await GamificationService(self.repo.session).award_points(
+                author_id, 15, "Primera publicación en comunidad", "community.post.created"
+            )
+
+        return post
 
     async def list_feed(
         self,

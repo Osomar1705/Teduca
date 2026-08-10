@@ -122,4 +122,5 @@ export interface CurrentUser {
   email: string
   avatar?: string
   role: 'student' | 'teacher'
+  email_verified: boolean
 }

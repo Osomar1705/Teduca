@@ -37,6 +37,7 @@ export const APP_ROUTES = {
   EVALUATION:       '/evaluation',
   MERCH:            '/merch',
   ANNOUNCEMENTS:    '/announcements',
+  ADMIN:            '/admin',
 } as const
 
 // API endpoints (backend FastAPI, versionado /api/v1)

@@ -8,9 +8,10 @@ import {
   Home, Users, Compass, BookOpen, MessageCircle, CalendarCheck,
   Heart, BarChart3, Trophy, Gift, User, Bell, Settings, Flame,
   LayoutDashboard, GraduationCap, CalendarDays, LineChart, UserSquare2,
-  Brain, ShoppingBag, Megaphone,
+  Brain, ShoppingBag, Megaphone, ShieldCheck, Clock,
   type LucideIcon,
 } from 'lucide-react'
+import { apiClient } from '@/lib/api-client'
 
 import { APP_ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -104,15 +105,46 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
+// ── Banner teacher_pending ─────────────────────────────────────────────────
+
+function PendingTeacherBanner() {
+  return (
+    <div className="mx-3 mb-2 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-2.5">
+      <Clock className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
+      <div>
+        <p className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">Solicitud en revisión</p>
+        <p className="text-[10px] text-muted-foreground leading-relaxed">
+          Tu solicitud para ser Profesor está siendo evaluada. Te notificaremos cuando sea aprobada.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 // ── SidebarNav ─────────────────────────────────────────────────────────────
+
+interface MeRole { name: string }
+interface MeUser { roles: MeRole[] }
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
   const { mode } = usePlatformStore()
   const nav = mode === 'profesor' ? NAV_PROFESOR : NAV_ALUMNO
+  const [userRoles, setUserRoles] = useState<string[]>([])
+
+  useEffect(() => {
+    apiClient
+      .get<MeUser>('/api/v1/users/me')
+      .then((u) => setUserRoles(u.roles.map((r) => r.name)))
+      .catch(() => {})
+  }, [])
+
+  const isPending = userRoles.includes('teacher_pending') && !userRoles.includes('teacher')
+  const isAdmin = userRoles.includes('admin')
 
   return (
     <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-3">
+      {isPending && <PendingTeacherBanner />}
       {nav.map((group, gi) => (
         <div key={gi} className="flex flex-col gap-1">
           {group.title && (
@@ -148,6 +180,33 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           })}
         </div>
       ))}
+      {isAdmin && (
+        <div className="flex flex-col gap-1">
+          <p className="px-2.5 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/60">
+            Admin
+          </p>
+          <Link
+            href={APP_ROUTES.ADMIN}
+            onClick={onNavigate}
+            className={cn(
+              'group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-all duration-200',
+              isActive(pathname, APP_ROUTES.ADMIN)
+                ? 'font-medium text-primary'
+                : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+            )}
+          >
+            {isActive(pathname, APP_ROUTES.ADMIN) && (
+              <motion.span
+                layoutId="sidebar-active"
+                className="absolute inset-0 rounded-xl bg-primary/8 ring-1 ring-primary/10"
+                transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+              />
+            )}
+            <ShieldCheck className="relative size-4 shrink-0" />
+            <span className="relative truncate">Panel Admin</span>
+          </Link>
+        </div>
+      )}
     </nav>
   )
 }

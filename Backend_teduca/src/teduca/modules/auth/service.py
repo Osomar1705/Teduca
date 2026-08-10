@@ -24,7 +24,7 @@ from teduca.core.security import (
     verify_password,
 )
 from teduca.modules.auth.schemas import AuthResponse, TokenPair
-from teduca.modules.users.models import PasswordResetToken, RefreshToken, User
+from teduca.modules.users.models import EmailVerificationToken, PasswordResetToken, RefreshToken, User
 from teduca.modules.users.repository import PasswordResetTokenRepository, RefreshTokenRepository, UserRepository
 from teduca.modules.users.service import UserService
 
@@ -50,12 +50,52 @@ class AuthService:
         )
         return TokenPair(access_token=access, refresh_token=refresh)
 
+    async def _send_verification(self, user: User) -> None:
+        """Genera y envía el email de verificación (no bloquea si falla)."""
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+        self.session.add(
+            EmailVerificationToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=datetime.now(UTC) + timedelta(hours=24),
+            )
+        )
+        await self.session.flush()
+        front_url = os.getenv("NEXT_PUBLIC_SITE_URL", "https://teduca.vercel.app")
+        verify_url = f"{front_url}/verify-email?token={raw_token}"
+        from teduca.core.email import send_verification_email
+        send_verification_email(to=user.email, name=user.name, verify_url=verify_url)
+
     async def register(self, *, email: str, name: str, password: str, role: str) -> AuthResponse:
         user = await self.user_service.create_user(
             email=email, name=name, password=password, role=role
         )
+        await self._send_verification(user)
         tokens = await self._issue_tokens(user)
         return AuthResponse(user=user, tokens=tokens)
+
+    async def verify_email(self, *, token: str) -> None:
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        from sqlalchemy import select as _sel
+        record = await self.session.scalar(
+            _sel(EmailVerificationToken).where(EmailVerificationToken.token_hash == token_hash)
+        )
+        if record is None or not record.is_valid:
+            raise BadRequestError("El enlace de verificación es inválido o ya expiró.")
+        record.used = True
+        user = await self.users.get_by_id(record.user_id)
+        if user:
+            user.email_verified = True
+        await self.session.commit()
+
+    async def resend_verification(self, *, email: str) -> None:
+        """Reenvía el email de verificación. Siempre responde 204 (no revela si el email existe)."""
+        user = await self.users.get_by_email(email)
+        if user is None or user.email_verified:
+            return
+        await self._send_verification(user)
+        await self.session.commit()
 
     async def login(self, *, email: str, password: str) -> AuthResponse:
         user = await self.users.get_by_email(email)

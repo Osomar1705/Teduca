@@ -191,6 +191,7 @@ export async function getCurrentUser(): Promise<CurrentUser> {
     email: user.email,
     avatar: user.avatar ?? undefined,
     role: roles.includes('teacher') ? 'teacher' : 'student',
+    email_verified: (user as unknown as Record<string, unknown>).email_verified !== false,
   }
 }
 

@@ -17,8 +17,10 @@ from teduca.modules.auth.schemas import (
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
+    ResendVerificationRequest,
     ResetPasswordRequest,
     TokenPair,
+    VerifyEmailRequest,
 )
 from teduca.modules.auth.service import AuthService
 
@@ -80,6 +82,18 @@ async def forgot_password(data: ForgotPasswordRequest, session: DbSession) -> No
 async def reset_password(data: ResetPasswordRequest, session: DbSession) -> None:
     """Aplica la nueva contraseña usando el token de un solo uso."""
     await AuthService(session).reset_password(token=data.token, new_password=data.new_password)
+
+
+@router.post("/verify-email", status_code=status.HTTP_204_NO_CONTENT)
+async def verify_email(data: VerifyEmailRequest, session: DbSession) -> None:
+    """Verifica el email usando el token enviado por correo."""
+    await AuthService(session).verify_email(token=data.token)
+
+
+@router.post("/resend-verification", status_code=status.HTTP_204_NO_CONTENT)
+async def resend_verification(data: ResendVerificationRequest, session: DbSession) -> None:
+    """Reenvía el email de verificación. Siempre responde 204."""
+    await AuthService(session).resend_verification(email=data.email)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

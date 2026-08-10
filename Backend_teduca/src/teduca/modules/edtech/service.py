@@ -166,6 +166,22 @@ class EdtechService:
         )
         await self.repo.add(reservation)
         await self.session.refresh(reservation)
+
+        # Orbits por primera reserva (o por cada reserva confirmada).
+        from teduca.modules.gamification.service import GamificationService
+        from teduca.modules.gamification.models import PointsLedger
+        from sqlalchemy import select as _select
+        already = await self.session.scalar(
+            _select(PointsLedger).where(
+                PointsLedger.user_id == user.id,
+                PointsLedger.event_name == "reservation.created",
+            )
+        )
+        if already is None:
+            await GamificationService(self.session).award_points(
+                user.id, 25, "Primera reserva con un profesor", "reservation.created"
+            )
+
         return reservation
 
     async def cancel_reservation(self, user: User, reservation_id: uuid.UUID) -> Reservation:

@@ -3,8 +3,10 @@
 import uuid
 
 from fastapi import APIRouter, Depends, status
+from sqlalchemy import select
 
 from teduca.core.dependencies import CurrentUser, DbSession, require_role
+from teduca.modules.users.models import Role, User, user_roles
 from teduca.modules.users.schemas import PublicProfileRead, TeacherProfileRead, TeacherProfileUpdate, UserRead, UserUpdate
 from teduca.modules.users.service import UserService
 
@@ -103,3 +105,26 @@ async def update_teacher_profile(
 async def revoke_teacher(user_id: uuid.UUID, session: DbSession) -> UserRead:
     """Degrada `teacher` → `student`."""
     return await UserService(session).revoke_teacher_role(user_id)
+
+
+@router.get(
+    "/admin/pending-teachers",
+    response_model=list[UserRead],
+    dependencies=[Depends(require_role("admin"))],
+    summary="[Admin] Listar solicitudes de Profesor pendientes",
+)
+async def list_pending_teachers(session: DbSession) -> list[UserRead]:
+    """Retorna todos los usuarios con rol `teacher_pending`."""
+    role_subq = (
+        select(user_roles.c.user_id)
+        .join(Role, Role.id == user_roles.c.role_id)
+        .where(Role.name == "teacher_pending")
+        .subquery()
+    )
+    result = await session.execute(
+        select(User)
+        .where(User.id.in_(select(role_subq.c.user_id)))
+        .where(User.is_active.is_(True))
+        .order_by(User.created_at.desc())
+    )
+    return list(result.scalars())

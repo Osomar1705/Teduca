@@ -128,6 +128,26 @@ class UserService:
 
         await self.session.flush()
         await self.session.refresh(user)
+
+        # Notificación interna
+        from teduca.modules.notifications.service import NotificationService
+        await NotificationService(self.session).create(
+            user.id,
+            title="¡Tu cuenta de Profesor fue aprobada!",
+            message="Ya puedes acceder a tu panel de profesor y publicar tu perfil.",
+            type="system",
+        )
+
+        # Email de aprobación
+        import os
+        from teduca.core.email import send_teacher_approved_email
+        front_url = os.getenv("NEXT_PUBLIC_SITE_URL", "https://teduca.vercel.app")
+        send_teacher_approved_email(
+            to=user.email,
+            name=user.name,
+            dashboard_url=f"{front_url}/teacher",
+        )
+
         return user
 
     async def revoke_teacher_role(self, user_id: uuid.UUID) -> User:

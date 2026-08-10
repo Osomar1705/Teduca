@@ -69,6 +69,24 @@ class PasswordResetToken(UUIDMixin, TimestampMixin, Base):
         return not self.used and self.expires_at > datetime.now(UTC)
 
 
+class EmailVerificationToken(UUIDMixin, TimestampMixin, Base):
+    """Token de un solo uso para verificar la dirección de email."""
+
+    __tablename__ = "email_verification_tokens"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(256), unique=True, index=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    @property
+    def is_valid(self) -> bool:
+        from datetime import UTC
+        return not self.used and self.expires_at > datetime.now(UTC)
+
+
 class RefreshToken(UUIDMixin, TimestampMixin, Base):
     """Refresh tokens persistidos para rotación y revocación real."""
 

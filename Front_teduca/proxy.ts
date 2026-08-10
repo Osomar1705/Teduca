@@ -25,6 +25,7 @@ const PROTECTED_PREFIXES = [
   '/evaluation',
   '/announcements',
   '/merch',
+  '/admin',
 ]
 
 const AUTH_ONLY_PREFIXES = ['/login', '/register']

@@ -40,6 +40,14 @@ class TokenPair(BaseModel):
     token_type: str = "bearer"
 
 
+class VerifyEmailRequest(BaseModel):
+    token: str
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
+
+
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
