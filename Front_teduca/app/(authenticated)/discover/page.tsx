@@ -11,6 +11,7 @@ import {
 import { TeacherCard } from '@/components/edtech/TeacherCard'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/common/EmptyState'
 import { Stagger, StaggerItem, FadeIn } from '@/components/common/Motion'
 import { getTeachers, getFavorites, toggleFavorite } from '@/lib/edtech/service'
 import { cn } from '@/lib/utils'
@@ -168,6 +169,16 @@ export default function DiscoverPage() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
             </div>
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              icon={GraduationCap}
+              title={category === 'Todos' ? 'Aún no hay profesores disponibles' : `Sin profesores en «${category}»`}
+              description={
+                category === 'Todos'
+                  ? 'Todavía no hay profesores publicados. Cuando se aprueben nuevos profesores aparecerán aquí.'
+                  : 'Probá con otra categoría o volvé más tarde.'
+              }
+            />
           ) : (
             <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((t) => (

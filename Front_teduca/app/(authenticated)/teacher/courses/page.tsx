@@ -203,9 +203,7 @@ function CourseMaterialsList({
   materials: CourseMaterial[]
   onDelete: (id: string) => void
 }) {
-  const courseMaterials = materials.filter(
-    (m) => m.marketplaceCourseId === courseId || m.marketplaceCourseId === null
-  )
+  const courseMaterials = materials.filter((m) => m.marketplaceCourseId === courseId)
 
   if (courseMaterials.length === 0) {
     return (
