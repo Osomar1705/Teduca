@@ -1,13 +1,17 @@
 """Lógica de autenticación: registro, login, rotación de refresh y logout."""
 
 import contextlib
+import hashlib
+import os
+import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from teduca.core.config import settings
-from teduca.core.exceptions import UnauthorizedError
+from teduca.core.email import send_password_reset_email
+from teduca.core.exceptions import BadRequestError, UnauthorizedError
 from teduca.core.redis import get_redis
 from teduca.core.security import (
     GoogleAuthError,
@@ -15,12 +19,13 @@ from teduca.core.security import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    hash_password,
     verify_google_id_token,
     verify_password,
 )
 from teduca.modules.auth.schemas import AuthResponse, TokenPair
-from teduca.modules.users.models import RefreshToken, User
-from teduca.modules.users.repository import RefreshTokenRepository, UserRepository
+from teduca.modules.users.models import PasswordResetToken, RefreshToken, User
+from teduca.modules.users.repository import PasswordResetTokenRepository, RefreshTokenRepository, UserRepository
 from teduca.modules.users.service import UserService
 
 
@@ -29,6 +34,7 @@ class AuthService:
         self.session = session
         self.users = UserRepository(session)
         self.refresh_tokens = RefreshTokenRepository(session)
+        self.reset_tokens = PasswordResetTokenRepository(session)
         self.user_service = UserService(session)
 
     async def _issue_tokens(self, user: User) -> TokenPair:
@@ -100,6 +106,45 @@ class AuthService:
         if user is None or not user.is_active:
             raise UnauthorizedError("Usuario inexistente o inactivo.")
         return await self._issue_tokens(user)
+
+    async def forgot_password(self, *, email: str) -> None:
+        """Genera y envía el enlace de reset. Siempre responde 204 (no revela si el email existe)."""
+        user = await self.users.get_by_email(email)
+        if user is None or not user.is_active or user.password_hash is None:
+            return  # cuenta Google o inexistente: silencioso
+
+        await self.reset_tokens.invalidate_previous(user.id)
+
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+
+        await self.reset_tokens.add(
+            PasswordResetToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=datetime.now(UTC) + timedelta(minutes=30),
+            )
+        )
+        await self.session.commit()
+
+        front_url = os.getenv("NEXT_PUBLIC_SITE_URL", "https://teduca.vercel.app")
+        reset_url = f"{front_url}/reset-password?token={raw_token}"
+        send_password_reset_email(to=user.email, reset_url=reset_url)
+
+    async def reset_password(self, *, token: str, new_password: str) -> None:
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        record = await self.reset_tokens.get_by_hash(token_hash)
+
+        if record is None or not record.is_valid:
+            raise BadRequestError("El enlace es inválido o ya expiró.")
+
+        user = await self.users.get_by_id(record.user_id)
+        if user is None or not user.is_active:
+            raise BadRequestError("Usuario no encontrado.")
+
+        user.password_hash = hash_password(new_password)
+        record.used = True
+        await self.session.commit()
 
     async def logout(self, *, access_payload: dict, refresh_token: str | None) -> None:
         # Blacklist del access token vigente hasta su expiración.

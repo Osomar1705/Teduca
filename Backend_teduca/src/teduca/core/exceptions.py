@@ -42,6 +42,12 @@ class ForbiddenError(AppException):
     detail = "No tienes permisos para esta acción."
 
 
+class BadRequestError(AppException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    title = "Bad Request"
+    detail = "Solicitud inválida."
+
+
 class ValidationError(AppException):
     status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     title = "Validation Error"

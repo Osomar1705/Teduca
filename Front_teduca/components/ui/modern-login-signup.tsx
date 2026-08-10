@@ -299,6 +299,14 @@ export default function ModernLoginSignup({ defaultMode = 'sign-in' }: { default
               </p>
             )}
 
+            {isLogin && (
+              <div style={{ textAlign: 'right' }}>
+                <a href="/forgot-password" style={{ fontSize: '0.78rem', color: '#666' }}>
+                  ¿Olvidaste tu contraseña?
+                </a>
+              </div>
+            )}
+
             {error && (
               <p style={{ fontSize: '0.8rem', color: '#f87171', textAlign: 'left' }} role="alert">
                 {error}

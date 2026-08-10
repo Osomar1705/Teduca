@@ -19,6 +19,7 @@ dependencies = [
     "slowapi>=0.1.9",
     "email-validator>=2.2.0",
     "httpx>=0.28.0",
+    "resend>=2.35.0",
 ]
 
 [dependency-groups]

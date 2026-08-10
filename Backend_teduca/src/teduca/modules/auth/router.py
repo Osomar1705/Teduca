@@ -10,10 +10,12 @@ from teduca.core.dependencies import DbSession, get_token_payload
 from teduca.modules.auth.schemas import (
     AuthConfig,
     AuthResponse,
+    ForgotPasswordRequest,
     GoogleAuthRequest,
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
+    ResetPasswordRequest,
     TokenPair,
 )
 from teduca.modules.auth.service import AuthService
@@ -60,6 +62,18 @@ async def login_oauth2(
 @router.post("/refresh", response_model=TokenPair)
 async def refresh(data: RefreshRequest, session: DbSession) -> TokenPair:
     return await AuthService(session).refresh(data.refresh_token)
+
+
+@router.post("/forgot-password", status_code=status.HTTP_204_NO_CONTENT)
+async def forgot_password(data: ForgotPasswordRequest, session: DbSession) -> None:
+    """Solicita un enlace de restablecimiento. Siempre responde 204 (no revela si el email existe)."""
+    await AuthService(session).forgot_password(email=data.email)
+
+
+@router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
+async def reset_password(data: ResetPasswordRequest, session: DbSession) -> None:
+    """Aplica la nueva contraseña usando el token de un solo uso."""
+    await AuthService(session).reset_password(token=data.token, new_password=data.new_password)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
