@@ -29,7 +29,7 @@ const PROTECTED_PREFIXES = [
 
 const AUTH_ONLY_PREFIXES = ['/login', '/register']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const hasSession = request.cookies.has(AUTH_COOKIE)
 
