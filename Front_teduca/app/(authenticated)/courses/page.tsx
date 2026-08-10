@@ -130,43 +130,51 @@ export default function CoursesPage() {
         courses={popular.slice(0, 6)}
       />
 
-      <section>
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Por categoría</h2>
-        </div>
-        <div className="mb-5 flex flex-wrap gap-2">
-          {categories.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCategory(c)}
-              className={cn(
-                'rounded-full border px-3 py-1 text-xs font-medium transition-all',
-                category === c
-                  ? 'border-transparent bg-primary text-primary-foreground shadow-xs'
-                  : 'border-border text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground'
-              )}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-
-        {byCategory.length === 0 ? (
-          <EmptyState
-            icon={BookOpen}
-            title="No se encontraron cursos"
-            description="Probá con otra búsqueda o categoría."
-          />
-        ) : (
-          <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {byCategory.map((c) => (
-              <StaggerItem key={c.id}>
-                <CourseCard course={c} />
-              </StaggerItem>
+      {courses.length === 0 ? (
+        <EmptyState
+          icon={BookOpen}
+          title="Aún no hay cursos disponibles"
+          description="Estamos preparando nuevas experiencias de aprendizaje. Volvé pronto."
+        />
+      ) : (
+        <section>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Por categoría</h2>
+          </div>
+          <div className="mb-5 flex flex-wrap gap-2">
+            {categories.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategory(c)}
+                className={cn(
+                  'rounded-full border px-3 py-1 text-xs font-medium transition-all',
+                  category === c
+                    ? 'border-transparent bg-primary text-primary-foreground shadow-xs'
+                    : 'border-border text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground'
+                )}
+              >
+                {c}
+              </button>
             ))}
-          </Stagger>
-        )}
-      </section>
+          </div>
+
+          {byCategory.length === 0 ? (
+            <EmptyState
+              icon={BookOpen}
+              title="Sin cursos en esta categoría"
+              description="Probá con otra categoría o ajustá tu búsqueda."
+            />
+          ) : (
+            <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {byCategory.map((c) => (
+                <StaggerItem key={c.id}>
+                  <CourseCard course={c} />
+                </StaggerItem>
+              ))}
+            </Stagger>
+          )}
+        </section>
+      )}
     </div>
   )
 }

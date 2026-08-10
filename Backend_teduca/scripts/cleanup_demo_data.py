@@ -51,10 +51,21 @@ BUCKETS = {"A": BUCKET_A, "B": BUCKET_B, "C": BUCKET_C}
 
 
 def db_url() -> str:
-    for line in open("/home/osmar/Teduca/Backend_teduca/.env"):
-        if line.startswith("DATABASE_URL="):
-            return line.split("=", 1)[1].strip().replace("postgresql+asyncpg://", "postgresql://")
-    raise SystemExit("No DATABASE_URL en .env")
+    import os
+    from pathlib import Path
+
+    # 1. Variable de entorno directa (producción / CI).
+    if url := os.environ.get("DATABASE_URL"):
+        return url.replace("postgresql+asyncpg://", "postgresql://")
+
+    # 2. Archivo .env en el directorio del backend (desarrollo local).
+    env_file = Path(__file__).parent.parent / ".env"
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            if line.startswith("DATABASE_URL="):
+                return line.split("=", 1)[1].strip().replace("postgresql+asyncpg://", "postgresql://")
+
+    raise SystemExit("No DATABASE_URL en entorno ni en .env")
 
 
 async def main() -> None:

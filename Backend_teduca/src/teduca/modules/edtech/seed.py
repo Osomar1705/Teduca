@@ -328,3 +328,16 @@ async def seed_marketplace(session: AsyncSession) -> None:
             session.add(MarketplaceCourse(teacher_profile_id=profile.id, **c))
 
     await session.commit()
+
+
+if __name__ == "__main__":
+    """Solo para desarrollo local: python -m teduca.modules.edtech.seed"""
+    import asyncio
+    from teduca.core.database import AsyncSessionLocal
+
+    async def _run() -> None:
+        async with AsyncSessionLocal() as session:
+            await seed_marketplace(session)
+        print("Demo marketplace sembrado.")
+
+    asyncio.run(_run())

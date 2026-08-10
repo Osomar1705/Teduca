@@ -3,7 +3,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from teduca.core.config import settings
 from teduca.modules.achievements.models import Achievement
 from teduca.modules.achievements.rules import ACHIEVEMENTS
 from teduca.modules.gamification.models import Reward
@@ -46,13 +45,6 @@ async def seed(session: AsyncSession) -> None:
 
     await session.commit()
 
-    # Profesores demo del marketplace: solo en entornos de desarrollo/staging.
-    # En producción la plataforma parte vacía y los profesores reales se registran.
-    if not settings.is_production:
-        from teduca.modules.edtech.seed import seed_marketplace
-
-        await seed_marketplace(session)
-
     # Productos de merch (idempotente).
     from teduca.modules.merch.seed import seed_merch
 
@@ -65,7 +57,11 @@ async def seed(session: AsyncSession) -> None:
 
 
 async def _main() -> None:
-    """Permite sembrar la BD manualmente: `python -m teduca.core.seed`."""
+    """Permite sembrar la BD manualmente: `python -m teduca.core.seed`.
+
+    Para sembrar profesores DEMO en desarrollo (nunca en producción), ejecutar
+    por separado:  python -m teduca.modules.edtech.seed
+    """
     from teduca.core.database import AsyncSessionLocal
 
     async with AsyncSessionLocal() as session:

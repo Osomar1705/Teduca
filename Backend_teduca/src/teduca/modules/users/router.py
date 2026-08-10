@@ -29,16 +29,6 @@ async def update_me(data: UserUpdate, current_user: CurrentUser, session: DbSess
     return await UserService(session).update_profile(current_user, data)
 
 
-@router.get(
-    "/{user_id}",
-    response_model=UserRead,
-    dependencies=[Depends(require_role("admin"))],
-    status_code=status.HTTP_200_OK,
-)
-async def get_user(user_id: uuid.UUID, session: DbSession) -> UserRead:
-    return await UserService(session).get_by_id(user_id)
-
-
 # ── Evaluación para ser Profesor ───────────────────────────────────────────
 
 @router.post(
@@ -107,6 +97,10 @@ async def revoke_teacher(user_id: uuid.UUID, session: DbSession) -> UserRead:
     return await UserService(session).revoke_teacher_role(user_id)
 
 
+# ── Rutas admin con segmentos literales — deben ir ANTES de /{user_id} ────
+# FastAPI evalúa rutas en orden de registro; poner literales primero evita que
+# un segmento como "admin" sea capturado como UUID y devuelva 422.
+
 @router.get(
     "/admin/pending-teachers",
     response_model=list[UserRead],
@@ -128,3 +122,13 @@ async def list_pending_teachers(session: DbSession) -> list[UserRead]:
         .order_by(User.created_at.desc())
     )
     return list(result.scalars())
+
+
+@router.get(
+    "/{user_id}",
+    response_model=UserRead,
+    dependencies=[Depends(require_role("admin"))],
+    status_code=status.HTTP_200_OK,
+)
+async def get_user(user_id: uuid.UUID, session: DbSession) -> UserRead:
+    return await UserService(session).get_by_id(user_id)
