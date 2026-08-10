@@ -71,7 +71,6 @@ class AuthService:
         user = await self.user_service.create_user(
             email=email, name=name, password=password, role=role
         )
-        await self._send_verification(user)
         tokens = await self._issue_tokens(user)
         return AuthResponse(user=user, tokens=tokens)
 

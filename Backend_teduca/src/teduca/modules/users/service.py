@@ -38,6 +38,7 @@ class UserService:
             email=email,
             name=name,
             password_hash=hash_password(password),
+            email_verified=True,
             roles=[role_obj],
         )
         return await self.users.add(user)

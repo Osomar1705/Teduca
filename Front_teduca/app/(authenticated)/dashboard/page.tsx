@@ -6,7 +6,6 @@ import {
   CalendarCheck,
   ArrowRight,
   Flame,
-  MailWarning,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -51,9 +50,7 @@ export default function DashboardPage() {
   const [game, setGame] = useState<GamificationState | null>(null)
   const [mentorContext, setMentorContext] = useState<StudentContext | null>(null)
   const [loading, setLoading] = useState(true)
-  const [emailVerified, setEmailVerified] = useState(true)
   const [userEmail, setUserEmail] = useState('')
-  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent'>('idle')
 
   useEffect(() => {
     recordDailyActivity().catch(() => {})
@@ -68,7 +65,6 @@ export default function DashboardPage() {
         getGamificationState().catch(() => null),
       ])
       setGame(g)
-      setEmailVerified(user.email_verified ?? true)
       setUserEmail(user.email)
       setName(user.name.split(' ')[0])
       setTeachers(t.slice(0, 3))
@@ -90,20 +86,6 @@ export default function DashboardPage() {
     }
     load()
   }, [])
-
-  async function handleResendVerification() {
-    if (resendStatus !== 'idle') return
-    setResendStatus('sending')
-    try {
-      if (userEmail) {
-        await apiClient.post('/api/v1/auth/resend-verification', { email: userEmail })
-      }
-    } catch {
-      // silencioso
-    } finally {
-      setResendStatus('sent')
-    }
-  }
 
   const activeReservations = reservations.filter((x) => x.status !== 'cancelled')
   const upcoming = reservations
@@ -129,24 +111,6 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      {!emailVerified && (
-        <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-50 px-4 py-3 dark:bg-amber-950/30">
-          <MailWarning className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-          <div className="min-w-0 flex-1 text-sm text-amber-800 dark:text-amber-300">
-            <span className="font-medium">Verificá tu correo electrónico.</span>{' '}
-            Revisá tu bandeja de entrada para activar tu cuenta.
-          </div>
-          <button
-            onClick={handleResendVerification}
-            disabled={resendStatus !== 'idle'}
-            className="shrink-0 text-xs font-medium text-amber-700 underline underline-offset-2 hover:text-amber-900 disabled:cursor-not-allowed disabled:opacity-60 dark:text-amber-400"
-          >
-            {resendStatus === 'idle' && 'Reenviar'}
-            {resendStatus === 'sending' && 'Enviando…'}
-            {resendStatus === 'sent' && '¡Enviado!'}
-          </button>
-        </div>
-      )}
       <div className="flex gap-6">
         <div className="min-w-0 flex-1">
           <FadeIn>
