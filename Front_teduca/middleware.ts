@@ -23,6 +23,8 @@ const PROTECTED_PREFIXES = [
   '/teacher',
   '/become-teacher',
   '/evaluation',
+  '/announcements',
+  '/merch',
 ]
 
 const AUTH_ONLY_PREFIXES = ['/login', '/register']
@@ -65,7 +67,7 @@ export async function middleware(request: NextRequest) {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self' data:",
-      "connect-src 'self' " + (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000') + " https://qlqqpeisizzmugpubzmk.supabase.co",
+      "connect-src 'self' " + (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000') + " " + (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/^https?/, (p) => p === 'https' ? 'wss' : 'ws') + " https://qlqqpeisizzmugpubzmk.supabase.co",
       "frame-src https://accounts.google.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
