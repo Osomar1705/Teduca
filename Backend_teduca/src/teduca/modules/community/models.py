@@ -3,11 +3,14 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import Date, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Date, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from teduca.core.database import Base, TimestampMixin, UUIDMixin
+
+# JSONB en Postgres (producción) y JSON en el resto (SQLite en tests).
+JSONType = JSON().with_variant(JSONB, "postgresql")
 
 
 class Post(UUIDMixin, TimestampMixin, Base):
@@ -22,8 +25,8 @@ class Post(UUIDMixin, TimestampMixin, Base):
     location: Mapped[str | None] = mapped_column(String(255))
     deadline: Mapped[date | None] = mapped_column(Date)
     link: Mapped[str | None] = mapped_column(String(512))
-    tags: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
-    image_urls: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    tags: Mapped[list] = mapped_column(JSONType, default=list, nullable=False)
+    image_urls: Mapped[list] = mapped_column(JSONType, default=list, nullable=False)
     likes_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     comments_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     saves_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

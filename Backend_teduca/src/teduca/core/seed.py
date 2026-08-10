@@ -3,6 +3,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from teduca.core.config import settings
 from teduca.modules.achievements.models import Achievement
 from teduca.modules.achievements.rules import ACHIEVEMENTS
 from teduca.modules.gamification.models import Reward

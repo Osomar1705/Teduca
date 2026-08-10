@@ -3,11 +3,14 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import JSON, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from teduca.core.database import Base, TimestampMixin, UUIDMixin
+
+# JSONB en Postgres (producción) y JSON en el resto (SQLite en tests).
+JSONType = JSON().with_variant(JSONB, "postgresql")
 
 
 class FileAsset(UUIDMixin, TimestampMixin, Base):
@@ -66,7 +69,7 @@ class FileAsset(UUIDMixin, TimestampMixin, Base):
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     # Metadatos extensibles: duración de video, páginas, resolución, etc.
-    extra_metadata: Mapped[dict | None] = mapped_column(JSONB, default=dict)
+    extra_metadata: Mapped[dict | None] = mapped_column(JSONType, default=dict)
 
     __table_args__ = (
         Index("ix_file_assets_bucket_path", "bucket", "storage_path", unique=True),

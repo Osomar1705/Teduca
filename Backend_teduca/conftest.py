@@ -48,6 +48,13 @@ async def client(db_sessionmaker) -> AsyncClient:
     fake = fakeredis.aioredis.FakeRedis(decode_responses=True)
     redis_module._redis = fake
 
+    # Desactiva el rate limiting en tests: el limiter vive a nivel de proceso y
+    # su almacenamiento en memoria persiste entre tests, provocando 429 falsos.
+    from teduca.modules.auth.router import _limiter as _auth_limiter
+
+    app.state.limiter.enabled = False
+    _auth_limiter.enabled = False
+
     async def _override_get_db():
         async with db_sessionmaker() as session:
             try:
