@@ -13,8 +13,8 @@ from teduca.modules.users.schemas import PublicProfileRead, TeacherProfileUpdate
 from teduca.modules.onboarding.models import UserOnboarding
 from teduca.modules.edtech.models import TeacherProfile
 
-# Roles válidos que un usuario puede auto-asignarse al registrarse.
-SELF_ASSIGNABLE_ROLES = {"student", "teacher"}
+# Solo "student" puede auto-asignarse. "teacher" requiere aprobación admin.
+SELF_ASSIGNABLE_ROLES = {"student"}
 DEFAULT_ROLE = "student"
 
 

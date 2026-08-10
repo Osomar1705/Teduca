@@ -45,10 +45,12 @@ async def seed(session: AsyncSession) -> None:
 
     await session.commit()
 
-    # Profesores demo del marketplace (idempotente, hace su propio commit).
-    from teduca.modules.edtech.seed import seed_marketplace
+    # Profesores demo del marketplace: solo en entornos de desarrollo/staging.
+    # En producción la plataforma parte vacía y los profesores reales se registran.
+    if not settings.is_production:
+        from teduca.modules.edtech.seed import seed_marketplace
 
-    await seed_marketplace(session)
+        await seed_marketplace(session)
 
     # Productos de merch (idempotente).
     from teduca.modules.merch.seed import seed_merch

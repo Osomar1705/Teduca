@@ -392,11 +392,24 @@ export async function addEarnTransaction(
 
 export async function maybeAwardDailyLogin(): Promise<RewardTransaction | null> {
   if (typeof window === 'undefined') return null
-  const today = new Date().toISOString().slice(0, 10)
-  const key = 'teduca_reward_daily_login'
-  if (localStorage.getItem(key) === today) return null
-  localStorage.setItem(key, today)
-  return addEarnTransaction('daily_login', 'Ingreso diario — Orbits ganados')
+  try {
+    const res = await apiClient.post<{ awarded: boolean; points: number }>(
+      '/api/v1/gamification/daily-login'
+    )
+    if (!res.awarded) return null
+    return {
+      id: `tx_daily_${Date.now()}`,
+      type: 'earned',
+      event: 'daily_login',
+      points: res.points,
+      balance: 0,
+      description: 'Ingreso diario — Orbits ganados',
+      createdAt: new Date().toISOString(),
+      status: 'completed',
+    }
+  } catch {
+    return null
+  }
 }
 
 export function getEarnRules(): EarnRule[] {

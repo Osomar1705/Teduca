@@ -42,6 +42,7 @@ class PointsLedgerRead(BaseModel):
 
 
 class AwardPointsRequest(BaseModel):
+    user_id: uuid.UUID
     event: str
     points: int
     reason: str

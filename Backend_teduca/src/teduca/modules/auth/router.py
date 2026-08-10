@@ -2,8 +2,10 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from teduca.core.config import settings
 from teduca.core.dependencies import DbSession, get_token_payload
@@ -22,6 +24,8 @@ from teduca.modules.auth.service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+_limiter = Limiter(key_func=get_remote_address, storage_uri="memory://")
+
 
 @router.get("/config", response_model=AuthConfig)
 async def auth_config() -> AuthConfig:
@@ -33,14 +37,16 @@ async def auth_config() -> AuthConfig:
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-async def register(data: RegisterRequest, session: DbSession) -> AuthResponse:
+@_limiter.limit("10/minute")
+async def register(request: Request, data: RegisterRequest, session: DbSession) -> AuthResponse:
     return await AuthService(session).register(
         email=data.email, name=data.name, password=data.password, role=data.role
     )
 
 
 @router.post("/login", response_model=AuthResponse)
-async def login(data: LoginRequest, session: DbSession) -> AuthResponse:
+@_limiter.limit("20/minute")
+async def login(request: Request, data: LoginRequest, session: DbSession) -> AuthResponse:
     return await AuthService(session).login(email=data.email, password=data.password)
 
 

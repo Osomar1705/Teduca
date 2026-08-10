@@ -5,7 +5,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from teduca.core.dependencies import CurrentUser, DbSession
+from teduca.core.dependencies import CurrentUser, DbSession, require_role
+from teduca.modules.users.models import User
 from teduca.core.pagination import Page, PaginationParams, pagination_params
 from teduca.modules.gamification.schemas import (
     AwardPointsRequest,
@@ -42,13 +43,24 @@ async def my_ledger(
     return Page.create([PointsLedgerRead.model_validate(e) for e in items], total, params)
 
 
+AdminUser = Annotated[User, Depends(require_role("admin"))]
+
+
 @router.post("/award", status_code=204)
 async def award_points(
-    body: AwardPointsRequest, current_user: CurrentUser, session: DbSession
+    body: AwardPointsRequest, _admin: AdminUser, session: DbSession
 ) -> None:
+    """Otorgar Orbits manualmente. Solo administradores."""
     await GamificationService(session).award_points(
-        current_user.id, body.points, body.reason, body.event
+        body.user_id, body.points, body.reason, body.event
     )
+
+
+@router.post("/daily-login", status_code=200)
+async def daily_login(current_user: CurrentUser, session: DbSession) -> dict:
+    """Reclama Orbits por ingreso diario. Idempotente: solo otorga una vez por día."""
+    awarded = await GamificationService(session).claim_daily_login(current_user.id)
+    return {"awarded": awarded, "points": 10 if awarded else 0}
 
 
 @router.get("/ranking", response_model=RankingResponse)

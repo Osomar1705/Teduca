@@ -39,12 +39,17 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    # En producción se deshabilita la documentación pública de la API.
+    _docs_url = None if settings.is_production else "/docs"
+    _redoc_url = None if settings.is_production else "/redoc"
+    _openapi_url = None if settings.is_production else f"{settings.api_v1_prefix}/openapi.json"
+
     app = FastAPI(
         title=settings.project_name,
         version="0.1.0",
-        docs_url="/docs",
-        redoc_url="/redoc",
-        openapi_url=f"{settings.api_v1_prefix}/openapi.json",
+        docs_url=_docs_url,
+        redoc_url=_redoc_url,
+        openapi_url=_openapi_url,
         lifespan=lifespan,
     )
 

@@ -41,6 +41,28 @@ class GamificationService:
             await self.session.flush()
         return streak
 
+    async def claim_daily_login(self, user_id: uuid.UUID) -> bool:
+        """Otorga Orbits por ingreso diario si no se han reclamado hoy.
+
+        Retorna True si se otorgaron puntos, False si ya se reclamaron hoy.
+        La deduplicación se hace en BD: busca un asiento daily_login del día.
+        """
+        from datetime import timezone
+        today_start = datetime.combine(date.today(), datetime.min.time()).replace(tzinfo=timezone.utc)
+        already = await self.session.scalar(
+            select(PointsLedger).where(
+                PointsLedger.user_id == user_id,
+                PointsLedger.event_name == "daily_login",
+                PointsLedger.created_at >= today_start,
+            )
+        )
+        if already is not None:
+            return False
+        await self.award_points(user_id, 10, "Ingreso diario", "daily_login")
+        await self.touch_streak(user_id)
+        await self.session.commit()
+        return True
+
     async def touch_streak(self, user_id: uuid.UUID) -> Streak:
         """Actualiza la racha por actividad del día."""
         streak = await self._get_or_create_streak(user_id)
