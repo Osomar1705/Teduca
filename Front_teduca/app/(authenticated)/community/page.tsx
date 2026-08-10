@@ -8,16 +8,15 @@ import {
   MoreHorizontal, MapPin, ExternalLink, Calendar, Users,
   Zap, BookOpen, Briefcase, Globe, Award, Lightbulb, Rocket,
   X, Link as LinkIcon, Send, GitFork, Link2, Loader2,
-  Play, Clock, ThumbsUp, Eye, Filter, GraduationCap,
+  Play, Eye, Filter,
   FlaskConical, Code2, Languages, Cpu, TrendingUp,
-  Building2, UserPlus, CheckCircle2, Flame,
+  UserPlus, CheckCircle2,
   Sparkles, ArrowRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { ImageUploader, type PostImage } from '@/components/community/ImageUploader'
 import { fetchPosts, createPost, toggleLike, toggleSave, type ApiPost } from '@/lib/community/service'
@@ -296,6 +295,7 @@ function PostCard({ post }: { post: Post }) {
 
   return (
     <article className="group overflow-hidden rounded-2xl border border-border bg-card shadow-xs transition-all duration-200 hover:border-border/80 hover:shadow-md">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       {post.image && <img src={post.image} alt="" className="aspect-video w-full object-cover" />}
       <div className="p-5">
         <div className="mb-3 flex items-start justify-between gap-3">
@@ -453,32 +453,6 @@ function PersonCard({ person }: { person: Person }) {
           ))}
         </div>
       </div>
-    </div>
-  )
-}
-
-// ── GroupCard ──────────────────────────────────────────────────────────────
-
-function GroupCard({ group }: { group: { id: string; name: string; category: string; members: number; icon: string } }) {
-  const [joined, setJoined] = useState(false)
-  return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 transition-all hover:border-border/80 hover:shadow-sm">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-xl">{group.icon}</div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-foreground">{group.name}</p>
-        <p className="text-xs text-muted-foreground">{group.category} · {group.members} miembros</p>
-      </div>
-      <button
-        onClick={() => setJoined((p) => !p)}
-        className={cn(
-          'shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
-          joined
-            ? 'border-primary/20 bg-primary/10 text-primary'
-            : 'border-border text-muted-foreground hover:border-primary/30 hover:text-primary',
-        )}
-      >
-        {joined ? '✓ Unido' : 'Unirse'}
-      </button>
     </div>
   )
 }

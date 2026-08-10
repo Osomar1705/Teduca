@@ -205,14 +205,6 @@ export default function ModernLoginSignup({ defaultMode = 'sign-in' }: { default
     return cleanup;
   }, []);
 
-  const socialBtn: React.CSSProperties = {
-    width: '100%', padding: '0.65rem', borderRadius: 6,
-    border: '1px solid #333', background: 'transparent', color: '#fff',
-    fontWeight: 500, fontSize: '0.875rem', cursor: 'pointer',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-    marginBottom: '0.4rem',
-  };
-
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '0.65rem 0.85rem', borderRadius: 6,
     border: '1px solid #333', background: '#0a0a0a', color: '#fff',

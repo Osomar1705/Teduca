@@ -126,6 +126,7 @@ function MessagesContent() {
       ws?.close()
       void dead
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeThread?.id])
 
   useEffect(() => {

@@ -41,7 +41,7 @@ function Lightbox({ src, alt, onClose }: { src: string; alt: string; onClose: ()
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
-  }, [onClose]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [onClose])
 
   function zoom(delta: number) {
     setScale((s) => Math.min(MAX, Math.max(MIN, s + delta)))

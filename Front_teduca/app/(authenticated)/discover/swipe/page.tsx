@@ -10,20 +10,20 @@ import {
 import {
   ArrowLeft, RotateCcw, Heart, X,
   Star, MapPin, Users, Clock, CheckCircle,
-  GraduationCap, Rocket, CalendarDays, Briefcase,
-  Building2, UserPlus, Play, BookOpen,
-  Trophy, Globe, Coins, FlaskConical,
-  BadgeCheck, Languages, Wallet, Timer,
-  CalendarCheck, Tag, Download, Eye,
+  GraduationCap, CalendarDays, Briefcase,
+  Building2, Play, BookOpen,
+  Globe, Coins,
+  BadgeCheck, Wallet, Timer,
+  Tag, Download, Eye,
   Zap, ChevronRight,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-import { getDiscoverDeck, resetDeck, swipeTeacher, toggleFavorite } from '@/lib/edtech/service'
+import { getDiscoverDeck, resetDeck, swipeTeacher } from '@/lib/edtech/service'
 import { formatPrice, MODALITY_LABEL } from '@/lib/format'
-import type { TeacherProfile, SwipeDirection } from '@/lib/edtech/types'
+import type { TeacherProfile } from '@/lib/edtech/types'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TIPOS

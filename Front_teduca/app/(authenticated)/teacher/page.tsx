@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import {
   Users, BookOpen, DollarSign, Star, TrendingUp,
   Clock, CalendarCheck, ArrowUpRight, MoreHorizontal,
