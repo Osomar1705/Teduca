@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
@@ -15,11 +15,7 @@ function ResetPasswordForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (!token) setError('Enlace inválido o expirado.')
-  }, [token])
+  const [error, setError] = useState(!token ? 'Enlace inválido o expirado.' : '')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

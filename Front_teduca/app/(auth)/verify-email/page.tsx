@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { CheckCircle2, XCircle, Loader2, Mail } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
@@ -9,13 +9,14 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const token = searchParams.get('token')
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'no-token'>('loading')
+  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'no-token'>(
+    token ? 'loading' : 'no-token'
+  )
+  const verified = useRef(false)
 
   useEffect(() => {
-    if (!token) {
-      setStatus('no-token')
-      return
-    }
+    if (!token || verified.current) return
+    verified.current = true
     apiClient
       .post('/api/v1/auth/verify-email', { token })
       .then(() => {

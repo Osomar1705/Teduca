@@ -1,14 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
 import {
   ShieldCheck, UserCheck, UserX, Clock, CheckCircle2,
   XCircle, Mail, Users, AlertTriangle,
 } from 'lucide-react'
 import { apiClient } from '@/lib/api-client'
-import { API_ENDPOINTS } from '@/lib/constants'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -61,7 +58,6 @@ function ActionButton({
 }
 
 export default function AdminPage() {
-  const router = useRouter()
   const [pending, setPending] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [forbidden, setForbidden] = useState(false)

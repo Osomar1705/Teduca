@@ -92,3 +92,34 @@ async def promote_admin(db_sessionmaker):
             await session.commit()
 
     return _promote
+
+
+@pytest.fixture
+async def promote_teacher(db_sessionmaker):
+    """Devuelve una función async que promueve a teacher a un usuario por email.
+
+    Reemplaza el rol student por teacher directamente en la BD, simulando la
+    aprobación de un admin. Necesario porque SELF_ASSIGNABLE_ROLES solo permite
+    'student' en el registro normal (correcto por seguridad).
+    """
+    from sqlalchemy import select
+
+    from teduca.modules.users.models import Role, User
+
+    async def _promote(email: str) -> None:
+        async with db_sessionmaker() as session:
+            user = (
+                await session.execute(select(User).where(User.email == email.lower()))
+            ).scalar_one()
+            student_role = (
+                await session.execute(select(Role).where(Role.name == "student"))
+            ).scalar_one()
+            teacher_role = (
+                await session.execute(select(Role).where(Role.name == "teacher"))
+            ).scalar_one()
+            if student_role in user.roles:
+                user.roles.remove(student_role)
+            user.roles.append(teacher_role)
+            await session.commit()
+
+    return _promote

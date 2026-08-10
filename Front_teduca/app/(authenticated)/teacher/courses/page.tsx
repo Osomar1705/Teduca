@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, BookOpen, Star, FileText, Video, Link2, FileImage,
-  Trash2, Edit2, X, ExternalLink, ChevronDown, ChevronRight,
+  Trash2, X, ExternalLink, ChevronDown, ChevronRight,
   Upload,
 } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
@@ -254,25 +254,22 @@ export default function TeacherCoursesPage() {
   const [showAddMaterial, setShowAddMaterial] = useState(false)
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null)
 
-  async function load() {
-    try {
-      const profile = await getMyProfile()
-      const [cs, ms] = await Promise.all([
-        getCoursesByTeacher(profile.id),
-        getMyMaterials(),
-      ])
-      setCourses(cs)
-      setMaterials(ms)
-    } catch {
-      /* mantener vacío */
-    } finally {
-      setLoading(false)
-    }
+  function load() {
+    getMyProfile()
+      .then((profile) =>
+        Promise.all([getCoursesByTeacher(profile.id), getMyMaterials()])
+      )
+      .then(([cs, ms]) => {
+        setCourses(cs)
+        setMaterials(ms)
+      })
+      .catch(() => { /* mantener vacío */ })
+      .finally(() => setLoading(false))
   }
 
   useEffect(() => {
     if (!isAllowed) return
-    void load()
+    load()
   }, [isAllowed])
 
   async function handleDeleteMaterial(id: string) {

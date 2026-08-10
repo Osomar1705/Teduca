@@ -1,15 +1,35 @@
 """Tests de integración del dominio educativo (Fase 3)."""
 
+from collections.abc import Callable, Coroutine
+from typing import Any
+
 from httpx import AsyncClient
 
 
-async def _auth(client: AsyncClient, email: str, role: str) -> dict:
+async def _auth(client: AsyncClient, email: str) -> dict:
     reg = await client.post(
         "/api/v1/auth/register",
-        json={"email": email, "name": "User", "password": "supersecret1", "role": role},
+        json={"email": email, "name": "User", "password": "supersecret1"},
     )
     token = reg.json()["tokens"]["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+async def _auth_teacher(
+    client: AsyncClient,
+    email: str,
+    promote_teacher: Callable[[str], Coroutine[Any, Any, None]],
+) -> dict:
+    """Registra un usuario, lo promueve a teacher vía DB y re-loguea para obtener token fresco."""
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "name": "User", "password": "supersecret1"},
+    )
+    await promote_teacher(email)
+    login = await client.post(
+        "/api/v1/auth/login", json={"email": email, "password": "supersecret1"}
+    )
+    return {"Authorization": f"Bearer {login.json()['tokens']['access_token']}"}
 
 
 async def _create_course(client: AsyncClient, headers: dict, title="Python 101") -> dict:
@@ -17,8 +37,8 @@ async def _create_course(client: AsyncClient, headers: dict, title="Python 101")
     return resp
 
 
-async def test_teacher_creates_course(client: AsyncClient) -> None:
-    headers = await _auth(client, "t@teduca.io", "teacher")
+async def test_teacher_creates_course(client: AsyncClient, promote_teacher) -> None:
+    headers = await _auth_teacher(client, "t@teduca.io", promote_teacher)
     resp = await _create_course(client, headers)
     assert resp.status_code == 201
     body = resp.json()
@@ -27,14 +47,14 @@ async def test_teacher_creates_course(client: AsyncClient) -> None:
 
 
 async def test_student_cannot_create_course(client: AsyncClient) -> None:
-    headers = await _auth(client, "s@teduca.io", "student")
+    headers = await _auth(client, "s@teduca.io")
     resp = await _create_course(client, headers)
     assert resp.status_code == 403
 
 
-async def test_non_owner_cannot_update(client: AsyncClient) -> None:
-    owner = await _auth(client, "owner@teduca.io", "teacher")
-    other = await _auth(client, "other@teduca.io", "teacher")
+async def test_non_owner_cannot_update(client: AsyncClient, promote_teacher) -> None:
+    owner = await _auth_teacher(client, "owner@teduca.io", promote_teacher)
+    other = await _auth_teacher(client, "other@teduca.io", promote_teacher)
     course = (await _create_course(client, owner)).json()
 
     resp = await client.patch(
@@ -43,8 +63,8 @@ async def test_non_owner_cannot_update(client: AsyncClient) -> None:
     assert resp.status_code == 403
 
 
-async def test_lessons_crud_and_listing(client: AsyncClient) -> None:
-    headers = await _auth(client, "t2@teduca.io", "teacher")
+async def test_lessons_crud_and_listing(client: AsyncClient, promote_teacher) -> None:
+    headers = await _auth_teacher(client, "t2@teduca.io", promote_teacher)
     course = (await _create_course(client, headers)).json()
     cid = course["id"]
 
@@ -64,9 +84,9 @@ async def test_lessons_crud_and_listing(client: AsyncClient) -> None:
     assert upd.json()["duration"] == 20
 
 
-async def test_enroll_only_in_published_and_progress(client: AsyncClient) -> None:
-    teacher = await _auth(client, "t3@teduca.io", "teacher")
-    student = await _auth(client, "st@teduca.io", "student")
+async def test_enroll_only_in_published_and_progress(client: AsyncClient, promote_teacher) -> None:
+    teacher = await _auth_teacher(client, "t3@teduca.io", promote_teacher)
+    student = await _auth(client, "st@teduca.io")
     course = (await _create_course(client, teacher)).json()
     cid = course["id"]
 
@@ -97,8 +117,8 @@ async def test_enroll_only_in_published_and_progress(client: AsyncClient) -> Non
     assert mine.json()["pagination"]["total"] == 1
 
 
-async def test_list_courses_paginated(client: AsyncClient) -> None:
-    teacher = await _auth(client, "t4@teduca.io", "teacher")
+async def test_list_courses_paginated(client: AsyncClient, promote_teacher) -> None:
+    teacher = await _auth_teacher(client, "t4@teduca.io", promote_teacher)
     for i in range(3):
         await _create_course(client, teacher, title=f"Curso {i}")
     resp = await client.get("/api/v1/courses?limit=2")

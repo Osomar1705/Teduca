@@ -1,14 +1,33 @@
 """Tests de integración del subsistema de evaluación (Fase 4)."""
 
+from collections.abc import Callable, Coroutine
+from typing import Any
+
 from httpx import AsyncClient
 
 
-async def _auth(client: AsyncClient, email: str, role: str) -> dict:
+async def _auth(client: AsyncClient, email: str) -> dict:
     reg = await client.post(
         "/api/v1/auth/register",
-        json={"email": email, "name": "User", "password": "supersecret1", "role": role},
+        json={"email": email, "name": "User", "password": "supersecret1"},
     )
     return {"Authorization": f"Bearer {reg.json()['tokens']['access_token']}"}
+
+
+async def _auth_teacher(
+    client: AsyncClient,
+    email: str,
+    promote_teacher: Callable[[str], Coroutine[Any, Any, None]],
+) -> dict:
+    await client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "name": "User", "password": "supersecret1"},
+    )
+    await promote_teacher(email)
+    login = await client.post(
+        "/api/v1/auth/login", json={"email": email, "password": "supersecret1"}
+    )
+    return {"Authorization": f"Bearer {login.json()['tokens']['access_token']}"}
 
 
 async def _course(client: AsyncClient, teacher: dict) -> str:
@@ -16,10 +35,9 @@ async def _course(client: AsyncClient, teacher: dict) -> str:
     return resp.json()["id"]
 
 
-# --- Assignments + Submissions ---
-async def test_assignment_submission_and_grading(client: AsyncClient) -> None:
-    teacher = await _auth(client, "te@teduca.io", "teacher")
-    student = await _auth(client, "se@teduca.io", "student")
+async def test_assignment_submission_and_grading(client: AsyncClient, promote_teacher) -> None:
+    teacher = await _auth_teacher(client, "te@teduca.io", promote_teacher)
+    student = await _auth(client, "se@teduca.io")
     cid = await _course(client, teacher)
 
     created = await client.post(
@@ -30,7 +48,6 @@ async def test_assignment_submission_and_grading(client: AsyncClient) -> None:
     assert created.status_code == 201
     aid = created.json()["id"]
 
-    # Estudiante entrega
     sub = await client.post(
         f"/api/v1/assignments/{aid}/submit",
         headers=student,
@@ -52,7 +69,6 @@ async def test_assignment_submission_and_grading(client: AsyncClient) -> None:
     )
     assert over.status_code == 409
 
-    # Calificación válida
     graded = await client.post(
         f"/api/v1/submissions/{sid}/grade",
         headers=teacher,
@@ -62,14 +78,13 @@ async def test_assignment_submission_and_grading(client: AsyncClient) -> None:
     assert graded.json()["status"] == "graded"
     assert graded.json()["score"] == 45
 
-    # El profesor ve la lista de entregas
     listed = await client.get(f"/api/v1/assignments/{aid}/submissions", headers=teacher)
     assert len(listed.json()) == 1
 
 
-async def test_student_cannot_grade(client: AsyncClient) -> None:
-    teacher = await _auth(client, "tg@teduca.io", "teacher")
-    student = await _auth(client, "sg@teduca.io", "student")
+async def test_student_cannot_grade(client: AsyncClient, promote_teacher) -> None:
+    teacher = await _auth_teacher(client, "tg@teduca.io", promote_teacher)
+    student = await _auth(client, "sg@teduca.io")
     cid = await _course(client, teacher)
     aid = (
         await client.post(
@@ -88,7 +103,6 @@ async def test_student_cannot_grade(client: AsyncClient) -> None:
     assert resp.status_code == 403
 
 
-# --- Quizzes con autocorrección ---
 async def _quiz_payload() -> dict:
     return {
         "title": "Quiz básico",
@@ -114,9 +128,9 @@ async def _quiz_payload() -> dict:
     }
 
 
-async def test_quiz_creation_and_autograde(client: AsyncClient) -> None:
-    teacher = await _auth(client, "tq@teduca.io", "teacher")
-    student = await _auth(client, "sq@teduca.io", "student")
+async def test_quiz_creation_and_autograde(client: AsyncClient, promote_teacher) -> None:
+    teacher = await _auth_teacher(client, "tq@teduca.io", promote_teacher)
+    student = await _auth(client, "sq@teduca.io")
     cid = await _course(client, teacher)
 
     created = await client.post(
@@ -124,12 +138,11 @@ async def test_quiz_creation_and_autograde(client: AsyncClient) -> None:
     )
     assert created.status_code == 201
     quiz = created.json()
-    # El estudiante NO debe ver qué opción es correcta
     assert "is_correct" not in quiz["questions"][0]["options"][0]
 
     q0, q1 = quiz["questions"]
     correct0 = q0["options"][1]["id"]  # "4"
-    wrong1 = q1["options"][1]["id"]  # "Madrid"
+    wrong1 = q1["options"][1]["id"]   # "Madrid"
 
     attempt = await client.post(
         f"/api/v1/quizzes/{quiz['id']}/attempts",
@@ -147,8 +160,8 @@ async def test_quiz_creation_and_autograde(client: AsyncClient) -> None:
     assert body["passed"] is False
 
 
-async def test_quiz_requires_one_correct_option(client: AsyncClient) -> None:
-    teacher = await _auth(client, "tv@teduca.io", "teacher")
+async def test_quiz_requires_one_correct_option(client: AsyncClient, promote_teacher) -> None:
+    teacher = await _auth_teacher(client, "tv@teduca.io", promote_teacher)
     cid = await _course(client, teacher)
     bad = {
         "title": "Malo",

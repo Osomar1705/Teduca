@@ -19,7 +19,7 @@ import { TeacherCard } from '@/components/edtech/TeacherCard'
 import { CourseCard } from '@/components/edtech/CourseCard'
 import { EmptyState } from '@/components/common/EmptyState'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
-import { APP_ROUTES, API_ENDPOINTS } from '@/lib/constants'
+import { APP_ROUTES } from '@/lib/constants'
 import { apiClient } from '@/lib/api-client'
 import {
   getCourses,
