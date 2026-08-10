@@ -3,9 +3,12 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, status
 
+from teduca.core.database import get_db
 from teduca.core.dependencies import CurrentUser, DbSession, require_role
+from teduca.core.security import JWTError, decode_token
+from teduca.core.ws_manager import chat_manager
 from teduca.modules.edtech.schemas import (
     ChatMessageCreate,
     ChatMessageRead,
@@ -22,6 +25,7 @@ from teduca.modules.edtech.schemas import (
 )
 from teduca.modules.edtech.service import EdtechService
 from teduca.modules.users.models import User
+from teduca.modules.users.repository import UserRepository
 
 TeacherUser = Annotated[User, Depends(require_role("teacher"))]
 
@@ -188,4 +192,53 @@ async def post_message(
     session: DbSession,
 ) -> ChatMessageRead:
     message = await EdtechService(session).post_message(current_user, thread_id, data.body)
-    return ChatMessageRead.model_validate(message)
+    msg_read = ChatMessageRead.model_validate(message)
+    await chat_manager.broadcast(thread_id, msg_read.model_dump(mode="json"))
+    return msg_read
+
+
+@router.websocket("/chat/ws/{thread_id}")
+async def chat_ws(
+    thread_id: uuid.UUID,
+    websocket: WebSocket,
+    token: Annotated[str | None, Query()] = None,
+) -> None:
+    """WebSocket para recibir mensajes nuevos en tiempo real.
+
+    El cliente se conecta con ?token=<access_token> y queda escuchando.
+    Para enviar mensajes usa el endpoint HTTP POST /chat/threads/{thread_id}/messages.
+    """
+    if not token:
+        await websocket.close(code=4001)
+        return
+
+    try:
+        payload = decode_token(token)
+    except JWTError:
+        await websocket.close(code=4001)
+        return
+
+    if payload.get("type") != "access":
+        await websocket.close(code=4001)
+        return
+
+    try:
+        user_id = uuid.UUID(payload["sub"])
+    except (KeyError, ValueError):
+        await websocket.close(code=4001)
+        return
+
+    async for session in get_db():
+        user = await UserRepository(session).get_by_id(user_id)
+        if user is None or not user.is_active:
+            await websocket.close(code=4001)
+            return
+        break
+
+    await chat_manager.connect(thread_id, websocket)
+    try:
+        while True:
+            # Mantener la conexión viva; el cliente solo recibe, no envía por WS.
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        chat_manager.disconnect(thread_id, websocket)

@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { MessageCircle, Send } from 'lucide-react'
 import { PageHeader } from '@/components/common/PageHeader'
@@ -16,10 +16,24 @@ import {
   sendChatMessage,
 } from '@/lib/edtech/service'
 import type { ChatMessage, ChatThread } from '@/lib/edtech/types'
+import { getAccessToken } from '@/lib/auth-tokens'
 import { cn } from '@/lib/utils'
 
-/** Cada cuántos ms se refrescan los mensajes del hilo abierto. */
-const POLL_MS = 4000
+function toWsUrl(apiUrl: string, path: string): string {
+  return apiUrl.replace(/^https?/, (p) => (p === 'https' ? 'wss' : 'ws')) + path
+}
+
+interface WsMessagePayload {
+  id: string
+  thread_id: string
+  sender_id: string
+  body: string
+  created_at: string
+}
+
+function wsPayloadToMessage(p: WsMessagePayload): ChatMessage {
+  return { id: p.id, threadId: p.thread_id, senderId: p.sender_id, body: p.body, createdAt: p.created_at }
+}
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('es', {
@@ -76,25 +90,43 @@ function MessagesContent() {
     }
   }, [teacherParam])
 
-  const refreshMessages = useCallback(async () => {
-    if (!activeThread) return
-    try {
-      setMessages(await getChatMessages(activeThread.id))
-    } catch {
-      /* siguiente poll reintenta */
-    }
-  }, [activeThread])
-
-  // Mensajes del hilo activo + polling (primer fetch diferido a un tick).
+  // Carga inicial de mensajes + WebSocket para actualizaciones en tiempo real.
   useEffect(() => {
     if (!activeThread) return
-    const timeout = setTimeout(refreshMessages, 0)
-    const interval = setInterval(refreshMessages, POLL_MS)
-    return () => {
-      clearTimeout(timeout)
-      clearInterval(interval)
+    let ws: WebSocket | null = null
+    let dead = false
+
+    getChatMessages(activeThread.id).then(setMessages).catch(() => {})
+
+    const token = getAccessToken()
+    if (token) {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+      const url = toWsUrl(apiBase, `/api/v1/edtech/chat/ws/${activeThread.id}?token=${token}`)
+      ws = new WebSocket(url)
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = wsPayloadToMessage(JSON.parse(event.data as string) as WsMessagePayload)
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === msg.id)) return prev
+            return [...prev, msg]
+          })
+        } catch {
+          // mensaje malformado, ignorar
+        }
+      }
+
+      ws.onerror = () => {
+        // silencioso — el historial ya está cargado por HTTP
+      }
     }
-  }, [activeThread, refreshMessages])
+
+    return () => {
+      dead = true
+      ws?.close()
+      void dead
+    }
+  }, [activeThread?.id])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
