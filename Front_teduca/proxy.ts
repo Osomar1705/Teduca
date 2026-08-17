@@ -69,7 +69,7 @@ export async function proxy(request: NextRequest) {
       "img-src 'self' data: https:",
       "font-src 'self' data:",
       "connect-src 'self' " + (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000') + " " + (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/^https?/, (p) => p === 'https' ? 'wss' : 'ws') + " https://qlqqpeisizzmugpubzmk.supabase.co",
-      "frame-src https://accounts.google.com",
+      "frame-src https://accounts.google.com https://www.youtube-nocookie.com https://www.youtube.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

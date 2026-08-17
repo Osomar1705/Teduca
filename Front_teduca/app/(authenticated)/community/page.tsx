@@ -8,8 +8,6 @@ import {
   MoreHorizontal, MapPin, ExternalLink, Calendar, Users,
   Zap, BookOpen, Briefcase, Globe, Award, Lightbulb, Rocket,
   X, Link as LinkIcon, Send, GitFork, Link2, Loader2,
-  Play, Eye, Filter,
-  FlaskConical, Code2, Languages, Cpu, TrendingUp,
   UserPlus, CheckCircle2,
   Sparkles, ArrowRight,
 } from 'lucide-react'
@@ -23,13 +21,11 @@ import { fetchPosts, createPost, toggleLike, toggleSave, type ApiPost } from '@/
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
-type Tab = 'feed' | 'para-ti' | 'videos' | 'networking'
+type Tab = 'feed' | 'para-ti' | 'networking'
 
 type Category =
   | 'todo' | 'hackathons' | 'becas' | 'trabajo' | 'eventos'
   | 'cursos' | 'investigacion' | 'programas' | 'networking' | 'noticias'
-
-type VideoCategory = 'todo' | 'programacion' | 'ia' | 'matematicas' | 'fisica' | 'idiomas' | 'productividad' | 'entrevistas' | 'hackathons' | 'investigacion'
 
 interface Post {
   id: string
@@ -62,20 +58,6 @@ interface Person {
   open_to: ('mentoria' | 'proyectos' | 'trabajo')[]
 }
 
-interface VideoItem {
-  id: string
-  title: string
-  author: { name: string; username: string; university: string }
-  duration: string
-  thumbnail: string
-  category: VideoCategory
-  likes: number
-  comments: number
-  saves: number
-  views: string
-  timeAgo: string
-}
-
 // ── Constantes ─────────────────────────────────────────────────────────────
 
 const CATEGORIES: { key: Category; label: string; icon: React.ElementType }[] = [
@@ -89,19 +71,6 @@ const CATEGORIES: { key: Category; label: string; icon: React.ElementType }[] = 
   { key: 'programas',     label: 'Programas',     icon: Globe      },
   { key: 'networking',    label: 'Networking',    icon: Users      },
   { key: 'noticias',      label: 'Noticias',      icon: Rocket     },
-]
-
-const VIDEO_CATEGORIES: { key: VideoCategory; label: string; icon: React.ElementType }[] = [
-  { key: 'todo',         label: 'Todo',          icon: Globe       },
-  { key: 'programacion', label: 'Programación',  icon: Code2       },
-  { key: 'ia',           label: 'IA',            icon: Cpu         },
-  { key: 'matematicas',  label: 'Matemáticas',   icon: FlaskConical },
-  { key: 'fisica',       label: 'Física',        icon: Zap         },
-  { key: 'idiomas',      label: 'Idiomas',       icon: Languages   },
-  { key: 'productividad',label: 'Productividad', icon: TrendingUp  },
-  { key: 'entrevistas',  label: 'Entrevistas',   icon: Briefcase   },
-  { key: 'hackathons',   label: 'Hackathons',    icon: Award       },
-  { key: 'investigacion',label: 'Investigación', icon: FlaskConical },
 ]
 
 const FEED_TRENDS = [
@@ -226,7 +195,7 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
             {showLink && (
               <div className="flex items-center gap-2">
                 <LinkIcon className="size-4 shrink-0 text-muted-foreground" />
-                <Input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://enlace-externo.com" />
+                <Input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://youtube.com/watch?v=... o enlace externo" />
               </div>
             )}
 
@@ -239,7 +208,7 @@ function CreatePostModal({ onClose, onPublish }: { onClose: () => void; onPublis
             <button type="button" onClick={() => setShowLink((p) => !p)} aria-pressed={showLink}
               className={cn('flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors',
                 showLink ? 'text-primary bg-primary/8' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
-              <LinkIcon className="size-3.5" /> Enlace
+              <LinkIcon className="size-3.5" /> Video / Enlace
             </button>
             {isUploading && <span className="flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="size-3 animate-spin" /> Subiendo…</span>}
             {hasError && !isUploading && <span className="text-xs text-destructive">Algunas imágenes fallaron</span>}
@@ -271,6 +240,36 @@ function CategoryBadge({ category }: { category: Category }) {
   )
 }
 
+// ── Helpers de video ───────────────────────────────────────────────────────
+
+function getYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url.startsWith('http') ? url : `https://${url}`)
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0]
+    if (u.hostname.includes('youtube.com')) return u.searchParams.get('v')
+    return null
+  } catch { return null }
+}
+
+function VideoEmbed({ link }: { link: string }) {
+  const ytId = getYouTubeId(link)
+  if (ytId) {
+    return (
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted">
+        <iframe
+          src={`https://www.youtube-nocookie.com/embed/${ytId}`}
+          title="YouTube video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="absolute inset-0 h-full w-full border-0"
+          loading="lazy"
+        />
+      </div>
+    )
+  }
+  return null
+}
+
 // ── PostCard ───────────────────────────────────────────────────────────────
 
 function PostCard({ post }: { post: Post }) {
@@ -293,10 +292,13 @@ function PostCard({ post }: { post: Post }) {
     try { const res = await toggleSave(post.id); setSaved(res.saved); setSaves(res.saves_count) } catch {}
   }
 
+  const isVideoLink = post.link ? !!getYouTubeId(post.link) : false
+
   return (
     <article className="group overflow-hidden rounded-2xl border border-border bg-card shadow-xs transition-all duration-200 hover:border-border/80 hover:shadow-md">
+      {post.link && isVideoLink && <div className="p-4 pb-0"><VideoEmbed link={post.link} /></div>}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      {post.image && <img src={post.image} alt="" className="aspect-video w-full object-cover" />}
+      {post.image && !isVideoLink && <img src={post.image} alt="" className="aspect-video w-full object-cover" />}
       <div className="p-5">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
@@ -319,11 +321,11 @@ function PostCard({ post }: { post: Post }) {
         <p className={cn('text-sm leading-relaxed text-muted-foreground', !expanded && isLong && 'line-clamp-3')}>{post.content}</p>
         {isLong && <button onClick={() => setExp((p) => !p)} className="mt-1 text-xs font-medium text-primary hover:underline">{expanded ? 'Ver menos' : 'Ver más'}</button>}
 
-        {(post.deadline || post.location || post.link) && (
+        {(post.deadline || post.location || (post.link && !isVideoLink)) && (
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 rounded-xl bg-muted/50 px-3 py-2">
             {post.deadline && <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><Calendar className="size-3" />{post.deadline}</span>}
             {post.location && <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><MapPin className="size-3" />{post.location}</span>}
-            {post.link && <a href={`https://${post.link}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-primary hover:underline"><ExternalLink className="size-3" />{post.link}</a>}
+            {post.link && !isVideoLink && <a href={`https://${post.link}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-primary hover:underline"><ExternalLink className="size-3" />{post.link}</a>}
           </div>
         )}
 
@@ -348,70 +350,6 @@ function PostCard({ post }: { post: Post }) {
           <button className="ml-auto flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
             <Share2 className="size-3.5" />Compartir
           </button>
-        </div>
-      </div>
-    </article>
-  )
-}
-
-// ── VideoCard ──────────────────────────────────────────────────────────────
-
-function VideoCard({ video }: { video: VideoItem }) {
-  const [liked, setLiked]   = useState(false)
-  const [saved, setSaved]   = useState(false)
-  const [likes, setLikes]   = useState(video.likes)
-  const [saves, setSaves]   = useState(video.saves)
-  const [following, setFollowing] = useState(false)
-
-  return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xs transition-all duration-200 hover:border-border/80 hover:shadow-md hover:-translate-y-0.5">
-      {/* Thumbnail */}
-      <div className="relative aspect-video overflow-hidden bg-muted">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={video.thumbnail} alt={video.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          <div className="flex size-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
-            <Play className="size-5 fill-black text-black" />
-          </div>
-        </div>
-        <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[11px] font-medium text-white">
-          {video.duration}
-        </span>
-      </div>
-
-      {/* Content */}
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="mb-2 text-sm font-semibold leading-snug text-foreground line-clamp-2">{video.title}</h3>
-
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="truncate text-xs font-medium text-foreground">{video.author.name}</p>
-            <p className="truncate text-[11px] text-muted-foreground">{video.author.university}</p>
-          </div>
-          <button
-            onClick={() => setFollowing((p) => !p)}
-            className={cn('shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
-              following ? 'border-primary/20 bg-primary/8 text-primary' : 'border-border text-muted-foreground hover:border-primary/30 hover:text-primary')}
-          >
-            {following ? '✓ Siguiendo' : 'Seguir'}
-          </button>
-        </div>
-
-        <div className="mt-auto flex items-center gap-0.5 border-t border-border/60 pt-3">
-          <button onClick={() => { setLiked(p => !p); setLikes(p => liked ? p - 1 : p + 1) }}
-            className={cn('flex items-center gap-1 rounded-xl px-2 py-1.5 text-[11px] font-medium transition-colors', liked ? 'text-rose-500' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
-            <Heart className={cn('size-3', liked && 'fill-current')} />{likes >= 1000 ? `${(likes/1000).toFixed(1)}k` : likes}
-          </button>
-          <button className="flex items-center gap-1 rounded-xl px-2 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-            <MessageCircle className="size-3" />{video.comments}
-          </button>
-          <button onClick={() => { setSaved(p => !p); setSaves(p => saved ? p - 1 : p + 1) }}
-            className={cn('flex items-center gap-1 rounded-xl px-2 py-1.5 text-[11px] font-medium transition-colors', saved ? 'text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>
-            <Bookmark className={cn('size-3', saved && 'fill-current')} />{saves}
-          </button>
-          <div className="ml-auto flex items-center gap-1 text-[11px] text-muted-foreground">
-            <Eye className="size-3" />{video.views}
-          </div>
         </div>
       </div>
     </article>
@@ -507,14 +445,12 @@ function apiToPost(a: ApiPost): Post {
 const COMMUNITY_TABS: { key: Tab; label: string }[] = [
   { key: 'feed',       label: 'Feed'       },
   { key: 'para-ti',    label: 'Para Ti'    },
-  { key: 'videos',     label: 'Videos'     },
   { key: 'networking', label: 'Networking' },
 ]
 
 export default function CommunityPage() {
   const [activeTab, setActiveTab]           = useState<Tab>('feed')
   const [activeCategory, setActiveCategory] = useState<Category>('todo')
-  const [videoCategory, setVideoCategory]   = useState<VideoCategory>('todo')
   const [search, setSearch]                 = useState('')
   const [netSearch, setNetSearch]           = useState('')
   const [showModal, setShowModal]           = useState(false)
@@ -547,7 +483,6 @@ export default function CommunityPage() {
   }, [activeCategory, search, loadPosts])
 
   const filteredPosts  = posts
-  const filteredVideos: VideoItem[] = []
   const filteredPeople: Person[] = []
 
   return (
@@ -695,50 +630,6 @@ export default function CommunityPage() {
                 {filteredPosts.slice(0, 3).map((post) => (<PostCard key={post.id} post={post} />))}
               </div>
             </section>
-          </motion.div>
-        )}
-
-        {/* ── VIDEOS ── */}
-        {activeTab === 'videos' && (
-          <motion.div key="videos" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="space-y-5">
-
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-base font-semibold text-foreground">Biblioteca de videos educativos</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">Contenido corto creado por estudiantes y profesores.</p>
-              </div>
-              <button className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                <Filter className="size-3" /> Filtrar
-              </button>
-            </div>
-
-            {/* Filtros de categoría */}
-            <div className="flex gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none]">
-              {VIDEO_CATEGORIES.map(({ key, label, icon: Icon }) => (
-                <button key={key} type="button" onClick={() => setVideoCategory(key)} aria-pressed={videoCategory === key}
-                  className={cn('flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all',
-                    videoCategory === key ? 'border-primary bg-primary text-primary-foreground shadow-xs' : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground')}>
-                  <Icon className="size-3" />{label}
-                </button>
-              ))}
-            </div>
-
-            {/* Grid de videos */}
-            <AnimatePresence mode="wait">
-              <motion.div key={videoCategory} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>
-                {filteredVideos.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-muted"><Play className="size-5 text-muted-foreground" /></div>
-                    <p className="text-sm font-medium text-foreground">Sin videos en esta categoría</p>
-                    <p className="text-xs text-muted-foreground">Pronto habrá más contenido</p>
-                  </div>
-                ) : (
-                  <Stagger className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {filteredVideos.map((v) => (<StaggerItem key={v.id}><VideoCard video={v} /></StaggerItem>))}
-                  </Stagger>
-                )}
-              </motion.div>
-            </AnimatePresence>
           </motion.div>
         )}
 
