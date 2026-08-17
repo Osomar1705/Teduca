@@ -136,6 +136,7 @@ class Reservation(UUIDMixin, TimestampMixin, Base):
     currency: Mapped[str] = mapped_column(String(8), default="USD", nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False, index=True)
 
+    student: Mapped[User] = relationship(foreign_keys=[user_id], lazy="joined")
     teacher: Mapped[TeacherProfile] = relationship(lazy="joined")
     course: Mapped["MarketplaceCourse | None"] = relationship(lazy="joined")
 
@@ -150,6 +151,10 @@ class Reservation(UUIDMixin, TimestampMixin, Base):
     @property
     def course_title(self) -> str | None:
         return self.course.title if self.course else None
+
+    @property
+    def student_name(self) -> str:
+        return self.student.name
 
 
 class ChatThread(UUIDMixin, TimestampMixin, Base):

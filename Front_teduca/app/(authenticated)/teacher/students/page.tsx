@@ -6,45 +6,44 @@ import { useEffect, useState } from 'react'
 import { Search, MoreHorizontal, Mail, MessageCircle, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
 import { cn } from '@/lib/utils'
-import { getReservations } from '@/lib/edtech/service'
+import { getTeacherReservations } from '@/lib/edtech/service'
 import type { Reservation } from '@/lib/edtech/types'
 
 type Filter = 'todos' | 'activos' | 'inactivos' | 'nuevos'
 
-// Derivamos "estudiantes" a partir de reservas reales del profesor
 interface StudentRow {
   id: string
   name: string
-  username: string
   course: string
   sessions: number
-  progress: number
-  rating: number | null
   lastSeen: string
   status: 'activo' | 'inactivo' | 'nuevo'
   trend: 'up' | 'down' | 'flat'
 }
 
+// Agrupa reservas recibidas por nombre de alumno
 function reservationsToStudents(reservations: Reservation[]): StudentRow[] {
   const map = new Map<string, StudentRow>()
   for (const r of reservations) {
-    const key = r.teacherId + (r.courseTitle ?? '')
+    const studentName = r.studentName || 'Alumno'
+    const key = studentName + (r.courseTitle ?? '')
     if (!map.has(key)) {
       map.set(key, {
         id: r.id,
-        name: r.teacherName,
-        username: r.teacherName.toLowerCase().replace(/\s+/g, '_'),
-        course: r.courseTitle ?? r.modality,
+        name: studentName,
+        course: r.courseTitle ?? (r.modality === 'virtual' ? 'Virtual' : 'Presencial'),
         sessions: 0,
-        progress: 0,
-        rating: null,
-        lastSeen: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '–',
-        status: r.status === 'confirmed' ? 'activo' : r.status === 'pending' ? 'nuevo' : 'inactivo',
+        lastSeen: r.createdAt ? new Date(r.createdAt).toLocaleDateString('es-PE') : '–',
+        status: r.status === 'confirmed' || r.status === 'completed' ? 'activo' : r.status === 'pending' ? 'nuevo' : 'inactivo',
         trend: r.status === 'confirmed' ? 'up' : 'flat',
       })
     }
     const entry = map.get(key)!
     entry.sessions += 1
+    // Actualizar lastSeen al más reciente
+    if (r.createdAt && new Date(r.createdAt) > new Date(entry.lastSeen || 0)) {
+      entry.lastSeen = new Date(r.createdAt).toLocaleDateString('es-PE')
+    }
   }
   return Array.from(map.values())
 }
@@ -86,7 +85,7 @@ export default function StudentsPage() {
     if (!isAllowed) return
     async function load() {
       try {
-        const reservations = await getReservations()
+        const reservations = await getTeacherReservations()
         setStudents(reservationsToStudents(reservations))
       } catch {
         // mantener vacío
@@ -171,8 +170,6 @@ export default function StudentsPage() {
                   <div>
                     <p className="text-sm font-medium text-foreground">{s.name}</p>
                     <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                      <span>@{s.username}</span>
-                      <span>·</span>
                       <span>{s.lastSeen}</span>
                     </div>
                   </div>
@@ -185,7 +182,7 @@ export default function StudentsPage() {
                   <TrendIcon trend={s.trend} />
                 </div>
                 {/* Progreso */}
-                <ProgressBar value={s.progress} />
+                <ProgressBar value={Math.min(100, s.sessions * 20)} />
                 {/* Estado */}
                 <span className={cn('inline-flex w-fit rounded-full px-2 py-0.5 text-[11px] font-medium capitalize', STATUS_STYLE[s.status])}>
                   {s.status}

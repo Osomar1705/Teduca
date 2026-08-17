@@ -66,6 +66,8 @@ interface ApiTeacher {
 
 interface ApiReservation {
   id: string
+  user_id: string
+  student_name: string
   teacher_profile_id: string
   teacher_name: string
   teacher_avatar: string | null
@@ -144,6 +146,8 @@ function toTeacher(t: ApiTeacher): TeacherProfile {
 function toReservation(r: ApiReservation): Reservation {
   return {
     id: r.id,
+    userId: r.user_id,
+    studentName: r.student_name || '',
     teacherId: r.teacher_profile_id,
     teacherName: r.teacher_name,
     teacherAvatar: r.teacher_avatar || FALLBACK_AVATAR,
@@ -318,7 +322,7 @@ export async function getReservations(): Promise<Reservation[]> {
 }
 
 export async function createReservation(
-  input: Omit<Reservation, 'id' | 'status' | 'createdAt'>
+  input: Omit<Reservation, 'id' | 'status' | 'createdAt' | 'userId' | 'studentName'>
 ): Promise<Reservation> {
   const reservation = await apiClient.post<ApiReservation>(`${BASE}/reservations`, {
     teacher_profile_id: input.teacherId,

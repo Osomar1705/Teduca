@@ -129,6 +129,8 @@ class ReservationRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+    user_id: uuid.UUID
+    student_name: str = ""
     teacher_profile_id: uuid.UUID
     teacher_name: str
     teacher_avatar: str | None = None

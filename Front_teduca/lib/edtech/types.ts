@@ -78,12 +78,14 @@ export type ReservationStatus =
 
 export interface Reservation {
   id: string
+  userId: string
+  studentName: string
   teacherId: string
   teacherName: string
   teacherAvatar: string
   courseId?: string
   courseTitle?: string
-  date: string // ISO date
+  date: string // ISO date "YYYY-MM-DD"
   time: string // "18:00"
   modality: Modality
   price: number
