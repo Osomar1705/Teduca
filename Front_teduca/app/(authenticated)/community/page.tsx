@@ -9,7 +9,7 @@ import {
   Zap, BookOpen, Briefcase, Globe, Award, Lightbulb, Rocket,
   X, Link as LinkIcon, Send, GitFork, Link2, Loader2,
   UserPlus, CheckCircle2,
-  Sparkles, ArrowRight,
+  ArrowRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -524,11 +524,6 @@ export default function CommunityPage() {
               )}
               <span className={cn('relative', activeTab === t.key ? 'text-primary' : 'text-muted-foreground hover:text-foreground')}>
                 {t.label}
-                {t.key === 'para-ti' && (
-                  <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-full bg-primary/15 px-1.5 py-px text-[9px] font-semibold text-primary">
-                    <Sparkles className="size-2" /> IA
-                  </span>
-                )}
               </span>
             </button>
           ))}
@@ -600,13 +595,6 @@ export default function CommunityPage() {
         {activeTab === 'para-ti' && (
           <motion.div key="para-ti" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="space-y-6">
 
-            {/* Header personalizado */}
-            <div className="flex items-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
-              <Sparkles className="size-4 text-primary shrink-0" />
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Recomendado especialmente para ti</span> según tu actividad en TEDUCA.
-              </p>
-            </div>
 
             {/* Descubrir profesores */}
             <section>
