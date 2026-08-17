@@ -1,1 +1,20 @@
 .vercel
+
+# Secretos — nunca versionar
+.env
+.env.local
+.env.production
+.env.*.local
+Backend_teduca/.env
+Front_teduca/.env.local
+
+# Dependencias y builds
+node_modules/
+.next/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+dist/
+build/

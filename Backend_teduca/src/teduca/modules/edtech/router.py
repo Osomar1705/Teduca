@@ -128,7 +128,7 @@ async def toggle_favorite(
     return {"is_favorite": await EdtechService(session).toggle_favorite(current_user, teacher_id)}
 
 
-# --- Reservas ------------------------------------------------------------
+# --- Reservas (alumno) ---------------------------------------------------
 @router.get("/reservations", response_model=list[ReservationRead])
 async def list_reservations(
     current_user: CurrentUser, session: DbSession
@@ -152,6 +152,43 @@ async def cancel_reservation(
     reservation_id: uuid.UUID, current_user: CurrentUser, session: DbSession
 ) -> ReservationRead:
     reservation = await EdtechService(session).cancel_reservation(current_user, reservation_id)
+    return ReservationRead.model_validate(reservation)
+
+
+# --- Reservas (profesor) -------------------------------------------------
+@router.get("/me/reservations", response_model=list[ReservationRead])
+async def list_my_reservations_as_teacher(
+    current_user: TeacherUser, session: DbSession
+) -> list[ReservationRead]:
+    """Lista todas las reservas recibidas por el profesor autenticado."""
+    items = await EdtechService(session).list_teacher_reservations(current_user)
+    return [ReservationRead.model_validate(r) for r in items]
+
+
+@router.post("/me/reservations/{reservation_id}/confirm", response_model=ReservationRead)
+async def confirm_reservation(
+    reservation_id: uuid.UUID, current_user: TeacherUser, session: DbSession
+) -> ReservationRead:
+    """El profesor confirma una reserva pendiente."""
+    reservation = await EdtechService(session).confirm_reservation(current_user, reservation_id)
+    return ReservationRead.model_validate(reservation)
+
+
+@router.post("/me/reservations/{reservation_id}/complete", response_model=ReservationRead)
+async def complete_reservation(
+    reservation_id: uuid.UUID, current_user: TeacherUser, session: DbSession
+) -> ReservationRead:
+    """El profesor marca una reserva como completada."""
+    reservation = await EdtechService(session).complete_reservation(current_user, reservation_id)
+    return ReservationRead.model_validate(reservation)
+
+
+@router.post("/me/reservations/{reservation_id}/cancel", response_model=ReservationRead)
+async def cancel_reservation_as_teacher(
+    reservation_id: uuid.UUID, current_user: TeacherUser, session: DbSession
+) -> ReservationRead:
+    """El profesor cancela una reserva de su agenda."""
+    reservation = await EdtechService(session).cancel_reservation_as_teacher(current_user, reservation_id)
     return ReservationRead.model_validate(reservation)
 
 

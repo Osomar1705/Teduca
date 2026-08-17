@@ -336,6 +336,28 @@ export async function cancelReservation(id: string): Promise<void> {
   await apiClient.post(`${BASE}/reservations/${id}/cancel`)
 }
 
+// --- Reservas del profesor -----------------------------------------------
+
+export async function getTeacherReservations(): Promise<Reservation[]> {
+  const reservations = await apiClient.get<ApiReservation[]>(`${BASE}/me/reservations`)
+  return reservations.map(toReservation)
+}
+
+export async function confirmReservation(id: string): Promise<Reservation> {
+  const r = await apiClient.post<ApiReservation>(`${BASE}/me/reservations/${id}/confirm`)
+  return toReservation(r)
+}
+
+export async function completeReservation(id: string): Promise<Reservation> {
+  const r = await apiClient.post<ApiReservation>(`${BASE}/me/reservations/${id}/complete`)
+  return toReservation(r)
+}
+
+export async function cancelReservationAsTeacher(id: string): Promise<Reservation> {
+  const r = await apiClient.post<ApiReservation>(`${BASE}/me/reservations/${id}/cancel`)
+  return toReservation(r)
+}
+
 // --- Chat (habilitado tras un match) -------------------------------------
 export async function getChatThreads(): Promise<ChatThread[]> {
   const threads = await apiClient.get<ApiThread[]>(`${BASE}/chat/threads`)

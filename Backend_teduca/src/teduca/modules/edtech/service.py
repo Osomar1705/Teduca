@@ -152,7 +152,22 @@ class EdtechService:
         return await self.repo.list_reservations(user.id)
 
     async def create_reservation(self, user: User, data: ReservationCreate) -> Reservation:
-        await self.get_teacher_or_404(data.teacher_profile_id)
+        from teduca.core.exceptions import BadRequestError
+
+        # Validar que la fecha no sea en el pasado.
+        today = datetime.now(UTC).date().isoformat()
+        if data.date < today:
+            raise BadRequestError("No se puede reservar en una fecha pasada.")
+
+        teacher = await self.get_teacher_or_404(data.teacher_profile_id)
+
+        # Validar que el slot no esté ya ocupado por otra reserva activa del mismo profesor.
+        conflict = await self.repo.get_conflicting_reservation(
+            data.teacher_profile_id, data.date, data.time
+        )
+        if conflict is not None:
+            raise BadRequestError("Este horario ya está reservado. Elige otro.")
+
         reservation = Reservation(
             user_id=user.id,
             teacher_profile_id=data.teacher_profile_id,
@@ -188,10 +203,60 @@ class EdtechService:
         reservation = await self.repo.get_reservation(reservation_id)
         if reservation is None or reservation.user_id != user.id:
             raise NotFoundError("Reserva no encontrada.")
+        if reservation.status == "cancelled":
+            from teduca.core.exceptions import BadRequestError
+            raise BadRequestError("La reserva ya está cancelada.")
         reservation.status = "cancelled"
         await self.session.flush()
         await self.session.refresh(reservation)
         return reservation
+
+    async def confirm_reservation(self, teacher: User, reservation_id: uuid.UUID) -> Reservation:
+        """El profesor confirma una reserva pendiente."""
+        profile = await self.get_or_create_my_profile(teacher)
+        reservation = await self.repo.get_reservation(reservation_id)
+        if reservation is None or reservation.teacher_profile_id != profile.id:
+            raise NotFoundError("Reserva no encontrada.")
+        if reservation.status != "pending":
+            from teduca.core.exceptions import BadRequestError
+            raise BadRequestError(f"Solo se pueden confirmar reservas pendientes (estado actual: {reservation.status}).")
+        reservation.status = "confirmed"
+        await self.session.flush()
+        await self.session.refresh(reservation)
+        return reservation
+
+    async def complete_reservation(self, teacher: User, reservation_id: uuid.UUID) -> Reservation:
+        """El profesor marca una reserva confirmada como completada."""
+        profile = await self.get_or_create_my_profile(teacher)
+        reservation = await self.repo.get_reservation(reservation_id)
+        if reservation is None or reservation.teacher_profile_id != profile.id:
+            raise NotFoundError("Reserva no encontrada.")
+        if reservation.status != "confirmed":
+            from teduca.core.exceptions import BadRequestError
+            raise BadRequestError("Solo se pueden completar reservas confirmadas.")
+        reservation.status = "completed"
+        await self.session.flush()
+        await self.session.refresh(reservation)
+        return reservation
+
+    async def cancel_reservation_as_teacher(self, teacher: User, reservation_id: uuid.UUID) -> Reservation:
+        """El profesor cancela una reserva de su agenda."""
+        profile = await self.get_or_create_my_profile(teacher)
+        reservation = await self.repo.get_reservation(reservation_id)
+        if reservation is None or reservation.teacher_profile_id != profile.id:
+            raise NotFoundError("Reserva no encontrada.")
+        if reservation.status in ("cancelled", "completed"):
+            from teduca.core.exceptions import BadRequestError
+            raise BadRequestError(f"No se puede cancelar una reserva en estado '{reservation.status}'.")
+        reservation.status = "cancelled"
+        await self.session.flush()
+        await self.session.refresh(reservation)
+        return reservation
+
+    async def list_teacher_reservations(self, teacher: User) -> list[Reservation]:
+        """Lista todas las reservas recibidas por el profesor."""
+        profile = await self.get_or_create_my_profile(teacher)
+        return await self.repo.list_reservations_for_teacher(profile.id)
 
     # --- Chat -------------------------------------------------------------
     async def _ensure_thread(

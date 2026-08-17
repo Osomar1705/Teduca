@@ -1,10 +1,11 @@
 """Schemas del dominio marketplace (EdTech)."""
 
+import re
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 Modality = Literal["virtual", "in-person", "both"]
 CourseLevel = Literal["beginner", "intermediate", "advanced"]
@@ -108,6 +109,20 @@ class ReservationCreate(BaseModel):
     modality: Modality = "virtual"
     price: float = Field(default=0, ge=0)
     currency: str = "USD"
+
+    @field_validator("date")
+    @classmethod
+    def validate_date_format(cls, v: str) -> str:
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", v):
+            raise ValueError("La fecha debe tener el formato YYYY-MM-DD.")
+        return v
+
+    @field_validator("time")
+    @classmethod
+    def validate_time_format(cls, v: str) -> str:
+        if not re.fullmatch(r"\d{2}:\d{2}", v):
+            raise ValueError("La hora debe tener el formato HH:MM.")
+        return v
 
 
 class ReservationRead(BaseModel):

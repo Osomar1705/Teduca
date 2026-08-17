@@ -1,16 +1,29 @@
 'use client'
 
 import { useTeacherGuard } from '@/lib/hooks/useTeacherGuard'
-
-import { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Clock, User, Video, MapPin } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { ChevronLeft, ChevronRight, Clock, User, Video, MapPin, Check, X, Loader2, Link } from 'lucide-react'
 import { FadeIn, Stagger, StaggerItem } from '@/components/common/Motion'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { getReservations } from '@/lib/edtech/service'
-import type { Reservation } from '@/lib/edtech/types'
+import {
+  getTeacherReservations,
+  confirmReservation,
+  completeReservation,
+  cancelReservationAsTeacher,
+} from '@/lib/edtech/service'
+import type { Reservation, ReservationStatus } from '@/lib/edtech/types'
+import { APP_ROUTES } from '@/lib/constants'
 
 const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+
+const STATUS_BADGE: Record<ReservationStatus, { label: string; variant: 'warning' | 'success' | 'info' | 'secondary' }> = {
+  pending:   { label: 'Pendiente',   variant: 'warning' },
+  confirmed: { label: 'Confirmada',  variant: 'success' },
+  completed: { label: 'Completada',  variant: 'info' },
+  cancelled: { label: 'Cancelada',   variant: 'secondary' },
+}
 
 function buildCalendar(year: number, month: number) {
   const firstDay = new Date(year, month, 1).getDay()
@@ -25,60 +38,83 @@ function buildCalendar(year: number, month: number) {
 export default function TeacherCalendarPage() {
   const { isAllowed } = useTeacherGuard()
   const today = new Date()
-  const [year, setYear]     = useState(today.getFullYear())
-  const [month, setMonth]   = useState(today.getMonth())
+  const [year, setYear]         = useState(today.getFullYear())
+  const [month, setMonth]       = useState(today.getMonth())
   const [selected, setSelected] = useState<number | null>(today.getDate())
   const [reservations, setReservations] = useState<Reservation[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [acting, setActing]     = useState<string | null>(null)
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!isAllowed) return
-    getReservations().then(setReservations).catch(() => {})
+    setLoading(true)
+    getTeacherReservations()
+      .then(setReservations)
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [isAllowed])
+
+  useEffect(() => { load() }, [load])
 
   const calendar = buildCalendar(year, month)
 
-  // Filtra reservas del mes/año actual y del día seleccionado
   const sessionsForDay = reservations.filter((r) => {
     if (!r.date) return false
-    const d = new Date(r.date)
-    return d.getFullYear() === year && d.getMonth() === month && d.getDate() === selected
+    const [y, m, d] = r.date.split('-').map(Number)
+    return y === year && m - 1 === month && d === selected
   })
 
-  // Días del mes actual con reservas (para marcar en el calendario)
   const daysWithSessions = new Set(
     reservations
       .filter((r) => {
         if (!r.date) return false
-        const d = new Date(r.date)
-        return d.getFullYear() === year && d.getMonth() === month
+        const [y, m] = r.date.split('-').map(Number)
+        return y === year && m - 1 === month
       })
-      .map((r) => new Date(r.date).getDate())
+      .map((r) => Number(r.date.split('-')[2]))
   )
 
   function prevMonth() { if (month === 0) { setMonth(11); setYear(y => y - 1) } else setMonth(m => m - 1) }
   function nextMonth() { if (month === 11) { setMonth(0); setYear(y => y + 1) } else setMonth(m => m + 1) }
 
+  async function handleAction(action: 'confirm' | 'complete' | 'cancel', id: string) {
+    setActing(id + action)
+    try {
+      let updated: Reservation
+      if (action === 'confirm') updated = await confirmReservation(id)
+      else if (action === 'complete') updated = await completeReservation(id)
+      else updated = await cancelReservationAsTeacher(id)
+      setReservations(prev => prev.map(r => r.id === id ? updated : r))
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Error al actualizar la reserva.')
+    } finally {
+      setActing(null)
+    }
+  }
+
   if (!isAllowed) return null
+
   return (
     <div className="mx-auto max-w-5xl space-y-5">
       <FadeIn>
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Agenda</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">Gestiona tu disponibilidad y sesiones</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">Gestiona tus reservas y sesiones</p>
           </div>
-          <button className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90">
-            <Plus className="size-3.5" /> Nueva sesión
-          </button>
+          <a
+            href={APP_ROUTES.TEACHER_PROFILE}
+            className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Link className="size-3.5" /> Editar disponibilidad
+          </a>
         </div>
       </FadeIn>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
-        {/* Columna izquierda */}
+        {/* Calendario */}
         <div className="space-y-4">
-          {/* Calendario */}
           <div className="rounded-xl border border-border bg-card p-4">
-            {/* Header mes */}
             <div className="mb-4 flex items-center justify-between">
               <button onClick={prevMonth} className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                 <ChevronLeft className="size-4" />
@@ -89,14 +125,12 @@ export default function TeacherCalendarPage() {
               </button>
             </div>
 
-            {/* Días de semana */}
             <div className="mb-1 grid grid-cols-7 text-center">
               {DAYS.map((d) => (
                 <div key={d} className="py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{d}</div>
               ))}
             </div>
 
-            {/* Días */}
             <div className="grid grid-cols-7 gap-0.5">
               {calendar.map((day, i) => {
                 if (!day) return <div key={i} />
@@ -126,78 +160,161 @@ export default function TeacherCalendarPage() {
             </div>
           </div>
 
-          {/* Sesiones del día seleccionado */}
+          {/* Sesiones del día */}
           {selected && (
             <div className="rounded-xl border border-border bg-card">
               <div className="border-b border-border/60 px-5 py-3">
                 <h3 className="text-sm font-semibold text-foreground">
-                  {sessionsForDay.length > 0
-                    ? `${sessionsForDay.length} sesión${sessionsForDay.length > 1 ? 'es' : ''} · día ${selected}`
-                    : `Sin sesiones · día ${selected}`}
+                  {loading
+                    ? 'Cargando…'
+                    : sessionsForDay.length > 0
+                      ? `${sessionsForDay.length} reserva${sessionsForDay.length > 1 ? 's' : ''} · ${MONTHS[month]} ${selected}`
+                      : `Sin reservas · ${MONTHS[month]} ${selected}`}
                 </h3>
               </div>
-              {sessionsForDay.length > 0 ? (
+              {loading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : sessionsForDay.length > 0 ? (
                 <Stagger className="divide-y divide-border/60">
-                  {sessionsForDay.map((r) => (
-                    <StaggerItem key={r.id}>
-                      <div className="flex items-center gap-3 px-5 py-3.5">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/8">
-                          <Clock className="size-4 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-foreground">{r.time}</p>
+                  {sessionsForDay.map((r) => {
+                    const s = STATUS_BADGE[r.status]
+                    const busy = acting !== null
+                    return (
+                      <StaggerItem key={r.id}>
+                        <div className="flex flex-col gap-3 px-5 py-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-foreground">{r.teacherName}</p>
+                                <Badge variant={s.variant}>{s.label}</Badge>
+                              </div>
+                              {r.courseTitle && (
+                                <p className="text-xs text-muted-foreground">{r.courseTitle}</p>
+                              )}
+                              <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="size-3" />{r.time}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  {r.modality === 'virtual'
+                                    ? <Video className="size-3" />
+                                    : <MapPin className="size-3" />}
+                                  {r.modality === 'virtual' ? 'Virtual' : 'Presencial'}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-xs text-muted-foreground">{r.courseTitle ?? r.modality}</p>
+
+                          {/* Acciones del profesor */}
+                          {r.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleAction('confirm', r.id)}
+                                disabled={busy}
+                                className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-500/20 disabled:opacity-50 dark:text-emerald-400"
+                              >
+                                {acting === r.id + 'confirm' ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+                                Confirmar
+                              </button>
+                              <button
+                                onClick={() => handleAction('cancel', r.id)}
+                                disabled={busy}
+                                className="flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-50"
+                              >
+                                {acting === r.id + 'cancel' ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3" />}
+                                Rechazar
+                              </button>
+                            </div>
+                          )}
+                          {r.status === 'confirmed' && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleAction('complete', r.id)}
+                                disabled={busy}
+                                className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
+                              >
+                                {acting === r.id + 'complete' ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+                                Marcar completada
+                              </button>
+                              <button
+                                onClick={() => handleAction('cancel', r.id)}
+                                disabled={busy}
+                                className="flex items-center gap-1.5 rounded-lg bg-destructive/10 px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-50"
+                              >
+                                {acting === r.id + 'cancel' ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3" />}
+                                Cancelar
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <User className="size-3" />{r.teacherName.split(' ')[0]}
-                          </div>
-                          <span className={cn(
-                            'flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium',
-                            r.modality === 'virtual' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          )}>
-                            {r.modality === 'virtual' ? <Video className="size-2.5" /> : <MapPin className="size-2.5" />}
-                            {r.modality}
-                          </span>
-                        </div>
-                      </div>
-                    </StaggerItem>
-                  ))}
+                      </StaggerItem>
+                    )
+                  })}
                 </Stagger>
               ) : (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <p className="text-sm text-muted-foreground">Día libre</p>
-                  <button className="mt-3 flex items-center gap-1.5 rounded-xl bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/12">
-                    <Plus className="size-3.5" /> Agendar sesión
-                  </button>
+                  <p className="text-sm text-muted-foreground">Sin reservas para este día</p>
                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* Columna derecha: disponibilidad */}
+        {/* Columna derecha */}
         <div className="space-y-4">
           <div className="rounded-xl border border-border bg-card p-4">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">Mi disponibilidad</h3>
-            <p className="text-xs text-muted-foreground">
-              Configura tu disponibilidad desde tu perfil de profesor.
-            </p>
-            <button className="mt-4 w-full rounded-xl border border-dashed border-border py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary">
-              Editar disponibilidad
-            </button>
+            <h3 className="mb-2 text-sm font-semibold text-foreground">Resumen del mes</h3>
+            {loading ? (
+              <div className="space-y-2">
+                <div className="h-4 w-full animate-pulse rounded bg-muted" />
+                <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+              </div>
+            ) : (
+              <div className="space-y-2 text-xs text-muted-foreground">
+                <div className="flex justify-between">
+                  <span>Pendientes</span>
+                  <span className="font-medium text-foreground">
+                    {reservations.filter(r => {
+                      const [y, m] = r.date.split('-').map(Number)
+                      return r.status === 'pending' && y === year && m - 1 === month
+                    }).length}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Confirmadas</span>
+                  <span className="font-medium text-foreground">
+                    {reservations.filter(r => {
+                      const [y, m] = r.date.split('-').map(Number)
+                      return r.status === 'confirmed' && y === year && m - 1 === month
+                    }).length}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Completadas</span>
+                  <span className="font-medium text-foreground">
+                    {reservations.filter(r => {
+                      const [y, m] = r.date.split('-').map(Number)
+                      return r.status === 'completed' && y === year && m - 1 === month
+                    }).length}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="rounded-xl border border-border bg-card p-4">
-            <h3 className="mb-1.5 text-sm font-semibold text-foreground">Google Calendar</h3>
-            <p className="mb-3 text-xs text-muted-foreground">Sincroniza tu agenda con Google Calendar para gestionar todo desde un solo lugar.</p>
-            <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-border py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="https://www.google.com/favicon.ico" alt="" className="size-3.5" />
-              Conectar Google Calendar
-            </button>
+            <h3 className="mb-1.5 text-sm font-semibold text-foreground">Disponibilidad</h3>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Define tus horarios disponibles desde tu perfil de profesor para que los alumnos puedan reservar.
+            </p>
+            <a
+              href={APP_ROUTES.TEACHER_PROFILE}
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+            >
+              Editar disponibilidad
+            </a>
           </div>
         </div>
       </div>

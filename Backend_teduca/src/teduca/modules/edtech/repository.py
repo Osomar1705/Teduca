@@ -149,6 +149,28 @@ class EdtechRepository:
         )
         return list(result.scalars())
 
+    async def list_reservations_for_teacher(self, teacher_profile_id: uuid.UUID) -> list[Reservation]:
+        result = await self.session.execute(
+            select(Reservation)
+            .where(Reservation.teacher_profile_id == teacher_profile_id)
+            .order_by(Reservation.date.asc(), Reservation.time.asc())
+        )
+        return list(result.scalars())
+
+    async def get_conflicting_reservation(
+        self, teacher_profile_id: uuid.UUID, date: str, time: str
+    ) -> Reservation | None:
+        """Devuelve una reserva activa del mismo profesor en el mismo slot."""
+        result = await self.session.execute(
+            select(Reservation).where(
+                Reservation.teacher_profile_id == teacher_profile_id,
+                Reservation.date == date,
+                Reservation.time == time,
+                Reservation.status.in_(["pending", "confirmed"]),
+            )
+        )
+        return result.scalar_one_or_none()
+
     # --- Chat -------------------------------------------------------------
     async def get_thread(self, thread_id: uuid.UUID) -> ChatThread | None:
         # Ídem: usar select() para que lazy="joined" en ChatThread.teacher aplique.

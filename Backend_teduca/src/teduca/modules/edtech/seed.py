@@ -331,13 +331,25 @@ async def seed_marketplace(session: AsyncSession) -> None:
 
 
 if __name__ == "__main__":
-    """Solo para desarrollo local: python -m teduca.modules.edtech.seed"""
+    """Solo para desarrollo local: python -m teduca.modules.edtech.seed
+
+    ADVERTENCIA: Este seed crea profesores DEMO con emails @teduca.dev.
+    Nunca ejecutar en producción. Para limpiar datos demo en producción,
+    usar: psql $DATABASE_URL -f scripts/clean_seed_data.sql
+    """
     import asyncio
+    import os
     from teduca.core.database import AsyncSessionLocal
+
+    env = os.getenv("ENVIRONMENT", "development")
+    if env == "production":
+        print("ERROR: No se puede sembrar datos demo en ENVIRONMENT=production.")
+        print("Para limpiar datos demo ya existentes: psql $DATABASE_URL -f scripts/clean_seed_data.sql")
+        raise SystemExit(1)
 
     async def _run() -> None:
         async with AsyncSessionLocal() as session:
             await seed_marketplace(session)
-        print("Demo marketplace sembrado.")
+        print("Demo marketplace sembrado (solo desarrollo).")
 
     asyncio.run(_run())
